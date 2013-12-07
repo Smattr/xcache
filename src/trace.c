@@ -1,5 +1,6 @@
 #include "arch_syscall.h"
 #include <assert.h>
+#include "debug.h"
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -37,6 +38,7 @@ proc_t *trace(char **argv) {
             exit(-1);
         } case -1: {
             /* Fork failed. */
+            DEBUG("failed initial fork (%d)\n", errno);
             free(p);
             return NULL;
         }
@@ -47,12 +49,14 @@ proc_t *trace(char **argv) {
     waitpid(p->pid, &status, 0);
     if (WIFEXITED(status)) {
         /* Either ptrace or exec failed in the child. */
+        DEBUG("child process (tracee) exited immediately\n");
         free(p);
         return NULL;
     }
 
     long r = ptrace(PTRACE_SYSCALL, p->pid, NULL, NULL);
     if (r != 0) {
+        DEBUG("failed first resume of child process (tracee) (%d)\n", errno);
         free(p);
         return NULL;
     }
@@ -82,6 +86,7 @@ static long syscall_result(proc_t *proc) {
 int next_syscall(proc_t *proc, syscall_t *syscall) {
     assert(proc != NULL);
     if (!proc->running) {
+        DEBUG("attempt to retrieve a syscall from a stopped process\n");
         return -1;
     }
 
@@ -91,6 +96,7 @@ int next_syscall(proc_t *proc, syscall_t *syscall) {
     if (WIFEXITED(status)) {
         proc->running = false;
         proc->exit_status = WEXITSTATUS(status);
+        DEBUG("child exited with status %d\n", proc->exit_status);
         return -1;
     }
 
@@ -109,6 +115,7 @@ int acknowledge_syscall(proc_t *proc) {
     assert(proc != NULL);
     assert(proc->pid > 0);
     long r = ptrace(PTRACE_SYSCALL, proc->pid, NULL, NULL);
+    DEBUG("failed to resume process (%d)\n", errno);
     return (int)r;
 }
 
@@ -131,6 +138,7 @@ int detach(proc_t *proc) {
     assert(proc->pid > 0);
     long res = ptrace(PTRACE_DETACH, proc->pid, NULL, NULL);
     if (res != 0) {
+        DEBUG("failed to detach child (%d)\n", errno);
         return -1;
     }
     free(proc);
