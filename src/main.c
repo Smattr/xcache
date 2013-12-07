@@ -1,10 +1,31 @@
+#include "debug.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/syscall.h>
 #include "trace.h"
 
+static void usage(const char *prog) {
+    fprintf(stderr, "%s [--debug] command args...\n", prog);
+}
+
 int main(int argc, char **argv) {
-    proc_t *target = trace(&argv[1]);
+    int index;
+
+    for (index = 1; index < argc; index++) {
+        if (!strcmp(argv[index], "--debug")) {
+            debug = true;
+        } else {
+            break;
+        }
+    }
+    if (argc - index == 0) {
+        usage(argv[0]);
+        return -1;
+    }
+
+    proc_t *target = trace(&argv[index]);
     if (target == NULL) {
         return -1;
     }
@@ -50,6 +71,7 @@ int main(int argc, char **argv) {
 #endif
             case SYS_umount2:
             case SYS_uselib:
+                DEBUG("bailing out due to unhandled syscall %ld\n", s.call);
                 goto break2;
 
             default:
