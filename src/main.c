@@ -33,8 +33,15 @@ int main(int argc, char **argv) {
     syscall_t s;
     while (next_syscall(target, &s) == 0) {
         switch (s.call) {
+
+            case SYS_access: {
+                char *arg = syscall_getstring(target, 1);
+                printf("access(%s)\n", arg == NULL ? "(nil)" : arg);
+                free(arg);
+                break;
+            }
+
             case SYS__sysctl:
-            case SYS_access:
             case SYS_acct:
             case SYS_chdir:
             case SYS_chmod:

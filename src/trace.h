@@ -20,4 +20,6 @@ int detach(proc_t *proc);
 
 int complete(proc_t *proc);
 
+char *syscall_getstring(proc_t *proc, int arg);
+
 #endif
