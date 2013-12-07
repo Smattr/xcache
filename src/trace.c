@@ -115,7 +115,9 @@ int acknowledge_syscall(proc_t *proc) {
     assert(proc != NULL);
     assert(proc->pid > 0);
     long r = ptrace(PTRACE_SYSCALL, proc->pid, NULL, NULL);
-    DEBUG("failed to resume process (%d)\n", errno);
+    if (r != 0) {
+        DEBUG("failed to resume process (%d)\n", errno);
+    }
     return (int)r;
 }
 
@@ -124,6 +126,9 @@ int complete(proc_t *proc) {
     assert(proc->pid > 0);
     if (proc->running) {
         long r = ptrace(PTRACE_CONT, proc->pid, NULL, NULL);
+        if (r != 0) {
+            DEBUG("failed to resume process (%d)\n", errno);
+        }
         int status;
         waitpid(proc->pid, &status, 0);
         assert(WIFEXITED(status));
