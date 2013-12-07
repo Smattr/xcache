@@ -12,6 +12,7 @@ int main(int argc, char **argv) {
     syscall_t s;
     while (next_syscall(target, &s) == 0) {
         switch (s.call) {
+            case SYS__sysctl:
             case SYS_access:
             case SYS_acct:
             case SYS_chdir:
