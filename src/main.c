@@ -1,3 +1,4 @@
+#include "config.h"
 #include "debug.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -16,6 +17,9 @@ int main(int argc, char **argv) {
     for (index = 1; index < argc; index++) {
         if (!strcmp(argv[index], "--debug")) {
             debug = true;
+        } else if (!strcmp(argv[index], "--version")) {
+            printf("xcache %d.%02d\n", VERSION_MAJOR, VERSION_MINOR);
+            return 0;
         } else {
             break;
         }

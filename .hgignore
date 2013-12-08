@@ -1,0 +1,15 @@
+syntax: regexp
+
+# CMake stuffs
+^src/CMakeFiles/
+^src/CMakeCache\.txt$
+^src/Makefile$
+^src/config\.h$
+^src/cmake_install\.cmake$
+
+# Build files
+\.o$
+^src/xcache$
+
+# Editor files
+\.swp$
