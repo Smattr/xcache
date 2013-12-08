@@ -18,6 +18,7 @@ struct proc {
     bool running;
     bool in_syscall;
     unsigned char exit_status;
+    char argbuffer[PATH_MAX + 1];
 };
 
 proc_t *trace(char **argv) {
@@ -102,25 +103,17 @@ static char *peekstring(proc_t *proc, off_t reg) {
         return NULL;
     }
 
-    char *s = (char*)malloc(sizeof(char) * (PATH_MAX + 1));
-    if (s == NULL) {
-        DEBUG("out of memory while trying to read string from %s\n", filename);
-        close(fd);
-        return NULL;
-    }
-
-    ssize_t sz = read(fd, s, PATH_MAX + 1);
+    ssize_t sz = read(fd, proc->argbuffer, sizeof(proc->argbuffer));
     if (sz == -1) {
         DEBUG("failed to read from %s\n", filename);
-        free(s);
         close(fd);
         return NULL;
     }
     close(fd);
 
-    assert(sz <= PATH_MAX + 1);
-    s[sz - 1] = '\0';
-    return s;
+    assert(sz <= (ssize_t)sizeof(proc->argbuffer));
+    proc->argbuffer[sz - 1] = '\0';
+    return proc->argbuffer;
 }
 
 #define OFFSET(reg) \
