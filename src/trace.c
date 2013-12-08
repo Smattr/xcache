@@ -1,9 +1,9 @@
 #include "arch_syscall.h"
 #include <assert.h>
-#include "debug.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/limits.h>
+#include "log.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <sys/ptrace.h>

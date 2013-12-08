@@ -1,6 +1,6 @@
 #include "config.h"
-#include "debug.h"
 #include "depset.h"
+#include "log.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

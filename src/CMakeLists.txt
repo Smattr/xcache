@@ -32,4 +32,4 @@ endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 
 # The final executable we want.
-add_executable (xcache debug.c depset.c dict.c main.c trace.c)
+add_executable (xcache depset.c dict.c log.c main.c trace.c)

@@ -1,5 +1,5 @@
-#ifndef _XCACHE_DEBUG_H_
-#define _XCACHE_DEBUG_H_
+#ifndef _XCACHE_LOG_H_
+#define _XCACHE_LOG_H_
 
 #include <stdbool.h>
 #include <stdio.h>
