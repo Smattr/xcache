@@ -1,5 +1,6 @@
 #include "config.h"
 #include "debug.h"
+#include "depset.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,12 +19,14 @@ int main(int argc, char **argv) {
      * behaviour that prevents us using it.
      */
     for (index = 1; index < argc; index++) {
-        if (!strcmp(argv[index], "--debug") || !strcmp(argv[index], "-d")) {
+        if (!strcmp(argv[index], "--debug") ||
+            !strcmp(argv[index], "-d")) {
             debug = true;
         } else if (!strcmp(argv[index], "--version")) {
             printf("xcache %d.%02d\n", VERSION_MAJOR, VERSION_MINOR);
             return 0;
-        } else if (!strcmp(argv[index], "--help") || !strcmp(argv[index], "-?")) {
+        } else if (!strcmp(argv[index], "--help") ||
+                   !strcmp(argv[index], "-?")) {
             usage(argv[0]);
             return 0;
         } else {
@@ -32,6 +35,12 @@ int main(int argc, char **argv) {
     }
     if (argc - index == 0) {
         usage(argv[0]);
+        return -1;
+    }
+
+    depset_t *deps = depset_new();
+    if (deps == NULL) {
+        DEBUG("failed to create dependency set\n");
         return -1;
     }
 
@@ -45,9 +54,14 @@ int main(int argc, char **argv) {
         switch (s.call) {
 
             case SYS_access: {
-                char *arg = syscall_getstring(target, 1);
-                printf("access(%s)\n", arg == NULL ? "(nil)" : arg);
-                free(arg);
+                char *f = syscall_getstring(target, 1);
+                if (f == NULL) {
+                    goto bailout;
+                }
+                int r = depset_add_input(deps, f);
+                if (r != 0) {
+                    goto bailout;
+                }
                 break;
             }
 
@@ -89,7 +103,7 @@ int main(int argc, char **argv) {
             case SYS_umount2:
             case SYS_uselib:
                 DEBUG("bailing out due to unhandled syscall %ld\n", s.call);
-                goto break2;
+                goto bailout;
 
             default:
                 printf("%s: %ld %ld\n", s.enter ? "call" : "return", s.call, s.result);
@@ -98,7 +112,7 @@ int main(int argc, char **argv) {
     }
 
     int ret;
-break2:
+bailout:
 
     ret = complete(target);
     detach(target);
