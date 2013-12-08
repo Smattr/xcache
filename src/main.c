@@ -14,11 +14,17 @@ static void usage(const char *prog) {
 int main(int argc, char **argv) {
     int index;
 
+    /* Parse command-line arguments. Unfortunately getopt has some undesirable
+     * behaviour that prevents us using it.
+     */
     for (index = 1; index < argc; index++) {
-        if (!strcmp(argv[index], "--debug")) {
+        if (!strcmp(argv[index], "--debug") || !strcmp(argv[index], "-d")) {
             debug = true;
         } else if (!strcmp(argv[index], "--version")) {
             printf("xcache %d.%02d\n", VERSION_MAJOR, VERSION_MINOR);
+            return 0;
+        } else if (!strcmp(argv[index], "--help") || !strcmp(argv[index], "-?")) {
+            usage(argv[0]);
             return 0;
         } else {
             break;
