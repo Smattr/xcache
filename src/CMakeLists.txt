@@ -11,12 +11,7 @@ set (CMAKE_C_FLAGS "-std=gnu99 -W -Wall -Wextra")
 
 set (VERSION_MAJOR 0)
 set (VERSION_MINOR 1)
-
-# Dump CMake settings so we can use them from C.
-configure_file (
-    "${PROJECT_SOURCE_DIR}/config.in.h"
-    "${PROJECT_BINARY_DIR}/config.h")
-include_directories ("${PROJECT_BINARY_DIR}")
+set (PROJ_NAME "\"xcache\"")
 
 # Handle building for different architectures.
 execute_process (
@@ -30,6 +25,12 @@ elseif (NOT "${ARCH}" STREQUAL "${HOST_ARCH}")
     message (STATUS "Warning: setting an architecture, ${ARCH}, different from your host, ${HOST_ARCH}")
 endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
+
+# Dump CMake settings so we can use them from C.
+configure_file (
+    "${PROJECT_SOURCE_DIR}/config.in.h"
+    "${PROJECT_BINARY_DIR}/config.h")
+include_directories ("${PROJECT_BINARY_DIR}")
 
 # The final executable we want.
 add_executable (xcache depset.c dict.c log.c main.c trace.c)

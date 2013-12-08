@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
                    !strcmp(argv[index], "-q")) {
             verbosity = L_QUIET;
         } else if (!strcmp(argv[index], "--version")) {
-            printf("xcache %d.%02d\n", VERSION_MAJOR, VERSION_MINOR);
+            printf("%s %d.%02d\n", PROJ_NAME, VERSION_MAJOR, VERSION_MINOR);
             return 0;
         } else if (!strcmp(argv[index], "--help") ||
                    !strcmp(argv[index], "-?")) {
