@@ -7,6 +7,8 @@ cmake_minimum_required (VERSION 2.6)
 
 project (xcache)
 
+set (CMAKE_C_FLAGS "-std=gnu99 -W -Wall -Wextra")
+
 set (VERSION_MAJOR 0)
 set (VERSION_MINOR 1)
 
@@ -30,4 +32,4 @@ endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 
 # The final executable we want.
-add_executable (xcache debug.c main.c trace.c)
+add_executable (xcache debug.c dict.c main.c trace.c)
