@@ -54,6 +54,12 @@ depset_t *depset_new(void) {
 
 int depset_add_input(depset_t *oper, char *filename) {
     assert(oper != NULL);
+    if (dict_find(oper->outputs, filename) != NULL) {
+        /* This is already marked as an output; i.e. we are reading back in
+         * something we effectively already know. No need to track this.
+         */
+        return 0;
+    }
     return dict_add_if(oper->inputs, filename, (void*)unset, NULL, stamp);
 }
 
