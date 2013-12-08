@@ -75,7 +75,7 @@ int dict_add(dict_t *dict, char *key, void *value, void **oldvalue) {
     return 0;
 }
 
-int dict_add_if(dict_t *dict, char *key, void *value, void **oldvalue, int (*guard)(void *current)) {
+int dict_add_if(dict_t *dict, char *key, void *value, void **oldvalue, void *(*guard)(char *key, void *current)) {
     unsigned int index = hash(key);
     entry_t *e = find(dict, key, index, NULL);
     if (e == NULL) {
@@ -85,9 +85,7 @@ int dict_add_if(dict_t *dict, char *key, void *value, void **oldvalue, int (*gua
     if (oldvalue != NULL) {
         *oldvalue = e->value;
     }
-    if (guard(e->value)) {
-        e->value = value;
-    }
+    e->value = guard(key, e->value);
     return 0;
 }
 

@@ -3,11 +3,21 @@
 #include "dict.h"
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <time.h>
+#include <unistd.h>
 
 static time_t unset = -1;
-static int is_unset(void *value) {
-    return (time_t)value == unset;
+static void *stamp(char *key, void *value) {
+    if ((time_t)value == unset) {
+        struct stat buf;
+        int r = stat(key, &buf);
+        if (r == 0) {
+            return (void*)buf.st_mtime;
+        }
+    }
+    return value;
 }
 
 struct depset {
@@ -44,7 +54,7 @@ depset_t *depset_new(void) {
 
 int depset_add_input(depset_t *oper, char *filename) {
     assert(oper != NULL);
-    return dict_add_if(oper->inputs, filename, (void*)unset, NULL, is_unset);
+    return dict_add_if(oper->inputs, filename, (void*)unset, NULL, stamp);
 }
 
 int depset_add_output(depset_t *oper, char *filename) {
