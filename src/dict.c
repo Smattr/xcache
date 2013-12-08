@@ -36,7 +36,11 @@ int dict_add(dict_t *dict, char *key, void *value) {
     if (e == NULL) {
         return -1;
     }
-    e->key = key;
+    e->key = strdup(key);
+    if (e->key == NULL) {
+        free(e);
+        return -1;
+    }
     e->value = value;
     
     assert(dict != NULL);
@@ -74,6 +78,7 @@ void *dict_remove(dict_t *dict, char *key) {
         dict[index] = p->next;
     }
     void *value = p->value;
+    free(p->key);
     free(p);
     return value;
 }
@@ -94,6 +99,7 @@ void dict_destroy(dict_t *dict) {
     for (unsigned int i = 0; i < ENTRIES; i++) {
         for (entry_t *e = dict[i]; e != NULL;) {
             entry_t *next = e->next;
+            free(e->key);
             free(e);
             e = next;
         }
