@@ -78,9 +78,15 @@ int main(int argc, char **argv) {
                     ADD_AS(input, 1);
                     break;
 
-                case SYS_renameat:
-                case SYS_rmdir:
                 case SYS_unlink:
+                    ADD_AS(input, 1);
+                    break;
+
+                case SYS_rmdir:
+                    ADD_AS(input, 1);
+                    break;
+
+                case SYS_renameat:
                 case SYS_unlinkat:
                     DEBUG("bailing out due to unhandled syscall %ld\n", s.call);
                     goto bailout;
