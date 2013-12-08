@@ -26,6 +26,18 @@ elseif (NOT "${ARCH}" STREQUAL "${HOST_ARCH}")
 endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 
+# Tell CMake how to build the bits of SQL as C strings.
+ADD_CUSTOM_COMMAND (
+    OUTPUT "${CMAKE_BINARY_DIR}/sql-create.c"
+    COMMAND "${CMAKE_SOURCE_DIR}/sql/to_c.sh" "${CMAKE_SOURCE_DIR}/sql/create.sql" sql_create "${CMAKE_BINARY_DIR}/sql-create.c"
+    DEPENDS "${CMAKE_SOURCE_DIR}/sql/create.sql"
+    VERBATIM)
+ADD_CUSTOM_COMMAND (
+    OUTPUT "${CMAKE_BINARY_DIR}/sql-truncate.c"
+    COMMAND "${CMAKE_SOURCE_DIR}/sql/to_c.sh" "${CMAKE_SOURCE_DIR}/sql/truncate.sql" sql_truncate "${CMAKE_BINARY_DIR}/sql-truncate.c"
+    DEPENDS "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
+    VERBATIM)
+
 # Dump CMake settings so we can use them from C.
 configure_file (
     "${PROJECT_SOURCE_DIR}/config.in.h"
@@ -33,4 +45,15 @@ configure_file (
 include_directories ("${PROJECT_BINARY_DIR}")
 
 # The final executable we want.
-add_executable (xcache depset.c dict.c log.c main.c trace.c)
+add_executable (xcache cache.c depset.c dict.c log.c main.c sql-create.c sql-truncate.c trace.c)
+
+# -lpthread
+find_package (Threads)
+target_link_libraries (xcache ${CMAKE_THREAD_LIBS_INIT})
+
+# -ldl
+target_link_libraries (xcache ${CMAKE_DL_LIBS})
+
+# -lsqlite3
+find_library (SQLITE sqlite3)
+target_link_libraries (xcache ${SQLITE})
