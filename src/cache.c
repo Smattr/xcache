@@ -1,9 +1,8 @@
 #include <assert.h>
 #include "cache.h"
+#include "queries.h"
 #include <stdlib.h>
 #include <sqlite3.h>
-#include "sql-create.h"
-#include "sql-truncate.h"
 
 struct cache {
     sqlite3 *db;
@@ -22,7 +21,7 @@ cache_t *cache_open(const char *path) {
         return NULL;
     }
 
-    r = sqlite3_exec(c->db, sql_create, NULL, NULL, NULL);
+    r = sqlite3_exec(c->db, query_create, NULL, NULL, NULL);
     if (r != SQLITE_OK) {
         sqlite3_close(c->db);
         free(c);
@@ -33,7 +32,7 @@ cache_t *cache_open(const char *path) {
 
 int cache_clear(cache_t *cache) {
     assert(cache != NULL);
-    int r = sqlite3_exec(cache->db, sql_truncate, NULL, NULL, NULL);
+    int r = sqlite3_exec(cache->db, query_truncate, NULL, NULL, NULL);
     if (r != SQLITE_OK) {
         return -1;
     }

@@ -28,13 +28,9 @@ include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 
 # Tell CMake how to build the bits of SQL as C strings.
 ADD_CUSTOM_COMMAND (
-    OUTPUT "${CMAKE_BINARY_DIR}/sql-create.c"
-    COMMAND "${CMAKE_SOURCE_DIR}/sql/to_c.sh" "${CMAKE_SOURCE_DIR}/sql/create.sql" sql_create "${CMAKE_BINARY_DIR}/sql-create.c"
+    OUTPUT "${CMAKE_BINARY_DIR}/queries.c"
+    COMMAND "${CMAKE_SOURCE_DIR}/sql/to_c.sh" "${CMAKE_BINARY_DIR}/queries.c" "${CMAKE_SOURCE_DIR}/sql/create.sql" "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/create.sql"
-    VERBATIM)
-ADD_CUSTOM_COMMAND (
-    OUTPUT "${CMAKE_BINARY_DIR}/sql-truncate.c"
-    COMMAND "${CMAKE_SOURCE_DIR}/sql/to_c.sh" "${CMAKE_SOURCE_DIR}/sql/truncate.sql" sql_truncate "${CMAKE_BINARY_DIR}/sql-truncate.c"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
     VERBATIM)
 
@@ -45,7 +41,7 @@ configure_file (
 include_directories ("${PROJECT_BINARY_DIR}")
 
 # The final executable we want.
-add_executable (xcache cache.c depset.c dict.c log.c main.c sql-create.c sql-truncate.c trace.c)
+add_executable (xcache cache.c depset.c dict.c log.c main.c queries.c trace.c)
 
 # -lpthread
 find_package (Threads)
