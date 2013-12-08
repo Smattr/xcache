@@ -75,6 +75,22 @@ int dict_add(dict_t *dict, char *key, void *value, void **oldvalue) {
     return 0;
 }
 
+int dict_add_if(dict_t *dict, char *key, void *value, void **oldvalue, int (*guard)(void *current)) {
+    unsigned int index = hash(key);
+    entry_t *e = find(dict, key, index, NULL);
+    if (e == NULL) {
+        /* TODO: slow */
+        return dict_add(dict, key, value, oldvalue);
+    }
+    if (oldvalue != NULL) {
+        *oldvalue = e->value;
+    }
+    if (guard(e->value)) {
+        e->value = value;
+    }
+    return 0;
+}
+
 void *dict_remove(dict_t *dict, char *key) {
     unsigned int index = hash(key);
     entry_t *p, *prev;
