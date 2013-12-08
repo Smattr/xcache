@@ -91,29 +91,21 @@ static char *peekstring(proc_t *proc, off_t reg) {
      */
 
     sprintf(filename, "/proc/%d/mem", proc->pid);
-    int fd = open(filename, O_RDONLY);
-    if (fd == -1) {
+    FILE *f = fopen(filename, "r");
+    if (f == NULL) {
         DEBUG("failed to open %s to read string\n", filename);
         return NULL;
     }
 
-    if (lseek(fd, (off_t)addr, SEEK_SET) == -1) {
+    if (fseek(f, (off_t)addr, SEEK_SET) != 0) {
         DEBUG("failed to seek %s\n", filename);
-        close(fd);
+        fclose(f);
         return NULL;
     }
 
-    ssize_t sz = read(fd, proc->argbuffer, sizeof(proc->argbuffer));
-    if (sz == -1) {
-        DEBUG("failed to read from %s\n", filename);
-        close(fd);
-        return NULL;
-    }
-    close(fd);
-
-    assert(sz <= (ssize_t)sizeof(proc->argbuffer));
-    proc->argbuffer[sz - 1] = '\0';
-    return proc->argbuffer;
+    char *r = fgets(proc->argbuffer, sizeof(proc->argbuffer), f);
+    fclose(f);
+    return r;
 }
 
 #define OFFSET(reg) \
