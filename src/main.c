@@ -58,6 +58,14 @@ int main(int argc, char **argv) {
     syscall_t s;
     while (next_syscall(target, &s) == 0) {
 
+#define ADD_AS(category, argno) \
+    do { \
+        char *_f = syscall_getstring(target, argno); \
+        if (_f == NULL) goto bailout; \
+        int _r = depset_add_##category(deps, _f); \
+        if (_r != 0) goto bailout; \
+    } while (0)
+
         /* Any syscall we receive may be the kernel entry or exit. Handle entry
          * separately first because there are relatively few syscalls where
          * entry is relevant for us. The relevant ones are essentially ones
@@ -66,13 +74,9 @@ int main(int argc, char **argv) {
         if (s.enter) {
             switch (s.call) {
 
-                case SYS_rename: {
-                    char *f = syscall_getstring(target, 1);
-                    if (f == NULL) goto bailout;
-                    int r = depset_add_input(deps, f);
-                    if (r != 0) goto bailout;
+                case SYS_rename:
+                    ADD_AS(input, 1);
                     break;
-                }
 
                 case SYS_renameat:
                 case SYS_rmdir:
@@ -83,8 +87,8 @@ int main(int argc, char **argv) {
 
                 default:
                     DEBUG("irrelevant syscall entry %ld\n", s.call);
-                    acknowledge_syscall(target);
             }
+            acknowledge_syscall(target);
             continue;
         }
 
@@ -93,25 +97,13 @@ int main(int argc, char **argv) {
 
         switch (s.call) {
 
-            case SYS_access: {
-                char *f = syscall_getstring(target, 1);
-                if (f == NULL) {
-                    goto bailout;
-                }
-                int r = depset_add_input(deps, f);
-                if (r != 0) {
-                    goto bailout;
-                }
+            case SYS_access:
+                ADD_AS(input, 1);
                 break;
-            }
 
-            case SYS_creat: {
-                char *f = syscall_getstring(target, 1);
-                if (f == NULL) goto bailout;
-                int r = depset_add_output(deps, f);
-                if (r != 0) goto bailout;
+            case SYS_creat:
+                ADD_AS(output, 1);
                 break;
-            }
 
             case SYS__sysctl:
             case SYS_acct:
@@ -156,6 +148,9 @@ int main(int argc, char **argv) {
                 DEBUG("irrelevant syscall exit %ld\n", s.call);
         }
         acknowledge_syscall(target);
+
+#undef ADD_AS
+
     }
 
     int ret;
