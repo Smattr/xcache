@@ -21,7 +21,10 @@ int main(int argc, char **argv) {
     for (index = 1; index < argc; index++) {
         if (!strcmp(argv[index], "--debug") ||
             !strcmp(argv[index], "-d")) {
-            debug = true;
+            verbosity = L_DEBUG;
+        } else if (!strcmp(argv[index], "--quiet") ||
+                   !strcmp(argv[index], "-q")) {
+            verbosity = L_QUIET;
         } else if (!strcmp(argv[index], "--version")) {
             printf("xcache %d.%02d\n", VERSION_MAJOR, VERSION_MINOR);
             return 0;
@@ -34,18 +37,20 @@ int main(int argc, char **argv) {
         }
     }
     if (argc - index == 0) {
+        DEBUG("no target command supplied\n");
         usage(argv[0]);
         return -1;
     }
 
     depset_t *deps = depset_new();
     if (deps == NULL) {
-        DEBUG("failed to create dependency set\n");
+        ERROR("failed to create dependency set\n");
         return -1;
     }
 
     proc_t *target = trace(&argv[index]);
     if (target == NULL) {
+        ERROR("failed to start and trace target %s\n", argv[index]);
         return -1;
     }
 
@@ -106,7 +111,7 @@ int main(int argc, char **argv) {
                 goto bailout;
 
             default:
-                printf("%s: %ld %ld\n", s.enter ? "call" : "return", s.call, s.result);
+                DEBUG("irrelevant syscall %ld\n", s.call);
         }
         acknowledge_syscall(target);
     }

@@ -1,4 +1,3 @@
 #include "log.h"
-#include <stdbool.h>
 
-bool debug = false;
+verbosity_t verbosity = L_ERROR;
