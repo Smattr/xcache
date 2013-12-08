@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "config.h"
 #include "depset.h"
 #include "log.h"
@@ -56,6 +57,32 @@ int main(int argc, char **argv) {
 
     syscall_t s;
     while (next_syscall(target, &s) == 0) {
+
+        /* Any syscall we receive may be the kernel entry or exit. Handle entry
+         * separately first because there are relatively few syscalls where
+         * entry is relevant for us. The relevant ones are essentially ones
+         * that destroy some resource we need to measure before it disappears.
+         */
+        if (s.enter) {
+            switch (s.call) {
+                case SYS_rename:
+                case SYS_renameat:
+                case SYS_rmdir:
+                case SYS_unlink:
+                case SYS_unlinkat:
+                    DEBUG("bailing out due to unhandled syscall %ld\n", s.call);
+                    goto bailout;
+
+                default:
+                    DEBUG("irrelevant syscall entry %ld\n", s.call);
+                    acknowledge_syscall(target);
+                    continue;
+            }
+        }
+
+        /* We should now only be handling syscall exits. */
+        assert(!s.enter);
+
         switch (s.call) {
 
             case SYS_access: {
@@ -70,13 +97,20 @@ int main(int argc, char **argv) {
                 break;
             }
 
+            case SYS_creat: {
+                char *f = syscall_getstring(target, 1);
+                if (f == NULL) goto bailout;
+                int r = depset_add_output(deps, f);
+                if (r != 0) goto bailout;
+                break;
+            }
+
             case SYS__sysctl:
             case SYS_acct:
             case SYS_chdir:
             case SYS_chmod:
             case SYS_chown:
             case SYS_chroot:
-            case SYS_creat:
             case SYS_fchdir:
             case SYS_link:
             case SYS_linkat:
@@ -111,7 +145,7 @@ int main(int argc, char **argv) {
                 goto bailout;
 
             default:
-                DEBUG("irrelevant syscall %ld\n", s.call);
+                DEBUG("irrelevant syscall exit %ld\n", s.call);
         }
         acknowledge_syscall(target);
     }
