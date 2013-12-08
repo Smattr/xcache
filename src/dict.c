@@ -31,25 +31,6 @@ static unsigned int hash(char *s) {
     return h % ENTRIES;
 }
 
-int dict_add(dict_t *dict, char *key, void *value) {
-    entry_t *e = (entry_t*)malloc(sizeof(entry_t));
-    if (e == NULL) {
-        return -1;
-    }
-    e->key = strdup(key);
-    if (e->key == NULL) {
-        free(e);
-        return -1;
-    }
-    e->value = value;
-    
-    assert(dict != NULL);
-    unsigned int index = hash(key);
-    e->next = dict[index];
-    dict[index] = e;
-    return 0;
-}
-
 static entry_t *find(dict_t *dict, char *key, unsigned int index, entry_t **prev) {
     assert(prev != NULL);
     *prev = NULL;
@@ -63,6 +44,33 @@ static entry_t *find(dict_t *dict, char *key, unsigned int index, entry_t **prev
     }
     /* Didn't find it. */
     return NULL;
+}
+
+int dict_add(dict_t *dict, char *key, void *value, void **oldvalue) {
+    unsigned int index = hash(key);
+    entry_t *prev;
+    entry_t *e = find(dict, key, index, &prev);
+    if (e == NULL) {
+        e = (entry_t*)malloc(sizeof(entry_t));
+        if (e == NULL) {
+            return -1;
+        }
+        e->key = strdup(key);
+        if (e->key == NULL) {
+            free(e);
+            return -1;
+        }
+        if (oldvalue != NULL) {
+            *oldvalue = NULL;
+        }
+        e->next = dict[index];
+        dict[index] = e;
+    } else if (oldvalue != NULL) {
+        *oldvalue = e->value;
+    }
+    e->value = value;
+    
+    return 0;
 }
 
 void *dict_remove(dict_t *dict, char *key) {
