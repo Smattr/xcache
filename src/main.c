@@ -8,7 +8,7 @@
 #include "trace.h"
 
 static void usage(const char *prog) {
-    fprintf(stderr, "%s [--debug] command args...\n", prog);
+    fprintf(stderr, "%s [--debug | -d] [--help | -h] [--version] command args...\n", prog);
 }
 
 int main(int argc, char **argv) {
