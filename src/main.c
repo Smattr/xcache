@@ -65,7 +65,15 @@ int main(int argc, char **argv) {
          */
         if (s.enter) {
             switch (s.call) {
-                case SYS_rename:
+
+                case SYS_rename: {
+                    char *f = syscall_getstring(target, 1);
+                    if (f == NULL) goto bailout;
+                    int r = depset_add_input(deps, f);
+                    if (r != 0) goto bailout;
+                    break;
+                }
+
                 case SYS_renameat:
                 case SYS_rmdir:
                 case SYS_unlink:
@@ -76,8 +84,8 @@ int main(int argc, char **argv) {
                 default:
                     DEBUG("irrelevant syscall entry %ld\n", s.call);
                     acknowledge_syscall(target);
-                    continue;
             }
+            continue;
         }
 
         /* We should now only be handling syscall exits. */
