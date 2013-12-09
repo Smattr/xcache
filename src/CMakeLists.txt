@@ -29,7 +29,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 # Tell CMake how to build the bits of SQL as C strings.
 ADD_CUSTOM_COMMAND (
     OUTPUT "${CMAKE_BINARY_DIR}/queries.c"
-    COMMAND "${CMAKE_SOURCE_DIR}/sql/to_c.sh" "${CMAKE_BINARY_DIR}/queries.c" "${CMAKE_SOURCE_DIR}/sql/create.sql" "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
+    COMMAND "${CMAKE_SOURCE_DIR}/sql/to_c.sh" "${CMAKE_BINARY_DIR}/queries.c" "${CMAKE_SOURCE_DIR}/sql/addinput.sql" "${CMAKE_SOURCE_DIR}/sql/addoperation.sql" "${CMAKE_SOURCE_DIR}/sql/addoutput.sql" "${CMAKE_SOURCE_DIR}/sql/create.sql" "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/create.sql"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
     VERBATIM)
