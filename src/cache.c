@@ -13,14 +13,6 @@
 
 #define DATA "/data"
 
-#if __WORDSIZE == 32
-    #define sqlite3_bind_timestamp(stmt, index, val) \
-        sqlite3_bind_int(stmt, index, val)
-#else
-    #define sqlite3_bind_timestamp(stmt, index, val) \
-        sqlite3_bind_int64(stmt, index, (sqlite3_int64)(val))
-#endif
-
 struct cache {
     sqlite3 *db;
     char *root;
@@ -126,7 +118,7 @@ int cache_write(cache_t *cache, char *cwd, char *command, depset_t *depset) {
             sqlite3_finalize(st);
             goto fail;
         }
-        if (sqlite3_bind_timestamp(st, value_index, value) != SQLITE_OK) {
+        if (sqlite3_bind_int64(st, value_index, (sqlite3_int64)(value)) != SQLITE_OK) {
             sqlite3_finalize(st);
             goto fail;
         }
@@ -163,7 +155,7 @@ int cache_write(cache_t *cache, char *cwd, char *command, depset_t *depset) {
             sqlite3_finalize(st);
             goto fail;
         }
-        if (sqlite3_bind_timestamp(st, value_index, value) != SQLITE_OK) {
+        if (sqlite3_bind_int64(st, value_index, (sqlite3_int64)(value)) != SQLITE_OK) {
             sqlite3_finalize(st);
             goto fail;
         }
