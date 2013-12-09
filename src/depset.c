@@ -63,14 +63,26 @@ int depset_add_input(depset_t *oper, char *filename) {
     return dict_add_if(oper->inputs, filename, (void*)unset, NULL, stamp);
 }
 
+iter_t *depset_iter_inputs(depset_t *oper) {
+    return dict_iter(oper->inputs);
+}
+
 int depset_add_output(depset_t *oper, char *filename) {
     assert(oper != NULL);
     return dict_add(oper->outputs, filename, (void*)unset, NULL);
 }
 
+iter_t *depset_iter_outputs(depset_t *oper) {
+    return dict_iter(oper->outputs);
+}
+
 int depset_add_missing(depset_t *oper, char *filename) {
     assert(oper != NULL);
     return dict_add(oper->missing, filename, (void*)1, NULL);
+}
+
+iter_t *depset_iter_missing(depset_t *oper) {
+    return dict_iter(oper->missing);
 }
 
 void depset_destroy(depset_t *oper) {
