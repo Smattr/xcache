@@ -23,7 +23,6 @@ static void *stamp(char *key, void *value) {
 struct depset {
     dict_t *inputs;
     dict_t *outputs;
-    dict_t *missing;
 };
 
 depset_t *depset_new(void) {
@@ -39,13 +38,6 @@ depset_t *depset_new(void) {
     o->outputs = dict_new();
     if (o->outputs == NULL) {
         dict_destroy(o->inputs);
-        free(o);
-        return NULL;
-    }
-    o->missing = dict_new();
-    if (o->missing == NULL) {
-        dict_destroy(o->inputs);
-        dict_destroy(o->outputs);
         free(o);
         return NULL;
     }
@@ -76,19 +68,9 @@ iter_t *depset_iter_outputs(depset_t *oper) {
     return dict_iter(oper->outputs);
 }
 
-int depset_add_missing(depset_t *oper, char *filename) {
-    assert(oper != NULL);
-    return dict_add(oper->missing, filename, (void*)1, NULL);
-}
-
-iter_t *depset_iter_missing(depset_t *oper) {
-    return dict_iter(oper->missing);
-}
-
 void depset_destroy(depset_t *oper) {
     assert(oper != NULL);
     dict_destroy(oper->inputs);
     dict_destroy(oper->outputs);
-    dict_destroy(oper->missing);
     free(oper);
 }

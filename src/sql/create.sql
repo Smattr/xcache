@@ -12,7 +12,3 @@ create table if not exists output (
     fk_operation integer references operation(id),
     filename text not null,
     contents text not null);
-
-create table if not exists missing (
-    fk_operation integer references operation(id),
-    filename text);
