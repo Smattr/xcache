@@ -5,6 +5,7 @@ extern const char *query_addinput;
 extern const char *query_addoperation;
 extern const char *query_addoutput;
 extern const char *query_create;
+extern const char *query_getid;
 extern const char *query_truncate;
 
 #endif
