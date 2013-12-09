@@ -41,7 +41,7 @@ configure_file (
 include_directories ("${PROJECT_BINARY_DIR}")
 
 # The final executable we want.
-add_executable (xcache cache.c depset.c dict.c log.c main.c queries.c trace.c)
+add_executable (xcache cache.c depset.c dict.c filehash.c log.c main.c queries.c trace.c)
 
 # -lpthread
 find_package (Threads)
@@ -53,3 +53,11 @@ target_link_libraries (xcache ${CMAKE_DL_LIBS})
 # -lsqlite3
 find_library (SQLITE sqlite3)
 target_link_libraries (xcache ${SQLITE})
+
+# -lopenssl
+find_library (OPENSSL ssl)
+target_link_libraries (xcache ${OPENSSL})
+
+# -lcrypto
+find_library (CRYPTO crypto)
+target_link_libraries (xcache ${CRYPTO})
