@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 static time_t unset = -1;
+static time_t missing = -2;
 static void *stamp(char *key, void *value) {
     if ((time_t)value == unset) {
         struct stat buf;
@@ -16,6 +17,7 @@ static void *stamp(char *key, void *value) {
         if (r == 0) {
             return (void*)buf.st_mtime;
         }
+        return (void*)missing;
     }
     return value;
 }
