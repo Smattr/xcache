@@ -11,4 +11,5 @@ create table if not exists input (
 create table if not exists output (
     fk_operation integer references operation(id),
     filename text not null,
+    timestamp integer not null,
     contents text not null);
