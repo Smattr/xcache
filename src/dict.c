@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "dict.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -116,6 +117,51 @@ void *dict_find(dict_t *dict, char *key) {
         return p->value;
     }
     return NULL;
+}
+
+struct iter {
+    dict_t *dict;
+    unsigned int index;
+    entry_t *entry;
+};
+
+iter_t *dict_iter(dict_t *dict) {
+    iter_t *i = (iter_t*)malloc(sizeof(iter_t));
+    if (i == NULL) {
+        return NULL;
+    }
+    i->dict = dict;
+    i->index = 0;
+    i->entry = dict[0];
+    return i;
+}
+
+bool iter_next(iter_t *iter, char **key, void **value) {
+    assert(iter != NULL);
+    if (iter->entry != NULL) {
+        if (key != NULL) {
+            *key = iter->entry->key;
+        }
+        if (value != NULL) {
+            *value = iter->entry->value;
+        }
+        iter->entry = iter->entry->next;
+        return true;
+    }
+    for (iter->index++; iter->index < ENTRIES; iter->index++) {
+        if (iter->dict[iter->index] != NULL) {
+            if (key != NULL) {
+                *key = iter->dict[iter->index]->key;
+            }
+            if (value != NULL) {
+                *value = iter->dict[iter->index]->value;
+            }
+            iter->entry = iter->dict[iter->index]->next;
+            return true;
+        }
+    }
+    free(iter);
+    return false;
 }
 
 void dict_destroy(dict_t *dict) {
