@@ -26,6 +26,8 @@
  */
 #define DATA "/data"
 
+#define DB   "cache.db"
+
 struct cache {
 
     /* Underlying data store for metadata about dependency graphs. */
@@ -44,7 +46,14 @@ cache_t *cache_open(const char *path) {
         return NULL;
     }
 
-    int r = sqlite3_open(path, &c->db);
+    char *db_path = (char*)malloc(strlen(path) + 1 + strlen(DB) + 1);
+    if (db_path == NULL) {
+        free(c);
+        return NULL;
+    }
+    sprintf(db_path, "%s/" DB, path);
+    int r = sqlite3_open(db_path, &c->db);
+    free(db_path);
     if (r != SQLITE_OK) {
         sqlite3_close(c->db);
         free(c);
