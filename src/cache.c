@@ -16,13 +16,26 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+/* SQLite documentation advises to use sqlite3_prepare_v2 in preference to
+ * sqlite3_prepare.
+ */
 #define sqlite3_prepare sqlite3_prepare_v2
 
+/* Subdirectory of the cache root under which to cache file contents of output
+ * files.
+ */
 #define DATA "/data"
 
 struct cache {
+
+    /* Underlying data store for metadata about dependency graphs. */
     sqlite3 *db;
+
+    /* Absolute path (without a trailing slash) to the directory to store cache
+     * metadata and file data in.
+     */
     char *root;
+
 };
 
 cache_t *cache_open(const char *path) {
@@ -56,14 +69,18 @@ cache_t *cache_open(const char *path) {
     return c;
 }
 
+/* Some wrappers around SQLite's verbose query execution. */
 static bool begin_transaction(cache_t *c) {
-    return sqlite3_exec(c->db, "begin transaction;", NULL, NULL, NULL) == SQLITE_OK;
+    return sqlite3_exec(c->db, "begin transaction;", NULL, NULL, NULL)
+        == SQLITE_OK;
 }
 static bool commit_transaction(cache_t *c) {
-    return sqlite3_exec(c->db, "commit transaction;", NULL, NULL, NULL) == SQLITE_OK;
+    return sqlite3_exec(c->db, "commit transaction;", NULL, NULL, NULL)
+        == SQLITE_OK;
 }
 static bool rollback_transaction(cache_t *c) {
-    return sqlite3_exec(c->db, "rollback transaction;", NULL, NULL, NULL) == SQLITE_OK;
+    return sqlite3_exec(c->db, "rollback transaction;", NULL, NULL, NULL)
+        == SQLITE_OK;
 }
 
 static int get_id(cache_t *c, char *cwd, char *command) {
