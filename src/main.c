@@ -10,7 +10,20 @@
 #include "trace.h"
 
 static void usage(const char *prog) {
-    fprintf(stderr, "%s [--debug | -d] [--help | -h] [--version] command args...\n", prog);
+    fprintf(stderr, "Usage:\n"
+        "  %s [options] command args...\n"
+        "\n"
+        "Options:\n"
+        "  --debug\n"
+        "  -d            Enable debug output.\n"
+        "  --help\n"
+        "  -?            Print this help information and exit.\n"
+        "  --log <file>\n"
+        "  -l <file>     Direct any output to <file>. Defaults to stderr.\n"
+        "  --quiet\n"
+        "  -q            Suppress all output (except from the target).\n"
+        "  --version     Output version information and then exit.\n"
+        , prog);
 }
 
 int main(int argc, char **argv) {
