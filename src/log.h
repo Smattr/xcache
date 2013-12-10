@@ -2,6 +2,7 @@
 #define _XCACHE_LOG_H_
 
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef enum {
     L_QUIET = 0,
@@ -12,10 +13,23 @@ typedef enum {
 } verbosity_t;
 extern verbosity_t verbosity;
 
+extern FILE *log_file;
+
+int log_init(char *filename);
+void log_deinit(void);
+
+extern int log_initialised;
+
 #define LOG(level, args...) \
     do { \
+        if (!log_initialised) { \
+            log_init(NULL); \
+        } \
         if ((level) <= verbosity) { \
-            fprintf(stderr, "xcache: " args); \
+            if (log_file == stderr) { \
+                fprintf(stderr, "xcache: "); \
+            } \
+            fprintf(log_file, args); \
         } \
     } while (0)
 
