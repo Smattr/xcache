@@ -321,6 +321,73 @@ int cache_clear(cache_t *cache) {
     return 0;
 }
 
+int cache_locate(cache_t *cache, char **args) {
+    size_t sz = strlen(args[0]) + 1;
+    char *command = (char*)malloc(sz);
+    if (command == NULL)
+        return -1;
+    for (unsigned int i = 1; args[i] != NULL; i++) {
+        sz += strlen(args[i]) + 1;
+        char *tmp = (char*)realloc(command, sz);
+        if (tmp == NULL) {
+            free(command);
+            return -1;
+        }
+        strcat(command, " ");
+        strcat(command, args[i]);
+    }
+    char *cwd = getcwd(NULL, 0);
+    if (cwd == NULL) {
+        free(command);
+        return -1;
+    }
+
+    int id = get_id(cache, cwd, command);
+    free(command);
+    free(cwd);
+    if (id == -1)
+        return -1;
+    sqlite3_stmt *s = NULL;
+    if (sqlite3_prepare(cache->db, query_getinputs, -1, &s, NULL) != SQLITE_OK)
+        goto fail;
+    /* TODO: This, and all the other, bind_parameter_indexes can be done at
+     * compile-time.
+     */
+    int index = sqlite3_bind_parameter_index(s, "fk_operation");
+    if (index == 0)
+        goto fail;
+    if (sqlite3_bind_int(s, index, id) != SQLITE_OK)
+        goto fail;
+    int r;
+    while ((r = sqlite3_step(s)) == SQLITE_ROW) {
+        assert(sqlite3_column_count(s) == 2);
+        assert(sqlite3_column_type(s, 1) == SQLITE_TEXT);
+        const char *filename = (const char*)sqlite3_column_text(s, 1);
+        assert(filename != NULL);
+        assert(sqlite3_column_type(s, 2) == SQLITE_INTEGER);
+        time_t timestamp = (time_t)sqlite3_column_int64(s, 2);
+        struct stat st;
+        if (stat(filename, &st) != 0)
+            goto fail;
+        if (st.st_mtime != timestamp)
+            /* This is actually the expected case; that we found the input file
+             * but its timestamp has changed.
+             */
+            goto fail;
+    }
+    if (r != SQLITE_DONE)
+        goto fail;
+    sqlite3_finalize(s);
+
+    /* We found it with matching inputs. */
+    return id;
+
+fail:
+    if (s != NULL)
+        sqlite3_finalize(s);
+    return -1;
+}
+
 int cache_close(cache_t *cache) {
     assert(cache != NULL);
     int r = sqlite3_close(cache->db);

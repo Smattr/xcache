@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "cache.h"
 #include "config.h"
 #include "depset.h"
 #include "log.h"
@@ -24,6 +25,17 @@ static void usage(const char *prog) {
         "  -q            Suppress all output (except from the target).\n"
         "  --version     Output version information and then exit.\n"
         , prog);
+}
+
+static char *cache_dir(void) {
+    char *home = getenv("HOME");
+    if (home == NULL)
+        return NULL;
+    char *d = (char*)malloc(strlen(home) + strlen("/.xcache") + 1);
+    if (d == NULL)
+        return NULL;
+    sprintf(d, "%s/.xcache", home);
+    return d;
 }
 
 int main(int argc, char **argv) {
@@ -58,20 +70,30 @@ int main(int argc, char **argv) {
         }
     }
     if (argc - index == 0) {
-        DEBUG("no target command supplied\n");
+        ERROR("No target command supplied\n");
         usage(argv[0]);
         return -1;
     }
 
+    char *dir = cache_dir();
+    cache_t *cache = cache_open(dir);
+    if (cache == NULL) {
+        ERROR("Failed to create cache\n");
+        return -1;
+    }
+    int id = cache_locate(cache, &argv[index]);
+
+    /* TODO: Check id to decide whether we need to continue. */
+
     depset_t *deps = depset_new();
     if (deps == NULL) {
-        ERROR("failed to create dependency set\n");
+        ERROR("Failed to create dependency set\n");
         return -1;
     }
 
     proc_t *target = trace(&argv[index]);
     if (target == NULL) {
-        ERROR("failed to start and trace target %s\n", argv[index]);
+        ERROR("Failed to start and trace target %s\n", argv[index]);
         return -1;
     }
 
