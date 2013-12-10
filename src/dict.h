@@ -16,4 +16,9 @@ typedef struct iter iter_t;
 iter_t *dict_iter(dict_t *dict);
 bool iter_next(iter_t *iter, char **key, void **value);
 
+/* Pre-emptively destroy an iterator. This does not need to be called on an
+ * iterator that has been exhausted.
+ */
+void iter_destroy(iter_t *iter);
+
 #endif

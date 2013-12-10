@@ -164,6 +164,10 @@ bool iter_next(iter_t *iter, char **key, void **value) {
     return false;
 }
 
+void iter_destroy(iter_t *iter) {
+    free(iter);
+}
+
 void dict_destroy(dict_t *dict) {
     assert(dict != NULL);
     for (unsigned int i = 0; i < ENTRIES; i++) {

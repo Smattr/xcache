@@ -175,117 +175,122 @@ static char *cache_save(cache_t *c, char *filename) {
 }
 
 int cache_write(cache_t *cache, char *cwd, char *command, depset_t *depset) {
+    sqlite3_stmt *s = NULL;
+    iter_t *i = NULL;
     if (!begin_transaction(cache)) {
         return -1;
     }
 
-    sqlite3_stmt *s;
     int id = get_id(cache, cwd, command);
     if (id < 0) {
         /* This entry was not found in the cache. */
         /* Write the entry to the dep table. */
         if (sqlite3_prepare(cache->db, query_addoperation, -1, &s, NULL) != SQLITE_OK)
-            goto fail2;
+            goto fail;
         int index = sqlite3_bind_parameter_index(s, "cwd");
         if (index == 0)
-            goto fail1;
+            goto fail;
         if (sqlite3_bind_text(s, index, cwd, -1, SQLITE_STATIC) != SQLITE_OK)
-            goto fail1;
+            goto fail;
         index = sqlite3_bind_parameter_index(s, "command");
         if (index == 0)
-            goto fail1;
+            goto fail;
         if (sqlite3_bind_text(s, index, command, -1, SQLITE_STATIC) != SQLITE_OK)
-            goto fail1;
+            goto fail;
         if (sqlite3_step(s) != SQLITE_DONE)
-            goto fail1;
+            goto fail;
         if (sqlite3_finalize(s) != SQLITE_OK)
-            goto fail2;
+            goto fail;
+        s = NULL;
         id = get_id(cache, cwd, command);
     }
 
     assert(id >= 0);
 
     /* Write the inputs. */
-    iter_t *i = depset_iter_inputs(depset);
+    i = depset_iter_inputs(depset);
     if (i == NULL)
-        goto fail2;
-    /* TODO: free i in following code */
-    /* TODO: bind fk_operation */
+        goto fail;
     char *key;
     time_t *value;
     if (sqlite3_prepare(cache->db, query_addinput, -1, &s, NULL) != SQLITE_OK)
-        goto fail2;
+        goto fail;
     int id_index = sqlite3_bind_parameter_index(s, "fk_operation");
     if (id_index == 0)
-        goto fail1;
+        goto fail;
     int key_index = sqlite3_bind_parameter_index(s, "filename");
     if (key_index == 0)
-        goto fail1;
+        goto fail;
     int value_index = sqlite3_bind_parameter_index(s, "timestamp");
     if (value_index == 0)
-        goto fail1;
+        goto fail;
     while (iter_next(i, &key, (void**)&value)) {
         if (sqlite3_bind_int(s, id_index, id) != SQLITE_OK)
-            goto fail1;
+            goto fail;
         if (sqlite3_bind_text(s, key_index, key, -1, SQLITE_STATIC) != SQLITE_OK)
-            goto fail1;
+            goto fail;
         if (sqlite3_bind_int64(s, value_index, (sqlite3_int64)(value)) != SQLITE_OK)
-            goto fail1;
+            goto fail;
         if (sqlite3_step(s) != SQLITE_DONE)
-            goto fail1;
+            goto fail;
         if (sqlite3_reset(s) != SQLITE_OK)
-            goto fail1;
+            goto fail;
     }
+    i = NULL;
     if (sqlite3_finalize(s) != SQLITE_OK)
-        goto fail2;
+        goto fail;
+    s = NULL;
 
     /* Write the outputs. */
     i = depset_iter_outputs(depset);
     if (i == NULL)
-        goto fail2;
+        goto fail;
     if (sqlite3_prepare(cache->db, query_addoutput, -1, &s, NULL) != SQLITE_OK)
-        goto fail2;
+        goto fail;
     id_index = sqlite3_bind_parameter_index(s, "fk_operation");
     if (id_index == 0)
-        goto fail1;
+        goto fail;
     key_index = sqlite3_bind_parameter_index(s, "filename");
     if (key_index == 0)
-        goto fail1;
+        goto fail;
     value_index = sqlite3_bind_parameter_index(s, "timestamp");
     if (value_index == 0)
-        goto fail1;
+        goto fail;
     int contents_index = sqlite3_bind_parameter_index(s, "contents");
     if (contents_index == 0)
-        goto fail1;
+        goto fail;
     while (iter_next(i, &key, (void**)&value)) {
         char *h = cache_save(cache, key);
         if (h == NULL)
-            goto fail1;
+            goto fail;
 
         if (sqlite3_bind_int(s, id_index, id) != SQLITE_OK)
-            goto fail1;
+            goto fail;
         if (sqlite3_bind_text(s, key_index, key, -1, SQLITE_STATIC) != SQLITE_OK)
-            goto fail1;
+            goto fail;
         if (sqlite3_bind_int64(s, value_index, (sqlite3_int64)(value)) != SQLITE_OK)
-            goto fail1;
+            goto fail;
         if (sqlite3_bind_text(s, contents_index, h, -1, free) != SQLITE_OK)
-            goto fail1;
+            goto fail;
         if (sqlite3_step(s) != SQLITE_DONE)
-            goto fail1;
+            goto fail;
         if (sqlite3_reset(s) != SQLITE_OK)
-            goto fail1;
-        /* TODO write file data */
+            goto fail;
     }
+    i = NULL;
     if (sqlite3_finalize(s) != SQLITE_OK)
-        goto fail2;
+        goto fail;
+    s = NULL;
 
     if (!commit_transaction(cache))
-        return -1;
+        goto fail;
     return 0;
 
-fail1:
-    sqlite3_finalize(s);
-fail2:
+fail:
+    if (s != NULL)
+        sqlite3_finalize(s);
+    if (i != NULL)
+        iter_destroy(i);
     rollback_transaction(cache);
     return -1;
 }
