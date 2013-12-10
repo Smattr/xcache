@@ -23,6 +23,13 @@ int main(int argc, char **argv) {
         if (!strcmp(argv[index], "--debug") ||
             !strcmp(argv[index], "-d")) {
             verbosity = L_DEBUG;
+        } else if ((!strcmp(argv[index], "--log") ||
+                    !strcmp(argv[index], "-l")) &&
+                   index < argc - 1) {
+            if (log_init(argv[index + 1]) != 0) {
+                usage(argv[0]);
+                return -1;
+            }
         } else if (!strcmp(argv[index], "--quiet") ||
                    !strcmp(argv[index], "-q")) {
             verbosity = L_QUIET;
