@@ -54,18 +54,18 @@ static int parse_arguments(int argc, char **argv) {
                    index < argc - 1) {
             if (log_init(argv[index + 1]) != 0) {
                 usage(argv[0]);
-                return -1;
+                exit(-1);
             }
         } else if (!strcmp(argv[index], "--quiet") ||
                    !strcmp(argv[index], "-q")) {
             verbosity = L_QUIET;
         } else if (!strcmp(argv[index], "--version")) {
             printf("%s %d.%02d\n", PROJ_NAME, VERSION_MAJOR, VERSION_MINOR);
-            return 0;
+            exit(0);
         } else if (!strcmp(argv[index], "--help") ||
                    !strcmp(argv[index], "-?")) {
             usage(argv[0]);
-            return 0;
+            exit(0);
         } else {
             break;
         }
