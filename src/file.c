@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include "file.h"
+#include "log.h"
 #include <openssl/md5.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -92,12 +93,17 @@ int mkdirp(const char *path) {
         if (*p == '/') {
             *p = '\0';
             int r = mkdir(path, 0775);
-            *p = '/';
-            if (r != 0 && errno != EEXIST)
+            if (r != 0 && errno != EEXIST) {
+                DEBUG("Failed to create directory \"%s\"\n", path);
+                *p = '/';
                 return -1;
+            }
+            *p = '/';
         }
     }
-    if (mkdir(path, 0775) != 0 && errno != EEXIST)
+    if (mkdir(path, 0775) != 0 && errno != EEXIST) {
+        DEBUG("Failed to create directory \"%s\"\n", path);
         return -1;
+    }
     return 0;
 }
