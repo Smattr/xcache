@@ -143,41 +143,31 @@ fail:
  * TODO: Place some limit on the size of file that can be saved.
  */
 static char *cache_save(cache_t *c, char *filename) {
-    int fd = open(filename, O_RDONLY);
-    if (fd < 0)
+    char *h = filehash(filename);
+    if (h == NULL)
         return NULL;
 
-    /* Measure the size of the file we're about to cache. */
+    int fd = open(filename, O_RDONLY);
+    if (fd < 0) {
+        free(h);
+        return NULL;
+    }
+
+    /* Measure the size of the file. */
     struct stat st;
-    int r = fstat(fd, &st);
-    if (r != 0) {
+    if (fstat(fd, &st) != 0) {
         close(fd);
+        free(h);
         return NULL;
     }
     size_t sz = st.st_size;
 
-    /* Mmap the file purely for the purposes of calculating its hash. */
-    void *addr = mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (addr == MAP_FAILED) {
-        close(fd);
-        return NULL;
-    }
-    char *h = filehash((char*)addr, sz);
-    munmap(addr, sz);
-    if (h == NULL) {
-        close(fd);
-        return NULL;
-    }
-
-    /* Copy the file itself to the cache. Note that we do this through the
-     * kernel (sendfile) for efficiency, but we've actually already read the
-     * entire file in userspace when we just calculated its hash. It may be
-     * more efficient to do the copy in userspace at this point.
-     */
+    /* Copy the file. */
     char *cpath = (char*)malloc(strlen(c->root) + strlen(DATA) + 1 + strlen(h)
         + 1);
     if (cpath == NULL) {
         close(fd);
+        free(h);
         return NULL;
     }
     sprintf(cpath, "%s" DATA "/%s", c->root, h);
@@ -185,18 +175,20 @@ static char *cache_save(cache_t *c, char *filename) {
     if (out < 0) {
         free(cpath);
         close(fd);
+        free(h);
         return NULL;
     }
     ssize_t written = sendfile(out, fd, 0, sz);
     close(out);
-    free(cpath);
     close(fd);
-    if ((size_t)written != sz)
-        /* We somehow failed to copy the entire file. FIXME: We're potentially
-         * leaving (benign) garbage in the cache here that we should be
-         * removing.
-         */
+    if ((size_t)written != sz) {
+        /* We somehow failed to copy the entire file. */
+        unlink(cpath);
+        free(cpath);
+        free(h);
         return NULL;
+    }
+    free(cpath);
     return h;
 }
 
