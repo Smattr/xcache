@@ -38,12 +38,13 @@ static char *cache_dir(void) {
     return d;
 }
 
-int main(int argc, char **argv) {
+/* Parse command-line arguments. Unfortunately getopt has some undesirable
+ * behaviour that prevents us using it.
+ *
+ * Returns the index of the first non-xcache argument.
+ */
+static int parse_arguments(int argc, char **argv) {
     int index;
-
-    /* Parse command-line arguments. Unfortunately getopt has some undesirable
-     * behaviour that prevents us using it.
-     */
     for (index = 1; index < argc; index++) {
         if (!strcmp(argv[index], "--debug") ||
             !strcmp(argv[index], "-d")) {
@@ -69,6 +70,12 @@ int main(int argc, char **argv) {
             break;
         }
     }
+    return index;
+}
+
+int main(int argc, char **argv) {
+    int index = parse_arguments(argc, argv);
+
     if (argc - index == 0) {
         ERROR("No target command supplied\n");
         usage(argv[0]);
