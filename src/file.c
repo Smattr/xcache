@@ -89,7 +89,7 @@ int mkdirp(const char *path) {
      * modify their string and we do. I think it's acceptable because we undo
      * the changes we make.
      */
-    for (char *p = (char*)path; *p != '\0'; p++) {
+    for (char *p = (char*)(path + 1); *p != '\0'; p++) {
         if (*p == '/') {
             *p = '\0';
             int r = mkdir(path, 0775);
