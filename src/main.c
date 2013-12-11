@@ -11,6 +11,8 @@
 #include <sys/syscall.h>
 #include "trace.h"
 
+static bool dryrun = false;
+
 static void usage(const char *prog) {
     fprintf(stderr, "Usage:\n"
         "  %s [options] command args...\n"
@@ -18,6 +20,8 @@ static void usage(const char *prog) {
         "Options:\n"
         "  --debug\n"
         "  -d            Enable debug output.\n"
+        "  --dry-run\n"
+        "  -n            Simulate only; do not perform any actions.\n"
         "  --help\n"
         "  -?            Print this help information and exit.\n"
         "  --log <file>\n"
@@ -50,6 +54,9 @@ static int parse_arguments(int argc, char **argv) {
         if (!strcmp(argv[index], "--debug") ||
             !strcmp(argv[index], "-d")) {
             verbosity = L_DEBUG;
+        } else if (!strcmp(argv[index], "--dry-run") ||
+                   !strcmp(argv[index], "-n")) {
+            dryrun = true;
         } else if ((!strcmp(argv[index], "--log") ||
                     !strcmp(argv[index], "-l")) &&
                    index < argc - 1) {
