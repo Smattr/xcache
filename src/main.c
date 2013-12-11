@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "config.h"
 #include "depset.h"
+#include "file.h"
 #include "log.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -83,6 +84,11 @@ int main(int argc, char **argv) {
     }
 
     char *dir = cache_dir();
+    if (mkdirp(dir) != 0) {
+        ERROR("Failed to create cache directory \"%s\"\n", dir);
+        return -1;
+    }
+
     cache_t *cache = cache_open(dir);
     if (cache == NULL) {
         ERROR("Failed to create cache\n");

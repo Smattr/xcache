@@ -22,4 +22,10 @@ char *filehash(const char *filename);
  */
 int cp(const char *from, const char *to);
 
+/* Equivalent of `mkdir -p`.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+int mkdirp(const char *path);
+
 #endif

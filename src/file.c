@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include "file.h"
 #include <openssl/md5.h>
@@ -46,6 +48,9 @@ char *filehash(const char *filename) {
 }
 
 int cp(const char *from, const char *to) {
+    assert(from != NULL);
+    assert(to != NULL);
+
     int in = open(from, O_RDONLY);
     if (in < 0)
         return -1;
@@ -73,5 +78,26 @@ int cp(const char *from, const char *to) {
         unlink(to);
         return -1;
     }
+    return 0;
+}
+
+int mkdirp(const char *path) {
+    assert(path != NULL);
+
+    /* We commit a white lie, in that we told the caller we weren't going to
+     * modify their string and we do. I think it's acceptable because we undo
+     * the changes we make.
+     */
+    for (char *p = (char*)path; *p != '\0'; p++) {
+        if (*p == '/') {
+            *p = '\0';
+            int r = mkdir(path, 0775);
+            *p = '/';
+            if (r != 0 && errno != EEXIST)
+                return -1;
+        }
+    }
+    if (mkdir(path, 0775) != 0 && errno != EEXIST)
+        return -1;
     return 0;
 }
