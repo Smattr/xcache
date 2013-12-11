@@ -41,7 +41,7 @@ configure_file (
 include_directories ("${PROJECT_BINARY_DIR}")
 
 # The final executable we want.
-add_executable (xcache cache.c depset.c dict.c filehash.c log.c main.c queries.c trace.c)
+add_executable (xcache cache.c depset.c dict.c file.c log.c main.c queries.c trace.c)
 
 # -lpthread
 find_package (Threads)

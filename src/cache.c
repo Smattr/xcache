@@ -3,7 +3,7 @@
 #include "depset.h"
 #include "dict.h"
 #include <fcntl.h>
-#include "filehash.h"
+#include "file.h"
 #include "queries.h"
 #include <stdbool.h>
 #include <stdio.h>

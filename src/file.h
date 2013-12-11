@@ -1,5 +1,5 @@
-#ifndef _XCACHE_FILEHASH_H_
-#define _XCACHE_FILEHASH_H_
+#ifndef _XCACHE_FILE_H_
+#define _XCACHE_FILE_H_
 
 #include <stddef.h>
 
