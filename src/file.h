@@ -13,4 +13,13 @@
  */
 char *filehash(const char *filename);
 
+/* Copy a file, preserving the permissions, owner and group if possible.
+ *
+ * from - Absolute path of source.
+ * to - Absolute path of destination.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+int cp(const char *from, const char *to);
+
 #endif

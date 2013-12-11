@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -42,4 +43,35 @@ char *filehash(const char *filename) {
     munmap(addr, sz);
     close(fd);
     return (char*)h;
+}
+
+int cp(const char *from, const char *to) {
+    int in = open(from, O_RDONLY);
+    if (in < 0)
+        return -1;
+
+    /* Measure the size of the file. */
+    struct stat st;
+    if (fstat(in, &st) != 0) {
+        close(in);
+        return -1;
+    }
+    size_t sz = st.st_size;
+
+    /* Copy the file. */
+    int out = open(to, O_WRONLY|O_CREAT, st.st_mode);
+    if (out < 0) {
+        close(in);
+        return -1;
+    }
+    ssize_t written = sendfile(out, in, NULL, sz);
+    fchown(out, st.st_uid, st.st_gid);
+    close(out);
+    close(in);
+    if ((size_t)written != sz) {
+        /* We somehow failed to copy the entire file. */
+        unlink(to);
+        return -1;
+    }
+    return 0;
 }

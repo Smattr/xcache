@@ -147,43 +147,14 @@ static char *cache_save(cache_t *c, char *filename) {
     if (h == NULL)
         return NULL;
 
-    int fd = open(filename, O_RDONLY);
-    if (fd < 0) {
-        free(h);
-        return NULL;
-    }
-
-    /* Measure the size of the file. */
-    struct stat st;
-    if (fstat(fd, &st) != 0) {
-        close(fd);
-        free(h);
-        return NULL;
-    }
-    size_t sz = st.st_size;
-
-    /* Copy the file. */
     char *cpath = (char*)malloc(strlen(c->root) + strlen(DATA) + 1 + strlen(h)
         + 1);
     if (cpath == NULL) {
-        close(fd);
         free(h);
         return NULL;
     }
     sprintf(cpath, "%s" DATA "/%s", c->root, h);
-    int out = open(cpath, O_WRONLY|O_CREAT);
-    if (out < 0) {
-        free(cpath);
-        close(fd);
-        free(h);
-        return NULL;
-    }
-    ssize_t written = sendfile(out, fd, 0, sz);
-    close(out);
-    close(fd);
-    if ((size_t)written != sz) {
-        /* We somehow failed to copy the entire file. */
-        unlink(cpath);
+    if (cp(filename, cpath) != 0) {
         free(cpath);
         free(h);
         return NULL;
