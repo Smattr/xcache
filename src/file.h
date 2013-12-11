@@ -24,6 +24,8 @@ int cp(const char *from, const char *to);
 
 /* Equivalent of `mkdir -p`.
  *
+ * path - An absolute path to the final directory to create.
+ *
  * Returns 0 on success, -1 on failure.
  */
 int mkdirp(const char *path);
