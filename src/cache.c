@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <utime.h>
 
 /* SQLite documentation advises to use sqlite3_prepare_v2 in preference to
  * sqlite3_prepare.
@@ -356,9 +357,94 @@ int cache_locate(cache_t *cache, char **args) {
     if (r != SQLITE_DONE)
         goto fail;
     sqlite3_finalize(s);
+    s = NULL;
 
     /* We found it with matching inputs. */
     return id;
+
+fail:
+    if (s != NULL)
+        sqlite3_finalize(s);
+    return -1;
+}
+
+int cache_dump(cache_t *cache, int id) {
+    sqlite3_stmt *s = NULL;
+
+    assert(cache != NULL);
+    if (sqlite3_prepare(cache->db, query_getoutputs, -1, &s, NULL) != SQLITE_OK)
+        goto fail;
+    int index = sqlite3_bind_parameter_index(s, "@fk_operation");
+    if (index == 0)
+        goto fail;
+    if (sqlite3_bind_int(s, index, id) != SQLITE_OK)
+        goto fail;
+    int r;
+    while ((r = sqlite3_step(s)) == SQLITE_ROW) {
+        assert(sqlite3_column_count(s) == 3);
+        assert(sqlite3_column_type(s, 0) == SQLITE_TEXT);
+        const char *filename = (const char*)sqlite3_column_text(s, 0);
+        assert(filename != NULL);
+        assert(sqlite3_column_type(s, 1) == SQLITE_INTEGER);
+        time_t timestamp = (time_t)sqlite3_column_int64(s, 1);
+        assert(sqlite3_column_type(s, 2) == SQLITE_TEXT);
+        const char *contents = (const char*)sqlite3_column_text(s, 2);
+
+        char *last_slash = strrchr(filename, '/');
+        /* The path should contain at least one slash because it should be
+         * absolute.
+         */
+        assert(last_slash != NULL);
+        if (filename != last_slash) {
+            /* We're not creating a file in the root directory. */
+            last_slash[0] = '\0';
+            int m = mkdirp(filename);
+            if (m != 0)
+                goto fail;
+            last_slash[0] = '/';
+        }
+
+        int out = open(filename, O_CREAT|O_WRONLY);
+        if (out < 0)
+            goto fail;
+        char *cached_copy = (char*)malloc(strlen(cache->root) + 1 + strlen(contents) + 1);
+        if (cached_copy == NULL) {
+            close(out);
+            goto fail;
+        }
+        sprintf(cached_copy, "%s/%s", cache->root, contents);
+        int in = open(cached_copy, O_RDONLY);
+        if (in < 0) {
+            free(cached_copy);
+            close(out);
+            goto fail;
+        }
+        struct stat st;
+        if (fstat(in, &st) != 0) {
+            close(in);
+            free(cached_copy);
+            close(out);
+            goto fail;
+        }
+        ssize_t copied = sendfile(out, in, NULL, st.st_size);
+        close(in);
+        free(cached_copy);
+        fchown(out, st.st_uid, st.st_gid);
+        close(out);
+        struct utimbuf ut = {
+            .actime = timestamp,
+            .modtime = timestamp,
+        };
+        utime(filename, &ut);
+        if (copied != st.st_size)
+            goto fail;
+    }
+    if (r != SQLITE_DONE)
+        goto fail;
+    sqlite3_finalize(s);
+    s = NULL;
+
+    return 0;
 
 fail:
     if (s != NULL)
