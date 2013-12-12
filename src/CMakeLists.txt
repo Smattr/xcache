@@ -13,6 +13,9 @@ set (VERSION_MAJOR 0)
 set (VERSION_MINOR 1)
 set (PROJ_NAME "\"xcache\"")
 
+set (LIBSOURCES cache.c depset.c dict.c file.c log.c queries.c trace.c)
+set (EXESOURCES main.c)
+
 # Handle building for different architectures.
 execute_process (
     COMMAND uname -m
@@ -42,12 +45,12 @@ configure_file (
 include_directories ("${PROJECT_BINARY_DIR}")
 
 # Build xcache as a library in case anyone wants to reuse it.
-add_library (libxcache cache.c depset.c dict.c file.c log.c queries.c trace.c)
+add_library (libxcache ${LIBSOURCES})
 set_target_properties (libxcache PROPERTIES PREFIX "")
 link_directories (${CMAKE_BINARY_DIR})
 
 # The final executable we want.
-add_executable (xcache main.c)
+add_executable (xcache ${EXESOURCES})
 target_link_libraries (xcache libxcache)
 
 find_library (PTHREADS pthread)
