@@ -116,8 +116,8 @@ static int get_id(cache_t *c, char *cwd, char *command) {
         /* This cwd/command combination was not in the cache. */
         goto fail;
     assert(sqlite3_column_count(s) == 1);
-    assert(sqlite3_column_type(s, 1) == SQLITE_INTEGER);
-    int id = sqlite3_column_int(s, 1);
+    assert(sqlite3_column_type(s, 0) == SQLITE_INTEGER);
+    int id = sqlite3_column_int(s, 0);
 
     /* There should have only been a single row because cwd/command is intended
      * to be unique.
@@ -333,11 +333,11 @@ int cache_locate(cache_t *cache, char **args) {
     int r;
     while ((r = sqlite3_step(s)) == SQLITE_ROW) {
         assert(sqlite3_column_count(s) == 2);
-        assert(sqlite3_column_type(s, 1) == SQLITE_TEXT);
-        const char *filename = (const char*)sqlite3_column_text(s, 1);
+        assert(sqlite3_column_type(s, 0) == SQLITE_TEXT);
+        const char *filename = (const char*)sqlite3_column_text(s, 0);
         assert(filename != NULL);
-        assert(sqlite3_column_type(s, 2) == SQLITE_INTEGER);
-        time_t timestamp = (time_t)sqlite3_column_int64(s, 2);
+        assert(sqlite3_column_type(s, 1) == SQLITE_INTEGER);
+        time_t timestamp = (time_t)sqlite3_column_int64(s, 1);
         struct stat st;
         if (stat(filename, &st) != 0)
             goto fail;
