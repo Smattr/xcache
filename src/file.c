@@ -6,6 +6,7 @@
 #include <openssl/md5.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
@@ -24,7 +25,6 @@ char *filehash(const char *filename) {
         return NULL;
     }
     size_t sz = st.st_size;
-
 
     /* Mmap the file for MD5. */
     void *addr = mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -85,25 +85,48 @@ int cp(const char *from, const char *to) {
 int mkdirp(const char *path) {
     assert(path != NULL);
 
+    char *abspath;
+    if (path[0] == '/')
+        /* Path is already absolute. */
+        abspath = (char*)path;
+    else {
+        char *cwd = getcwd(NULL, 0);
+        if (cwd == NULL)
+            return -1;
+        abspath = (char*)realloc(cwd, strlen(cwd) + 1 + strlen(path) + 1);
+        if (abspath == NULL) {
+            free(cwd);
+            return -1;
+        }
+        strcat(abspath, "/");
+        strcat(abspath, path);
+    }
+
     /* We commit a white lie, in that we told the caller we weren't going to
      * modify their string and we do. I think it's acceptable because we undo
      * the changes we make.
      */
-    for (char *p = (char*)(path + 1); *p != '\0'; p++) {
+    for (char *p = abspath + 1; *p != '\0'; p++) {
         if (*p == '/') {
             *p = '\0';
             int r = mkdir(path, 0775);
             if (r != 0 && errno != EEXIST) {
-                DEBUG("Failed to create directory \"%s\"\n", path);
+                DEBUG("Failed to create directory \"%s\"\n", abspath);
                 *p = '/';
+                if (path[0] != '/')
+                    free(abspath);
                 return -1;
             }
             *p = '/';
         }
     }
     if (mkdir(path, 0775) != 0 && errno != EEXIST) {
-        DEBUG("Failed to create directory \"%s\"\n", path);
+        DEBUG("Failed to create directory \"%s\"\n", abspath);
+        if (path[0] != '/')
+            free(abspath);
         return -1;
     }
+    if (path[0] != '/')
+        free(abspath);
     return 0;
 }
