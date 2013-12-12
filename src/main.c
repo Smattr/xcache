@@ -13,26 +13,30 @@
 
 static bool dryrun = false;
 
+static char *cache_dir = NULL;
+
 static void usage(const char *prog) {
     fprintf(stderr, "Usage:\n"
         "  %s [options] command args...\n"
         "\n"
         "Options:\n"
+        "  --cache-dir <dir>\n"
+        "  -c <dir>           Locate cache in <dir>.\n"
         "  --debug\n"
-        "  -d            Enable debug output.\n"
+        "  -d                 Enable debug output.\n"
         "  --dry-run\n"
-        "  -n            Simulate only; do not perform any actions.\n"
+        "  -n                 Simulate only; do not perform any actions.\n"
         "  --help\n"
-        "  -?            Print this help information and exit.\n"
+        "  -?                 Print this help information and exit.\n"
         "  --log <file>\n"
-        "  -l <file>     Direct any output to <file>. Defaults to stderr.\n"
+        "  -l <file>          Direct any output to <file>. Defaults to stderr.\n"
         "  --quiet\n"
-        "  -q            Suppress all output (except from the target).\n"
-        "  --version     Output version information and then exit.\n"
+        "  -q                 Suppress all output (except from the target).\n"
+        "  --version          Output version information and then exit.\n"
         , prog);
 }
 
-static char *cache_dir(void) {
+static char *default_cache_dir(void) {
     char *home = getenv("HOME");
     if (home == NULL)
         return NULL;
@@ -51,7 +55,11 @@ static char *cache_dir(void) {
 static int parse_arguments(int argc, char **argv) {
     int index;
     for (index = 1; index < argc; index++) {
-        if (!strcmp(argv[index], "--debug") ||
+        if ((!strcmp(argv[index], "--cache-dir") ||
+             !strcmp(argv[index], "-c")) &&
+            index < argc - 1) {
+            cache_dir = argv[++index];
+        } else if (!strcmp(argv[index], "--debug") ||
             !strcmp(argv[index], "-d")) {
             verbosity = L_DEBUG;
         } else if (!strcmp(argv[index], "--dry-run") ||
@@ -90,13 +98,20 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    char *dir = cache_dir();
-    if (mkdirp(dir) != 0) {
-        ERROR("Failed to create cache directory \"%s\"\n", dir);
+    if (cache_dir == NULL) {
+        cache_dir = default_cache_dir();
+        if (cache_dir == NULL) {
+            ERROR("Failed to determine default cache directory\n");
+            return -1;
+        }
+    }
+
+    if (mkdirp(cache_dir) != 0) {
+        ERROR("Failed to create cache directory \"%s\"\n", cache_dir);
         return -1;
     }
 
-    cache_t *cache = cache_open(dir);
+    cache_t *cache = cache_open(cache_dir);
     if (cache == NULL) {
         ERROR("Failed to create cache\n");
         return -1;
