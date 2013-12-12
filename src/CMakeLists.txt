@@ -41,8 +41,14 @@ configure_file (
     "${PROJECT_BINARY_DIR}/config.h")
 include_directories ("${PROJECT_BINARY_DIR}")
 
+# Build xcache as a library in case anyone wants to reuse it.
+add_library (libxcache cache.c depset.c dict.c file.c log.c queries.c trace.c)
+set_target_properties (libxcache PROPERTIES PREFIX "")
+link_directories (${CMAKE_BINARY_DIR})
+
 # The final executable we want.
-add_executable (xcache cache.c depset.c dict.c file.c log.c main.c queries.c trace.c)
+add_executable (xcache main.c)
+target_link_libraries (xcache libxcache)
 
 # -lpthread
 find_package (Threads)
