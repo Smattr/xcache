@@ -100,12 +100,12 @@ static int get_id(cache_t *c, char *cwd, char *command) {
         return -1;
 
     /* Bind the parameters. */
-    int index = sqlite3_bind_parameter_index(s, "cwd");
+    int index = sqlite3_bind_parameter_index(s, "@cwd");
     if (index == 0)
         goto fail;
     if (sqlite3_bind_text(s, index, cwd, -1, SQLITE_STATIC) != SQLITE_OK)
         goto fail;
-    index = sqlite3_bind_parameter_index(s, "command");
+    index = sqlite3_bind_parameter_index(s, "@command");
     if (index == 0)
         goto fail;
     if (sqlite3_bind_text(s, index, command, -1, SQLITE_STATIC) != SQLITE_OK)
@@ -176,12 +176,12 @@ int cache_write(cache_t *cache, char *cwd, char *command, depset_t *depset) {
         /* Write the entry to the dep table. */
         if (sqlite3_prepare(cache->db, query_addoperation, -1, &s, NULL) != SQLITE_OK)
             goto fail;
-        int index = sqlite3_bind_parameter_index(s, "cwd");
+        int index = sqlite3_bind_parameter_index(s, "@cwd");
         if (index == 0)
             goto fail;
         if (sqlite3_bind_text(s, index, cwd, -1, SQLITE_STATIC) != SQLITE_OK)
             goto fail;
-        index = sqlite3_bind_parameter_index(s, "command");
+        index = sqlite3_bind_parameter_index(s, "@command");
         if (index == 0)
             goto fail;
         if (sqlite3_bind_text(s, index, command, -1, SQLITE_STATIC) != SQLITE_OK)
@@ -204,13 +204,13 @@ int cache_write(cache_t *cache, char *cwd, char *command, depset_t *depset) {
     time_t *value;
     if (sqlite3_prepare(cache->db, query_addinput, -1, &s, NULL) != SQLITE_OK)
         goto fail;
-    int id_index = sqlite3_bind_parameter_index(s, "fk_operation");
+    int id_index = sqlite3_bind_parameter_index(s, "@fk_operation");
     if (id_index == 0)
         goto fail;
-    int key_index = sqlite3_bind_parameter_index(s, "filename");
+    int key_index = sqlite3_bind_parameter_index(s, "@filename");
     if (key_index == 0)
         goto fail;
-    int value_index = sqlite3_bind_parameter_index(s, "timestamp");
+    int value_index = sqlite3_bind_parameter_index(s, "@timestamp");
     if (value_index == 0)
         goto fail;
     while (iter_next(i, &key, (void**)&value)) {
@@ -236,16 +236,16 @@ int cache_write(cache_t *cache, char *cwd, char *command, depset_t *depset) {
         goto fail;
     if (sqlite3_prepare(cache->db, query_addoutput, -1, &s, NULL) != SQLITE_OK)
         goto fail;
-    id_index = sqlite3_bind_parameter_index(s, "fk_operation");
+    id_index = sqlite3_bind_parameter_index(s, "@fk_operation");
     if (id_index == 0)
         goto fail;
-    key_index = sqlite3_bind_parameter_index(s, "filename");
+    key_index = sqlite3_bind_parameter_index(s, "@filename");
     if (key_index == 0)
         goto fail;
-    value_index = sqlite3_bind_parameter_index(s, "timestamp");
+    value_index = sqlite3_bind_parameter_index(s, "@timestamp");
     if (value_index == 0)
         goto fail;
-    int contents_index = sqlite3_bind_parameter_index(s, "contents");
+    int contents_index = sqlite3_bind_parameter_index(s, "@contents");
     if (contents_index == 0)
         goto fail;
     while (iter_next(i, &key, (void**)&value)) {
@@ -325,7 +325,7 @@ int cache_locate(cache_t *cache, char **args) {
     /* TODO: This, and all the other, bind_parameter_indexes can be done at
      * compile-time.
      */
-    int index = sqlite3_bind_parameter_index(s, "fk_operation");
+    int index = sqlite3_bind_parameter_index(s, "@fk_operation");
     if (index == 0)
         goto fail;
     if (sqlite3_bind_int(s, index, id) != SQLITE_OK)
