@@ -295,7 +295,7 @@ int cache_clear(cache_t *cache) {
 
 int cache_locate(cache_t *cache, char **args) {
     size_t sz = strlen(args[0]) + 1;
-    char *command = (char*)malloc(sz);
+    char *command = strdup(args[0]);
     if (command == NULL)
         return -1;
     for (unsigned int i = 1; args[i] != NULL; i++) {
