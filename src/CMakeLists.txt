@@ -18,11 +18,12 @@ execute_process (
     COMMAND uname -m
     OUTPUT_VARIABLE HOST_ARCH
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-option(ARCH "architecture" ${HOST_ARCH})
+if (NOT DEFINED ARCH)
+    set (ARCH ${HOST_ARCH})
+endif ()
+message (STATUS "Configuring build for ${ARCH} architecture")
 if (NOT IS_DIRECTORY "${PROJECT_SOURCE_DIR}/arch/${ARCH}")
-    message (SEND_ERROR "Your chosen architecture, ${ARCH}, is not implemented")
-elseif (NOT "${ARCH}" STREQUAL "${HOST_ARCH}")
-    message (STATUS "Warning: setting an architecture, ${ARCH}, different from your host, ${HOST_ARCH}")
+    message (SEND_ERROR "Your chosen architecture is not implemented")
 endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 
