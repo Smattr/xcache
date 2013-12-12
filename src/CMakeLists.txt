@@ -49,6 +49,11 @@ add_library (libxcache ${LIBSOURCES})
 set_target_properties (libxcache PROPERTIES PREFIX "")
 link_directories (${CMAKE_BINARY_DIR})
 
+# Build xcache as a shared library just in case anyone needs that instead.
+add_library (libxcache.so SHARED ${LIBSOURCES})
+set_target_properties (libxcache.so PROPERTIES PREFIX "")
+set_target_properties (libxcache.so PROPERTIES SUFFIX "")
+
 # The final executable we want.
 add_executable (xcache ${EXESOURCES})
 target_link_libraries (xcache libxcache)
