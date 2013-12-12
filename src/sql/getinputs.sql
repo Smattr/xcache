@@ -1,1 +1,1 @@
-select filename, timestamp from inputs where fk_operation = @fk_operation;
+select filename, timestamp from input where fk_operation = @fk_operation;
