@@ -50,21 +50,13 @@ link_directories (${CMAKE_BINARY_DIR})
 add_executable (xcache main.c)
 target_link_libraries (xcache libxcache)
 
-# -lpthread
-find_package (Threads)
-target_link_libraries (xcache ${CMAKE_THREAD_LIBS_INIT})
-
-# -ldl
-target_link_libraries (xcache ${CMAKE_DL_LIBS})
-
-# -lsqlite3
+find_library (PTHREADS pthread)
+target_link_libraries (xcache ${PTHREADS})
+find_library (DL dl)
+target_link_libraries (xcache ${DL})
 find_library (SQLITE sqlite3)
 target_link_libraries (xcache ${SQLITE})
-
-# -lopenssl
 find_library (OPENSSL ssl)
 target_link_libraries (xcache ${OPENSSL})
-
-# -lcrypto
 find_library (CRYPTO crypto)
 target_link_libraries (xcache ${CRYPTO})
