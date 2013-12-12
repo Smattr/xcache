@@ -34,7 +34,13 @@ include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 ADD_CUSTOM_COMMAND (
     OUTPUT "${CMAKE_BINARY_DIR}/queries.c"
     COMMAND "${CMAKE_SOURCE_DIR}/sql/to_c.sh" "${CMAKE_BINARY_DIR}/queries.c" "${CMAKE_SOURCE_DIR}/sql/addinput.sql" "${CMAKE_SOURCE_DIR}/sql/addoperation.sql" "${CMAKE_SOURCE_DIR}/sql/addoutput.sql" "${CMAKE_SOURCE_DIR}/sql/create.sql" "${CMAKE_SOURCE_DIR}/sql/getid.sql" "${CMAKE_SOURCE_DIR}/sql/getinputs.sql" "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
+    DEPENDS "${CMAKE_SOURCE_DIR}/sql/to_c.sh"
+    DEPENDS "${CMAKE_SOURCE_DIR}/sql/addinput.sql"
+    DEPENDS "${CMAKE_SOURCE_DIR}/sql/addoperation.sql"
+    DEPENDS "${CMAKE_SOURCE_DIR}/sql/addoutput.sql"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/create.sql"
+    DEPENDS "${CMAKE_SOURCE_DIR}/sql/getid.sql"
+    DEPENDS "${CMAKE_SOURCE_DIR}/sql/getinputs.sql"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
     VERBATIM)
 
