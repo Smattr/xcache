@@ -36,6 +36,9 @@ static void usage(const char *prog) {
         , prog);
 }
 
+/* Returns the default cache root, ${HOME}/.xcache. It is the caller's
+ * responsibility to free the returned pointer.
+ */
 static char *default_cache_dir(void) {
     char *home = getenv("HOME");
     if (home == NULL)
@@ -116,6 +119,7 @@ int main(int argc, char **argv) {
         ERROR("Failed to create cache\n");
         return -1;
     }
+
     int id = cache_locate(cache, &argv[index]);
 
     /* TODO: Check id to decide whether we need to continue. */

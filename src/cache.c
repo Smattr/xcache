@@ -4,6 +4,7 @@
 #include "dict.h"
 #include <fcntl.h>
 #include "file.h"
+#include "log.h"
 #include "queries.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -315,10 +316,15 @@ int cache_locate(cache_t *cache, char **args) {
     }
 
     int id = get_id(cache, cwd, command);
+    if (id == -1) {
+        DEBUG("Failed to locate cache entry for \"%s\" in directory \"%s\"\n",
+            command, cwd);
+        free(command);
+        free(cwd);
+        return -1;
+    }
     free(command);
     free(cwd);
-    if (id == -1)
-        return -1;
     sqlite3_stmt *s = NULL;
     if (sqlite3_prepare(cache->db, query_getinputs, -1, &s, NULL) != SQLITE_OK)
         goto fail;
