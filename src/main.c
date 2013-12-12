@@ -60,7 +60,7 @@ static int parse_arguments(int argc, char **argv) {
         } else if ((!strcmp(argv[index], "--log") ||
                     !strcmp(argv[index], "-l")) &&
                    index < argc - 1) {
-            if (log_init(argv[index + 1]) != 0) {
+            if (log_init(argv[++index]) != 0) {
                 usage(argv[0]);
                 exit(-1);
             }
