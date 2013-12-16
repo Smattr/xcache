@@ -346,13 +346,19 @@ int cache_locate(cache_t *cache, char **args) {
         assert(sqlite3_column_type(s, 1) == SQLITE_INTEGER);
         time_t timestamp = (time_t)sqlite3_column_int64(s, 1);
         struct stat st;
-        if (stat(filename, &st) != 0)
+        if (stat(filename, &st) != 0) {
+            DEBUG("Failed to stat %s\n", filename);
             goto fail;
-        if (st.st_mtime != timestamp)
+        }
+        if (st.st_mtime != timestamp) {
             /* This is actually the expected case; that we found the input file
              * but its timestamp has changed.
              */
+            DEBUG("Found %s but its timestamp was %llu, not %llu as expected\n",
+                filename, (long long unsigned)st.st_mtime,
+                (long long unsigned)timestamp);
             goto fail;
+        }
     }
     if (r != SQLITE_DONE)
         goto fail;
@@ -399,28 +405,37 @@ int cache_dump(cache_t *cache, int id) {
             /* We're not creating a file in the root directory. */
             last_slash[0] = '\0';
             int m = mkdirp(filename);
-            if (m != 0)
+            if (m != 0) {
+                ERROR("Failed to create directory %s\n", filename);
                 goto fail;
+            }
             last_slash[0] = '/';
         }
 
         int out = open(filename, O_CREAT|O_WRONLY);
-        if (out < 0)
+        if (out < 0) {
+            ERROR("Failed to open %s for writing\n", filename);
             goto fail;
+        }
         char *cached_copy = (char*)malloc(strlen(cache->root) + 1 + strlen(contents) + 1);
         if (cached_copy == NULL) {
+            ERROR("Out of memory while dumping cache entry %s\n", filename);
             close(out);
             goto fail;
         }
         sprintf(cached_copy, "%s/%s", cache->root, contents);
         int in = open(cached_copy, O_RDONLY);
         if (in < 0) {
+            ERROR("Failed to open cached copy %s of output %s\n", cached_copy,
+                filename);
             free(cached_copy);
             close(out);
             goto fail;
         }
         struct stat st;
         if (fstat(in, &st) != 0) {
+            ERROR("Failed to read size of cached copy %s of output %s\n",
+                cached_copy, filename);
             close(in);
             free(cached_copy);
             close(out);
@@ -436,8 +451,10 @@ int cache_dump(cache_t *cache, int id) {
             .modtime = timestamp,
         };
         utime(filename, &ut);
-        if (copied != st.st_size)
+        if (copied != st.st_size) {
+            ERROR("Failed to write output %s\n", filename);
             goto fail;
+        }
     }
     if (r != SQLITE_DONE)
         goto fail;
