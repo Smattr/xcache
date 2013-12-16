@@ -76,6 +76,12 @@ cache_t *cache_open(const char *path) {
         return NULL;
     }
     sprintf(c->root, "%s" DATA, path);
+    if (mkdirp(c->root) != 0) {
+        free(c->root);
+        free(c);
+        sqlite3_close(c->db);
+        return NULL;
+    }
 
     return c;
 }
