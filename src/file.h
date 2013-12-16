@@ -1,6 +1,8 @@
 #ifndef _XCACHE_FILE_H_
 #define _XCACHE_FILE_H_
 
+#include <stddef.h>
+
 /* Return the hash of the contents of a file. The caller should not rely on any
  * property of the hash except it being deterministic and printable. This
  * includes that the caller should not assume a particular hashing algorithm is
@@ -29,5 +31,15 @@ int cp(const char *from, const char *to);
  * Returns 0 on success, -1 on failure.
  */
 int mkdirp(const char *path);
+
+/* Equivalent of `du -cS`.
+ * 
+ * path - An absolute or relative path to a directory whose contents to
+ *   measure. Note that subdirectories and special files are not taken into
+ *   account.
+ *
+ * Return -1 on failure or the total size of files in the directory on success.
+ */
+ssize_t du(const char *path);
 
 #endif

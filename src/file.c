@@ -1,9 +1,11 @@
 #include <assert.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include "file.h"
 #include "log.h"
 #include <openssl/md5.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,4 +131,53 @@ int mkdirp(const char *path) {
     if (path[0] != '/')
         free(abspath);
     return 0;
+}
+
+ssize_t du(const char *path) {
+    assert(path != NULL);
+
+    DIR *dir = opendir(path);
+    if (dir == NULL)
+        return -1;
+
+    off_t off = strlen(path) + 1;
+    char *fname = (char*)malloc(off + NAME_MAX + 1);
+    if (fname == NULL) {
+        closedir(dir);
+        return -1;
+    }
+    sprintf(fname, "%s/", path);
+
+    ssize_t sz = 0;
+
+    while (true) {
+        errno = 0;
+        struct dirent *ent = readdir(dir);
+        if (ent == NULL) {
+            if (errno == 0)
+                /* Exhausted directory entries. */
+                break;
+            else {
+                /* Hit an error while reading this entry. */
+                free(fname);
+                closedir(dir);
+                return -1;
+            }
+        }
+        if (ent->d_type != DT_REG)
+            /* This entry was not a file. */
+            continue;
+        strcpy(fname + off, ent->d_name);
+        struct stat st;
+        if (stat(fname, &st) != 0) {
+            free(fname);
+            closedir(dir);
+            return -1;
+        }
+        sz += st.st_size;
+    }
+
+    free(fname);
+    closedir(dir);
+    return sz;
 }
