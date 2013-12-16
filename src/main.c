@@ -121,6 +121,14 @@ int main(int argc, char **argv) {
     }
 
     int id = cache_locate(cache, &argv[index]);
+    if (id >= 0) {
+        /* Excellent news! We found a cache entry and don't need to run the
+         * target program.
+         */
+        int res = cache_dump(cache, id);
+        cache_close(cache);
+        return res;
+    }
 
     /* TODO: Check id to decide whether we need to continue. */
 
