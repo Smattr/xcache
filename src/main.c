@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    cache_t *cache = cache_open(cache_dir);
+    cache_t *cache = cache_open(cache_dir, DATA_SIZE_UNSET);
     if (cache == NULL) {
         ERROR("Failed to create cache\n");
         return -1;
