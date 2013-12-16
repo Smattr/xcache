@@ -42,4 +42,13 @@ int mkdirp(const char *path);
  */
 ssize_t du(const char *path);
 
+/* Remove files within a directory up to a certain limit.
+ *
+ * path - An absolute or relative path to the directory to prune entries from.
+ * reduction - Remove files until we have removed at least this many bytes.
+ *
+ * Returns the number of bytes that were removed on success or -1 on failure.
+ */
+ssize_t reduce(const char *path, ssize_t reduction);
+
 #endif
