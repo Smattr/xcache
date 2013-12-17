@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    int id = cache_locate(cache, &argv[index]);
+    int id = cache_locate(cache, (const char**)&argv[index]);
     if (id >= 0) {
         /* Excellent news! We found a cache entry and don't need to run the
          * target program.
@@ -255,4 +255,3 @@ bailout:
     detach(target);
     return ret;
 }
-

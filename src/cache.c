@@ -227,6 +227,28 @@ static char *cache_save(cache_t *c, char *filename) {
     return h;
 }
 
+static char *to_command(const char **args) {
+    assert(args != NULL);
+    assert(args[0] != NULL);
+
+    size_t sz = strlen(args[0]) + 1;
+    char *command = strdup(args[0]);
+    if (command == NULL)
+        return NULL;
+    for (unsigned int i = 1; args[i] != NULL; i++) {
+        sz += strlen(args[i]) + 1;
+        char *tmp = (char*)realloc(command, sz);
+        if (tmp == NULL) {
+            free(command);
+            return NULL;
+        }
+        command = tmp;
+        strcat(command, " ");
+        strcat(command, args[i]);
+    }
+    return command;
+}
+
 int cache_write(cache_t *cache, char *cwd, char *command, depset_t *depset) {
     sqlite3_stmt *s = NULL;
     iter_t *i = NULL;
@@ -357,21 +379,10 @@ int cache_clear(cache_t *cache) {
     return 0;
 }
 
-int cache_locate(cache_t *cache, char **args) {
-    size_t sz = strlen(args[0]) + 1;
-    char *command = strdup(args[0]);
+int cache_locate(cache_t *cache, const char **args) {
+    char *command = to_command(args);
     if (command == NULL)
         return -1;
-    for (unsigned int i = 1; args[i] != NULL; i++) {
-        sz += strlen(args[i]) + 1;
-        char *tmp = (char*)realloc(command, sz);
-        if (tmp == NULL) {
-            free(command);
-            return -1;
-        }
-        strcat(command, " ");
-        strcat(command, args[i]);
-    }
     char *cwd = getcwd(NULL, 0);
     if (cwd == NULL) {
         free(command);
