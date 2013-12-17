@@ -120,11 +120,7 @@ static long syscall_result(proc_t *proc) {
     return peekuser(proc, OFFSET(REG_RESULT));
 }
 
-char *syscall_getstring(proc_t *proc, int arg) {
-    assert(proc != NULL);
-    assert(arg > 0);
-
-    long unsigned offset;
+static long register_offset(int arg) {
     switch (arg) {
 
         /* Dependending on our architecture, we may only have a subset of the
@@ -132,39 +128,50 @@ char *syscall_getstring(proc_t *proc, int arg) {
          */
 #ifdef REG_ARG1
         case 1:
-            offset = OFFSET(REG_ARG1);
-            break;
+            return OFFSET(REG_ARG1);
 #endif
 #ifdef REG_ARG2
         case 2:
-            offset = OFFSET(REG_ARG2);
-            break;
+            return OFFSET(REG_ARG2);
 #endif
 #ifdef REG_ARG3
         case 3:
-            offset = OFFSET(REG_ARG2);
-            break;
+            return OFFSET(REG_ARG3);
 #endif
 #ifdef REG_ARG4
         case 4:
-            offset = OFFSET(REG_ARG2);
-            break;
+            return OFFSET(REG_ARG4);
 #endif
 #ifdef REG_ARG5
         case 5:
-            offset = OFFSET(REG_ARG2);
-            break;
+            return OFFSET(REG_ARG5);
 #endif
 #ifdef REG_ARG6
         case 6:
-            offset = OFFSET(REG_ARG2);
-            break;
+            return OFFSET(REG_ARG6);
 #endif
         default:
             DEBUG("attempt to access unsupported argument register %d\n", arg);
-            return NULL;
+            return -1;
     }
+}
+
+char *syscall_getstring(proc_t *proc, int arg) {
+    assert(proc != NULL);
+    assert(arg > 0);
+
+    long offset = register_offset(arg);
+    if (offset == -1)
+        return NULL;
+
     return peekstring(proc, offset);
+}
+
+long syscall_getarg(proc_t *proc, int arg) {
+    long offset = register_offset(arg);
+    if (offset == -1)
+        return -1;
+    return peekuser(proc, offset);
 }
 
 int next_syscall(proc_t *proc, syscall_t *syscall) {

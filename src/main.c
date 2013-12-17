@@ -2,13 +2,16 @@
 #include "cache.h"
 #include "config.h"
 #include "depset.h"
+#include <fcntl.h>
 #include "file.h"
 #include "log.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
 #include "trace.h"
 #include "translate-syscall.h"
 #include <unistd.h>
@@ -213,6 +216,24 @@ int main(int argc, const char **argv) {
                 ADD_AS(output, 1);
                 break;
 
+            case SYS_open: {
+                int flags = (int)syscall_getarg(target, 2);
+                char *fname = syscall_getstring(target, 1);
+                int r = 0;
+                if (fname == NULL)
+                    goto bailout;
+                if (flags & O_WRONLY)
+                    r |= depset_add_output(deps, fname);
+                else {
+                    r |= depset_add_input(deps, fname);
+                    if (flags & O_RDWR)
+                        r |= depset_add_output(deps, fname);
+                }
+                if (r != 0)
+                    goto bailout;
+                break;
+            }
+
             case SYS__sysctl:
             case SYS_acct:
             case SYS_chdir:
@@ -227,7 +248,6 @@ int main(int argc, const char **argv) {
             case SYS_mknod:
             case SYS_mknodat:
             case SYS_mount:
-            case SYS_open:
             case SYS_openat:
             case SYS_pivot_root:
             case SYS_readlink:
