@@ -17,7 +17,7 @@ EOT
 grep --color=none '^#define SYS' "$1" | \
     sort | \
     uniq | \
-    sed 's/#define \(SYS_[^ ]\+\) .*/#ifdef \1\n        case \1:\n            return "\1";\n#endif/g'
+    sed 's/#define SYS_\([^ ]\+\) .*/#ifdef SYS_\1\n        case SYS_\1:\n            return "\1";\n#endif/g'
 cat <<EOT
     }
     return "UNKNOWN";
