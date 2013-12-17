@@ -163,10 +163,17 @@ int main(int argc, const char **argv) {
 
 #define ADD_AS(category, argno) \
     do { \
-        char *_f = syscall_getstring(target, argno); \
-        if (_f == NULL) goto bailout; \
+        char *_f = syscall_getstring(target, (argno)); \
+        if (_f == NULL) { \
+            DEBUG("Failed to retrieve string argument %d from syscall %s " \
+                "(%ld)\n", (argno), translate_syscall(s.call), s.call); \
+            goto bailout; \
+        } \
         int _r = depset_add_##category(deps, _f); \
-        if (_r != 0) goto bailout; \
+        if (_r != 0) { \
+            DEBUG("Failed to add " #category " \"%s\"\n", _f); \
+            goto bailout; \
+        } \
     } while (0)
 
         /* Any syscall we receive may be the kernel entry or exit. Handle entry
