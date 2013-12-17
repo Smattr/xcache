@@ -227,8 +227,11 @@ int main(int argc, const char **argv) {
                 int flags = (int)syscall_getarg(target, 2);
                 char *fname = syscall_getstring(target, 1);
                 int r = 0;
-                if (fname == NULL)
+                if (fname == NULL) {
+                    DEBUG("Failed to retrieve string argument 1 from " \
+                        "syscall open (%ld)\n", (long)SYS_open);
                     goto bailout;
+                }
                 if (flags & O_WRONLY)
                     r |= depset_add_output(deps, fname);
                 else {
@@ -236,8 +239,10 @@ int main(int argc, const char **argv) {
                     if (flags & O_RDWR)
                         r |= depset_add_output(deps, fname);
                 }
-                if (r != 0)
+                if (r != 0) {
+                    DEBUG("Failed to add dependency \"%s\"\n", fname);
                     goto bailout;
+                }
                 break;
             }
 

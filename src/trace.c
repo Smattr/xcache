@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include "file.h"
 #include <linux/limits.h>
 #include "log.h"
 #include <stdbool.h>
@@ -103,9 +104,9 @@ static char *peekstring(proc_t *proc, off_t reg) {
         return NULL;
     }
 
-    char *r = fgets(proc->argbuffer, sizeof(proc->argbuffer), f);
+    bool r = get(proc->argbuffer, sizeof(proc->argbuffer), f);
     fclose(f);
-    return r;
+    return r ? proc->argbuffer : NULL;
 }
 
 #define OFFSET(reg) \

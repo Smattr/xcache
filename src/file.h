@@ -1,7 +1,9 @@
 #ifndef _XCACHE_FILE_H_
 #define _XCACHE_FILE_H_
 
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 /* Return the hash of the contents of a file. The caller should not rely on any
  * property of the hash except it being deterministic and printable. This
@@ -50,5 +52,12 @@ ssize_t du(const char *path);
  * Returns the number of bytes that were removed on success or -1 on failure.
  */
 ssize_t reduce(const char *path, ssize_t reduction);
+
+/* fgets-/getdelim-alike. It's possible I'm too tired or dense at this point,
+ * but all the POSIX functions I'm aware of seem to have some deal-breaking
+ * flaw for reading a '\0'-terminated string into a static buffer. Perhaps
+ * reading programmatic strings from a file descriptor is not a common task.
+ */
+bool get(char *buffer, size_t limit, FILE *f);
 
 #endif
