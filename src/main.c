@@ -234,6 +234,10 @@ int main(int argc, const char **argv) {
                 break;
             }
 
+            case SYS_stat:
+                ADD_AS(input, 1);
+                break;
+
             case SYS__sysctl:
             case SYS_acct:
             case SYS_chdir:
@@ -255,7 +259,6 @@ int main(int argc, const char **argv) {
             case SYS_rename:
             case SYS_renameat:
             case SYS_rmdir:
-            case SYS_stat:
             case SYS_statfs:
             case SYS_swapoff:
             case SYS_swapon:
