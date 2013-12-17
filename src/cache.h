@@ -1,6 +1,7 @@
 #ifndef _XCACHE_CACHE_H_
 #define _XCACHE_CACHE_H_
 
+#include "depset.h"
 #include <stdlib.h>
 
 typedef struct cache cache_t;
@@ -21,5 +22,7 @@ int cache_locate(cache_t *cache, const char **args);
 int cache_dump(cache_t *cache, int id);
 
 int cache_close(cache_t *cache);
+
+int cache_write(cache_t *cache, char *cwd, const char **args, depset_t *depset);
 
 #endif

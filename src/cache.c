@@ -249,10 +249,15 @@ static char *to_command(const char **args) {
     return command;
 }
 
-int cache_write(cache_t *cache, char *cwd, char *command, depset_t *depset) {
+int cache_write(cache_t *cache, char *cwd, const char **args,
+        depset_t *depset) {
+    char *command = to_command(args);
+    if (command == NULL)
+        return -1;
     sqlite3_stmt *s = NULL;
     iter_t *i = NULL;
     if (!begin_transaction(cache)) {
+        free(command);
         return -1;
     }
 
@@ -279,6 +284,8 @@ int cache_write(cache_t *cache, char *cwd, char *command, depset_t *depset) {
         s = NULL;
         id = get_id(cache, cwd, command);
     }
+    free(command);
+    command = NULL;
 
     assert(id >= 0);
 
@@ -367,6 +374,8 @@ fail:
     if (i != NULL)
         iter_destroy(i);
     rollback_transaction(cache);
+    if (command != NULL)
+        free(command);
     return -1;
 }
 
@@ -453,6 +462,7 @@ int cache_dump(cache_t *cache, int id) {
     assert(cache != NULL);
     if (sqlite3_prepare(cache->db, query_getoutputs, -1, &s, NULL) != SQLITE_OK)
         goto fail;
+    printf("hello world\n");
     int index = sqlite3_bind_parameter_index(s, "@fk_operation");
     if (index == 0)
         goto fail;
