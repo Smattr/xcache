@@ -14,7 +14,7 @@
 
 static bool dryrun = false;
 
-static char *cache_dir = NULL;
+static const char *cache_dir = NULL;
 
 static void usage(const char *prog) {
     fprintf(stderr, "Usage:\n"
@@ -56,7 +56,7 @@ static char *default_cache_dir(void) {
  *
  * Returns the index of the first non-xcache argument.
  */
-static int parse_arguments(int argc, char **argv) {
+static int parse_arguments(int argc, const char **argv) {
     int index;
     for (index = 1; index < argc; index++) {
         if ((!strcmp(argv[index], "--cache-dir") ||
@@ -93,7 +93,7 @@ static int parse_arguments(int argc, char **argv) {
     return index;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
     int index = parse_arguments(argc, argv);
 
     if (argc - index == 0) {
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    int id = cache_locate(cache, (const char**)&argv[index]);
+    int id = cache_locate(cache, &argv[index]);
     if (id >= 0) {
         /* Excellent news! We found a cache entry and don't need to run the
          * target program.
@@ -263,7 +263,8 @@ int main(int argc, char **argv) {
      * traced the target. Hence we can now cache its dependency set for
      * retrieval on a later run.
      */
-    if (cache_write(cache, cwd, (const char**)&argv[index], deps) != 0)
+    if (cache_write(cache, cwd, &argv[index], deps) != 0)
+        /* This failure is non-critical in a sense. */
         DEBUG("Failed to write entry to cache\n");
 
     int ret;

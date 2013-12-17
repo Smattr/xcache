@@ -15,7 +15,7 @@ extern verbosity_t verbosity;
 
 extern FILE *log_file;
 
-int log_init(char *filename);
+int log_init(const char *filename);
 void log_deinit(void);
 
 extern int log_initialised;

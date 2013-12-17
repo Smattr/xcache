@@ -21,7 +21,7 @@ struct proc {
     char argbuffer[PATH_MAX + 1];
 };
 
-proc_t *trace(char **argv) {
+proc_t *trace(const char **argv) {
     proc_t *p = (proc_t*)malloc(sizeof(proc_t));
     if (p == NULL) {
         return NULL;
@@ -36,7 +36,7 @@ proc_t *trace(char **argv) {
             if (r != 0) {
                 exit(-1);
             }
-            execvp(argv[0], argv);
+            execvp(argv[0], (char**)argv);
 
             /* Exec failed. */
             exit(-1);

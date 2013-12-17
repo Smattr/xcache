@@ -8,7 +8,7 @@ FILE *log_file;
 
 int log_initialised;
 
-int log_init(char *filename) {
+int log_init(const char *filename) {
     if (filename == NULL) {
         log_file = stderr;
     } else {
