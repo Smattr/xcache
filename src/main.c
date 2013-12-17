@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/syscall.h>
 #include "trace.h"
+#include "translate-syscall.h"
 #include <unistd.h>
 
 static bool dryrun = false;
@@ -187,11 +188,13 @@ int main(int argc, const char **argv) {
 
                 case SYS_renameat:
                 case SYS_unlinkat:
-                    DEBUG("bailing out due to unhandled syscall %ld\n", s.call);
+                    DEBUG("bailing out due to unhandled syscall %s (%ld)\n",
+                        translate_syscall(s.call), s.call);
                     goto bailout;
 
                 default:
-                    DEBUG("irrelevant syscall entry %ld\n", s.call);
+                    DEBUG("irrelevant syscall entry %s (%ld)\n",
+                        translate_syscall(s.call), s.call);
             }
             acknowledge_syscall(target);
             continue;
@@ -247,11 +250,13 @@ int main(int argc, const char **argv) {
 #endif
             case SYS_umount2:
             case SYS_uselib:
-                DEBUG("bailing out due to unhandled syscall %ld\n", s.call);
+                DEBUG("bailing out due to unhandled syscall %s (%ld)\n",
+                    translate_syscall(s.call), s.call);
                 goto bailout;
 
             default:
-                DEBUG("irrelevant syscall exit %ld\n", s.call);
+                DEBUG("irrelevant syscall exit %s (%ld)\n",
+                    translate_syscall(s.call), s.call);
         }
         acknowledge_syscall(target);
 

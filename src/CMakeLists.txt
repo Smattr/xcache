@@ -14,7 +14,7 @@ set (VERSION_MINOR 1)
 set (PROJ_NAME "\"xcache\"")
 
 set (LIBSOURCES cache.c depset.c dict.c file.c log.c queries.c trace.c)
-set (EXESOURCES main.c)
+set (EXESOURCES main.c translate-syscall.c)
 
 # Handle building for different architectures.
 execute_process (
