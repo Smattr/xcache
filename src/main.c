@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/syscall.h>
 #include "trace.h"
+#include <unistd.h>
 
 static bool dryrun = false;
 
@@ -130,7 +131,16 @@ int main(int argc, char **argv) {
         return res;
     }
 
-    /* TODO: Check id to decide whether we need to continue. */
+    /* If we've reached this point, we failed to locate a suitable cached entry
+     * for this execution. We need to actually run the program itself.
+     */
+
+    char *cwd = getcwd(NULL, 0);
+    if (cwd == NULL) {
+        ERROR("Failed to read current working directory\n");
+        cache_close(cache);
+        return -1;
+    }
 
     depset_t *deps = depset_new();
     if (deps == NULL) {
@@ -232,6 +242,7 @@ int main(int argc, char **argv) {
             case SYS_unlink:
             case SYS_unlinkat:
 #if __WORDSIZE == 32
+            /* umount is not available on a 64-bit kernel. */
             case SYS_umount:
 #endif
             case SYS_umount2:
@@ -248,9 +259,17 @@ int main(int argc, char **argv) {
 
     }
 
+    /* If we've reached here (i.e. not jumped to 'bailout'), we successfully
+     * traced the target. Hence we can now cache its dependency set for
+     * retrieval on a later run.
+     */
+    if (cache_write(cache, cwd, (const char**)&argv[index], deps) != 0)
+        DEBUG("Failed to write entry to cache\n");
+
     int ret;
 bailout:
 
+    cache_close(cache);
     ret = complete(target);
     detach(target);
     return ret;
