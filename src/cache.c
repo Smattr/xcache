@@ -466,7 +466,6 @@ int cache_dump(cache_t *cache, int id) {
     assert(cache != NULL);
     if (sqlite3_prepare(cache->db, query_getoutputs, -1, &s, NULL) != SQLITE_OK)
         goto fail;
-    printf("hello world\n");
     int index = sqlite3_bind_parameter_index(s, "@fk_operation");
     if (index == 0)
         goto fail;

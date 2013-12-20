@@ -234,7 +234,7 @@ int detach(proc_t *proc) {
     assert(proc != NULL);
     assert(proc->pid > 0);
     long res = ptrace(PTRACE_DETACH, proc->pid, NULL, NULL);
-    if (res != 0) {
+    if (res != 0 && errno != ESRCH) {
         DEBUG("failed to detach child (%d)\n", errno);
         return -1;
     }
