@@ -50,7 +50,7 @@ static entry_t *find(dict_t *dict, char *key, unsigned int index, entry_t **prev
     return NULL;
 }
 
-int dict_add(dict_t *dict, char *key, void *value, void **oldvalue) {
+int dict_add(dict_t *dict, char *key, void *value) {
     unsigned int index = hash(key);
     entry_t *e = find(dict, key, index, NULL);
     if (e == NULL) {
@@ -63,28 +63,20 @@ int dict_add(dict_t *dict, char *key, void *value, void **oldvalue) {
             free(e);
             return -1;
         }
-        if (oldvalue != NULL) {
-            *oldvalue = NULL;
-        }
         e->next = dict[index];
         dict[index] = e;
-    } else if (oldvalue != NULL) {
-        *oldvalue = e->value;
     }
     e->value = value;
     
     return 0;
 }
 
-int dict_add_if(dict_t *dict, char *key, void *value, void **oldvalue, void *(*guard)(char *key, void *current)) {
+int dict_add_if(dict_t *dict, char *key, void *(*guard)(char *key, void *current)) {
     unsigned int index = hash(key);
     entry_t *e = find(dict, key, index, NULL);
     if (e == NULL) {
         /* TODO: slow */
-        return dict_add(dict, key, value, oldvalue);
-    }
-    if (oldvalue != NULL) {
-        *oldvalue = e->value;
+        return dict_add(dict, key, guard(key, NULL));
     }
     e->value = guard(key, e->value);
     return 0;

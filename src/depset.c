@@ -8,8 +8,8 @@
 #include <time.h>
 #include <unistd.h>
 
-static time_t unset = -1;
-static time_t missing = -2;
+static time_t unset = (time_t)NULL;
+static time_t missing = -1;
 static void *stamp(char *key, void *value) {
     if ((time_t)value == unset) {
         struct stat buf;
@@ -54,7 +54,7 @@ int depset_add_input(depset_t *oper, char *filename) {
          */
         return 0;
     }
-    return dict_add_if(oper->inputs, filename, (void*)unset, NULL, stamp);
+    return dict_add_if(oper->inputs, filename, stamp);
 }
 
 iter_t *depset_iter_inputs(depset_t *oper) {
@@ -63,7 +63,7 @@ iter_t *depset_iter_inputs(depset_t *oper) {
 
 int depset_add_output(depset_t *oper, char *filename) {
     assert(oper != NULL);
-    return dict_add(oper->outputs, filename, (void*)unset, NULL);
+    return dict_add(oper->outputs, filename, NULL);
 }
 
 iter_t *depset_iter_outputs(depset_t *oper) {
