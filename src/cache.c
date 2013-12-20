@@ -1,7 +1,9 @@
 #include <assert.h>
 #include "cache.h"
+#include "constants.h"
 #include "depset.h"
 #include "dict.h"
+#include <errno.h>
 #include <fcntl.h>
 #include "file.h"
 #include <limits.h>
@@ -429,10 +431,12 @@ int cache_locate(cache_t *cache, const char **args) {
         time_t timestamp = (time_t)sqlite3_column_int64(s, 1);
         struct stat st;
         if (stat(filename, &st) != 0) {
+            if (errno == ENOENT && timestamp == MISSING)
+                /* The file doesn't exist, but we expected it not to. */
+                continue;
             DEBUG("Failed to stat %s\n", filename);
             goto fail;
-        }
-        if (st.st_mtime != timestamp) {
+        } else if (st.st_mtime != timestamp) {
             /* This is actually the expected case; that we found the input file
              * but its timestamp has changed.
              */
