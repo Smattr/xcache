@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "constants.h"
 #include "depset.h"
 #include "dict.h"
 #include <stdlib.h>
@@ -8,16 +9,14 @@
 #include <time.h>
 #include <unistd.h>
 
-static time_t unset = (time_t)NULL;
-static time_t missing = -1;
 static void *stamp(char *key, void *value) {
-    if ((time_t)value == unset) {
+    if ((time_t)value == UNSET) {
         struct stat buf;
         int r = stat(key, &buf);
         if (r == 0) {
             return (void*)buf.st_mtime;
         }
-        return (void*)missing;
+        return (void*)MISSING;
     }
     return value;
 }
