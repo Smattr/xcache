@@ -5,11 +5,11 @@
 #include <stdlib.h>
 
 typedef enum {
-    L_QUIET = 0,
-    L_ERROR,
-    L_WARNING,
-    L_INFO,
-    L_DEBUG,
+    L_QUIET = -1,
+    L_ERROR = 0,
+    L_WARNING = 1,
+    L_INFO = 2,
+    L_DEBUG = 3,
 } verbosity_t;
 extern verbosity_t verbosity;
 

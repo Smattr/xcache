@@ -27,8 +27,6 @@ static void usage(const char *prog) {
         "Options:\n"
         "  --cache-dir <dir>\n"
         "  -c <dir>           Locate cache in <dir>.\n"
-        "  --debug\n"
-        "  -d                 Enable debug output.\n"
         "  --dry-run\n"
         "  -n                 Simulate only; do not perform any actions.\n"
         "  --help\n"
@@ -36,7 +34,9 @@ static void usage(const char *prog) {
         "  --log <file>\n"
         "  -l <file>          Direct any output to <file>. Defaults to stderr.\n"
         "  --quiet\n"
-        "  -q                 Suppress all output (except from the target).\n"
+        "  -q                 Show less output.\n"
+        "  --verbose\n"
+        "  -v                 Show more output.\n"
         "  --version          Output version information and then exit.\n"
         , prog);
 }
@@ -67,9 +67,6 @@ static int parse_arguments(int argc, const char **argv) {
              !strcmp(argv[index], "-c")) &&
             index < argc - 1) {
             cache_dir = argv[++index];
-        } else if (!strcmp(argv[index], "--debug") ||
-            !strcmp(argv[index], "-d")) {
-            verbosity = L_DEBUG;
         } else if (!strcmp(argv[index], "--dry-run") ||
                    !strcmp(argv[index], "-n")) {
             dryrun = true;
@@ -82,7 +79,10 @@ static int parse_arguments(int argc, const char **argv) {
             }
         } else if (!strcmp(argv[index], "--quiet") ||
                    !strcmp(argv[index], "-q")) {
-            verbosity = L_QUIET;
+            verbosity--;
+        } else if (!strcmp(argv[index], "--verbose") ||
+                   !strcmp(argv[index], "-v")) {
+            verbosity++;
         } else if (!strcmp(argv[index], "--version")) {
             printf("%s %d.%02d\n", PROJ_NAME, VERSION_MAJOR, VERSION_MINOR);
             exit(0);
