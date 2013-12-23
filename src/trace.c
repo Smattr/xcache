@@ -5,12 +5,15 @@
 #include "file.h"
 #include <linux/limits.h>
 #include "log.h"
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include "tee.h"
 #include "trace.h"
 #include <unistd.h>
 
@@ -20,19 +23,42 @@ struct proc {
     bool in_syscall;
     unsigned char exit_status;
     char argbuffer[PATH_MAX + 1];
+
+    tee_t *in, *out, *err;
+    char *infile, *outfile, *errfile;
 };
 
 proc_t *trace(const char **argv) {
     proc_t *p = (proc_t*)malloc(sizeof(proc_t));
-    if (p == NULL) {
+    if (p == NULL)
         return NULL;
-    }
+    memset(p, 0, sizeof(*p));
 
-    p->pid = vfork();
+    int stdin2 = STDIN_FILENO;
+    p->in = tee_create(&stdin2, NULL);
+    if (p->in == NULL)
+        goto fail;
+
+    int stdout2 = STDOUT_FILENO;
+    p->out = tee_create(NULL, &stdout2);
+    if (p->out == NULL)
+        goto fail;
+
+    int stderr2 = STDERR_FILENO;
+    p->err = tee_create(NULL, &stderr2);
+    if (p->err == NULL)
+        goto fail;
+
+    p->pid = fork();
     switch (p->pid) {
 
         case 0: {
             /* We are the child. */
+            if (dup2(stdin2, STDIN_FILENO) == -1 ||
+                    dup2(stdout2, STDOUT_FILENO) == -1 ||
+                    dup2(stderr2, STDERR_FILENO) == -1)
+                exit(-1);
+
             long r = ptrace(PTRACE_TRACEME, 0, NULL, NULL);
             if (r != 0) {
                 exit(-1);
@@ -44,8 +70,7 @@ proc_t *trace(const char **argv) {
         } case -1: {
             /* Fork failed. */
             DEBUG("failed initial fork (%d)\n", errno);
-            free(p);
-            return NULL;
+            goto fail;
         }
     }
 
@@ -55,19 +80,39 @@ proc_t *trace(const char **argv) {
     if (WIFEXITED(status)) {
         /* Either ptrace or exec failed in the child. */
         DEBUG("child process (tracee) exited immediately\n");
-        free(p);
-        return NULL;
+        goto fail;
     }
 
     long r = ptrace(PTRACE_SYSCALL, p->pid, NULL, NULL);
     if (r != 0) {
         DEBUG("failed first resume of child process (tracee) (%d)\n", errno);
-        free(p);
-        return NULL;
+        goto fail;
     }
     p->running = true;
     p->in_syscall = false;
     return p;
+
+fail:
+    if (p->err != NULL) {
+        char *t = tee_close(p->err);
+        if (t != NULL)
+            unlink(t);
+        free(t);
+    }
+    if (p->out != NULL) {
+        char *t = tee_close(p->out);
+        if (t != NULL)
+            unlink(t);
+        free(t);
+    }
+    if (p->err != NULL) {
+        char *t = tee_close(p->err);
+        if (t != NULL)
+            unlink(t);
+        free(t);
+    }
+    free(p);
+    return NULL;
 }
 
 static long peekuser(proc_t *proc, off_t offset) {
@@ -227,10 +272,22 @@ int complete(proc_t *proc) {
         proc->running = false;
         proc->exit_status = WEXITSTATUS(status);
     }
+    assert(proc->infile == NULL);
+    proc->infile = tee_close(proc->in);
+    assert(proc->outfile == NULL);
+    proc->outfile = tee_close(proc->out);
+    assert(proc->errfile == NULL);
+    proc->errfile = tee_close(proc->err);
     return proc->exit_status;
 }
 
 int delete(proc_t *proc) {
+    if (proc->errfile != NULL)
+        free(proc->errfile);
+    if (proc->outfile != NULL)
+        free(proc->outfile);
+    if (proc->infile != NULL)
+        free(proc->infile);
     free(proc);
     return 0;
 }
