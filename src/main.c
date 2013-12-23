@@ -316,6 +316,6 @@ bailout:
 
     cache_close(cache);
     ret = complete(target);
-    detach(target);
+    delete(target);
     return ret;
 }

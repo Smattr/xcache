@@ -230,14 +230,7 @@ int complete(proc_t *proc) {
     return proc->exit_status;
 }
 
-int detach(proc_t *proc) {
-    assert(proc != NULL);
-    assert(proc->pid > 0);
-    long res = ptrace(PTRACE_DETACH, proc->pid, NULL, NULL);
-    if (res != 0 && errno != ESRCH) {
-        DEBUG("failed to detach child (%d)\n", errno);
-        return -1;
-    }
+int delete(proc_t *proc) {
     free(proc);
     return 0;
 }

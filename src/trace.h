@@ -16,7 +16,7 @@ proc_t *trace(const char **argv);
 int next_syscall(proc_t *proc, syscall_t *s);
 int acknowledge_syscall(proc_t *proc);
 
-int detach(proc_t *proc);
+int delete(proc_t *proc);
 
 int complete(proc_t *proc);
 
