@@ -83,10 +83,9 @@ static int bind_time(sqlite3_stmt *s, const char *param, time_t value) {
 }
 
 int db_select_id(db_t *db, int *id, const char *cwd, const char *command) {
-    static sqlite3_stmt *s = NULL;
-    if (s == NULL)
-        if (prepare(db, &s, query_getid) != SQLITE_OK)
-            return -1;
+    sqlite3_stmt *s;
+    if (prepare(db, &s, query_getid) != SQLITE_OK)
+        return -1;
 
     int result = -1;
 
@@ -106,18 +105,15 @@ int db_select_id(db_t *db, int *id, const char *cwd, const char *command) {
     result = 0;
 
 fail:
-    if (sqlite3_reset(s) != SQLITE_OK ||
-            sqlite3_clear_bindings(s) != SQLITE_OK)
-        s = NULL;
+    sqlite3_finalize(s);
 
     return result;
 }
 
 int db_insert_id(db_t *db, int *id, const char *cwd, const char *command) {
-    static sqlite3_stmt *s = NULL;
-    if (s == NULL)
-        if (prepare(db, &s, query_addoperation) != SQLITE_OK)
-            return -1;
+    sqlite3_stmt *s;
+    if (prepare(db, &s, query_addoperation) != SQLITE_OK)
+        return -1;
 
     int result = -1;
 
@@ -132,18 +128,15 @@ int db_insert_id(db_t *db, int *id, const char *cwd, const char *command) {
     assert(result == 0);
 
 fail:
-    if (sqlite3_reset(s) != SQLITE_OK ||
-            sqlite3_clear_bindings(s) != SQLITE_OK)
-        s = NULL;
+    sqlite3_finalize(s);
 
     return result;
 }
 
 int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp) {
-    static sqlite3_stmt *s = NULL;
-    if (s == NULL)
-        if (prepare(db, &s, query_addinput) != SQLITE_OK)
-            return -1;
+    sqlite3_stmt *s;
+    if (prepare(db, &s, query_addinput) != SQLITE_OK)
+        return -1;
 
     int result = -1;
 
@@ -158,19 +151,16 @@ int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp) {
     result = 0;
 
 fail:
-    if (sqlite3_reset(s) != SQLITE_OK ||
-            sqlite3_clear_bindings(s) != SQLITE_OK)
-        s = NULL;
+    sqlite3_finalize(s);
 
     return result;
 }
 
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
         const char *contents) {
-    static sqlite3_stmt *s = NULL;
-    if (s == NULL)
-        if (prepare(db, &s, query_addoutput) != SQLITE_OK)
-            return -1;
+    sqlite3_stmt *s;
+    if (prepare(db, &s, query_addoutput) != SQLITE_OK)
+        return -1;
 
     int result = -1;
 
@@ -186,9 +176,7 @@ int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
     result = 0;
 
 fail:
-    if (sqlite3_reset(s) != SQLITE_OK ||
-            sqlite3_clear_bindings(s) != SQLITE_OK)
-        s = NULL;
+    sqlite3_finalize(s);
 
     return result;
 }
