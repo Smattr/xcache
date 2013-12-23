@@ -19,13 +19,13 @@
 
 struct proc {
     pid_t pid;
-    bool in_syscall;
     unsigned char exit_status;
     char argbuffer[PATH_MAX + 1];
 
     enum {
         SETUP = 0,
-        RUNNING,
+        RUNNING_IN_USER,
+        RUNNING_IN_KERNEL,
         TERMINATED,
         DETACHED,
         FINALISED,
@@ -95,8 +95,7 @@ proc_t *trace(const char **argv) {
         DEBUG("failed first resume of child process (tracee) (%d)\n", errno);
         goto fail;
     }
-    p->state = RUNNING;
-    p->in_syscall = false;
+    p->state = RUNNING_IN_USER;
     return p;
 
 fail:
@@ -212,7 +211,7 @@ static long register_offset(int arg) {
 char *syscall_getstring(proc_t *proc, int arg) {
     assert(proc != NULL);
     assert(arg > 0);
-    assert(proc->state == RUNNING);
+    assert(proc->state == RUNNING_IN_USER || proc->state == RUNNING_IN_KERNEL);
 
     long offset = register_offset(arg);
     if (offset == -1)
@@ -222,7 +221,7 @@ char *syscall_getstring(proc_t *proc, int arg) {
 }
 
 long syscall_getarg(proc_t *proc, int arg) {
-    assert(proc->state == RUNNING);
+    assert(proc->state == RUNNING_IN_USER || proc->state == RUNNING_IN_KERNEL);
     long offset = register_offset(arg);
     if (offset == -1)
         return -1;
@@ -231,7 +230,7 @@ long syscall_getarg(proc_t *proc, int arg) {
 
 int next_syscall(proc_t *proc, syscall_t *syscall) {
     assert(proc != NULL);
-    if (proc->state != RUNNING) {
+    if (proc->state != RUNNING_IN_USER && proc->state != RUNNING_IN_KERNEL) {
         DEBUG("attempt to retrieve a syscall from a stopped process\n");
         return -1;
     }
@@ -247,12 +246,17 @@ int next_syscall(proc_t *proc, syscall_t *syscall) {
     }
 
     syscall->call = syscall_number(proc);
-    syscall->enter = !proc->in_syscall;
+    syscall->enter = (proc->state == RUNNING_IN_USER);
     assert(!syscall->enter || syscall_result(proc) == -ENOSYS);
     if (!syscall->enter) {
         syscall->result = syscall_result(proc);
     }
-    proc->in_syscall = !proc->in_syscall;
+    if (proc->state == RUNNING_IN_USER) {
+        proc->state = RUNNING_IN_KERNEL;
+    } else {
+        assert(proc->state == RUNNING_IN_KERNEL);
+        proc->state = RUNNING_IN_USER;
+    }
 
     return 0;
 }
@@ -260,7 +264,7 @@ int next_syscall(proc_t *proc, syscall_t *syscall) {
 int acknowledge_syscall(proc_t *proc) {
     assert(proc != NULL);
     assert(proc->pid > 0);
-    assert(proc->state == RUNNING);
+    assert(proc->state == RUNNING_IN_USER || proc->state == RUNNING_IN_KERNEL);
     long r = ptrace(PTRACE_SYSCALL, proc->pid, NULL, NULL);
     if (r != 0) {
         DEBUG("failed to resume process (%d)\n", errno);
@@ -271,7 +275,7 @@ int acknowledge_syscall(proc_t *proc) {
 int complete(proc_t *proc) {
     assert(proc != NULL);
     assert(proc->pid > 0);
-    if (proc->state == RUNNING) {
+    if (proc->state == RUNNING_IN_USER || proc->state == RUNNING_IN_KERNEL) {
         long r = ptrace(PTRACE_CONT, proc->pid, NULL, NULL);
         if (r != 0) {
             DEBUG("failed to resume process (%d)\n", errno);
