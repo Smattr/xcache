@@ -19,10 +19,17 @@
 
 struct proc {
     pid_t pid;
-    bool running;
     bool in_syscall;
     unsigned char exit_status;
     char argbuffer[PATH_MAX + 1];
+
+    enum {
+        SETUP = 0,
+        RUNNING,
+        TERMINATED,
+        DETACHED,
+        FINALISED,
+    } state;
 
     tee_t *in, *out, *err;
     char *infile, *outfile, *errfile;
@@ -88,7 +95,7 @@ proc_t *trace(const char **argv) {
         DEBUG("failed first resume of child process (tracee) (%d)\n", errno);
         goto fail;
     }
-    p->running = true;
+    p->state = RUNNING;
     p->in_syscall = false;
     return p;
 
@@ -205,6 +212,7 @@ static long register_offset(int arg) {
 char *syscall_getstring(proc_t *proc, int arg) {
     assert(proc != NULL);
     assert(arg > 0);
+    assert(proc->state == RUNNING);
 
     long offset = register_offset(arg);
     if (offset == -1)
@@ -214,6 +222,7 @@ char *syscall_getstring(proc_t *proc, int arg) {
 }
 
 long syscall_getarg(proc_t *proc, int arg) {
+    assert(proc->state == RUNNING);
     long offset = register_offset(arg);
     if (offset == -1)
         return -1;
@@ -222,7 +231,7 @@ long syscall_getarg(proc_t *proc, int arg) {
 
 int next_syscall(proc_t *proc, syscall_t *syscall) {
     assert(proc != NULL);
-    if (!proc->running) {
+    if (proc->state != RUNNING) {
         DEBUG("attempt to retrieve a syscall from a stopped process\n");
         return -1;
     }
@@ -231,7 +240,7 @@ int next_syscall(proc_t *proc, syscall_t *syscall) {
     int status;
     waitpid(proc->pid, &status, 0);
     if (WIFEXITED(status)) {
-        proc->running = false;
+        proc->state = TERMINATED;
         proc->exit_status = WEXITSTATUS(status);
         DEBUG("child exited with status %d\n", proc->exit_status);
         return -1;
@@ -251,6 +260,7 @@ int next_syscall(proc_t *proc, syscall_t *syscall) {
 int acknowledge_syscall(proc_t *proc) {
     assert(proc != NULL);
     assert(proc->pid > 0);
+    assert(proc->state == RUNNING);
     long r = ptrace(PTRACE_SYSCALL, proc->pid, NULL, NULL);
     if (r != 0) {
         DEBUG("failed to resume process (%d)\n", errno);
@@ -261,7 +271,7 @@ int acknowledge_syscall(proc_t *proc) {
 int complete(proc_t *proc) {
     assert(proc != NULL);
     assert(proc->pid > 0);
-    if (proc->running) {
+    if (proc->state == RUNNING) {
         long r = ptrace(PTRACE_CONT, proc->pid, NULL, NULL);
         if (r != 0) {
             DEBUG("failed to resume process (%d)\n", errno);
@@ -269,7 +279,7 @@ int complete(proc_t *proc) {
         int status;
         waitpid(proc->pid, &status, 0);
         assert(WIFEXITED(status));
-        proc->running = false;
+        proc->state = TERMINATED;
         proc->exit_status = WEXITSTATUS(status);
     }
     assert(proc->infile == NULL);
@@ -278,6 +288,7 @@ int complete(proc_t *proc) {
     proc->outfile = tee_close(proc->out);
     assert(proc->errfile == NULL);
     proc->errfile = tee_close(proc->err);
+    proc->state = FINALISED;
     return proc->exit_status;
 }
 
