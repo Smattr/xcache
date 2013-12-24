@@ -23,4 +23,7 @@ int complete(proc_t *proc);
 char *syscall_getstring(proc_t *proc, int arg);
 long syscall_getarg(proc_t *proc, int arg);
 
+const char *get_stdout(proc_t *proc);
+const char *get_stderr(proc_t *proc);
+
 #endif

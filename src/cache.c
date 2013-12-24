@@ -189,7 +189,7 @@ static char *to_command(const char **args) {
 }
 
 int cache_write(cache_t *cache, char *cwd, const char **args,
-        depset_t *depset) {
+        depset_t *depset, const char *outfile, const char *errfile) {
     char *command = to_command(args);
     if (command == NULL)
         return -1;
@@ -238,6 +238,28 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
             goto fail;
     }
     i = NULL;
+
+    if (outfile != NULL) {
+        char *h = cache_save(cache, outfile);
+        if (h == NULL)
+            goto fail;
+
+        int r = db_insert_output(cache->db, id, "/dev/stdout", 0, h);
+        free(h);
+        if (r != 0)
+            goto fail;
+    }
+
+    if (errfile != NULL) {
+        char *h = cache_save(cache, errfile);
+        if (h == NULL)
+            goto fail;
+
+        int r = db_insert_output(cache->db, id, "/dev/stderr", 0, h);
+        free(h);
+        if (r != 0)
+            goto fail;
+    }
 
     if (db_commit(cache->db) != 0)
         goto fail;

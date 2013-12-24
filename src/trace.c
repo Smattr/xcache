@@ -296,6 +296,16 @@ int complete(proc_t *proc) {
     return proc->exit_status;
 }
 
+const char *get_stdout(proc_t *proc) {
+    assert(proc->state == FINALISED);
+    return proc->outfile;
+}
+
+const char *get_stderr(proc_t *proc) {
+    assert(proc->state == FINALISED);
+    return proc->errfile;
+}
+
 int delete(proc_t *proc) {
     if (proc->errfile != NULL)
         free(proc->errfile);

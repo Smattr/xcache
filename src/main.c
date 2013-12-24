@@ -158,6 +158,8 @@ int main(int argc, const char **argv) {
         return -1;
     }
 
+    bool success = false;
+
     syscall_t s;
     while (next_syscall(target, &s) == 0) {
 
@@ -307,15 +309,26 @@ int main(int argc, const char **argv) {
      * traced the target. Hence we can now cache its dependency set for
      * retrieval on a later run.
      */
-    if (cache_write(cache, cwd, &argv[index], deps) != 0)
-        /* This failure is non-critical in a sense. */
-        DEBUG("Failed to write entry to cache\n");
+    success = true;
 
-    int ret;
-bailout:
+bailout:;
+    int ret = complete(target);
+
+    const char *outfile = get_stdout(target),
+               *errfile = get_stderr(target);
+
+    if (success) {
+        if (cache_write(cache, cwd, &argv[index], deps, outfile, errfile) != 0)
+            /* This failure is non-critical in a sense. */
+            DEBUG("Failed to write entry to cache\n");
+    }
+
+    if (outfile != NULL)
+        unlink(outfile);
+    if (errfile != NULL)
+        unlink(errfile);
 
     cache_close(cache);
-    ret = complete(target);
     delete(target);
     return ret;
 }

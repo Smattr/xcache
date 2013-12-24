@@ -23,6 +23,7 @@ int cache_dump(cache_t *cache, int id);
 
 int cache_close(cache_t *cache);
 
-int cache_write(cache_t *cache, char *cwd, const char **args, depset_t *depset);
+int cache_write(cache_t *cache, char *cwd, const char **args, depset_t *depset,
+    const char *outfile, const char *errfile);
 
 #endif
