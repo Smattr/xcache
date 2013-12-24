@@ -151,13 +151,12 @@ static char *cache_save(cache_t *c, char *filename) {
         }
     }
 
-    char *cpath = (char*)malloc(strlen(c->root) + strlen(DATA) + 1 + strlen(h)
-        + 1);
+    char *cpath = (char*)malloc(strlen(c->root) + 1 + strlen(h) + 1);
     if (cpath == NULL) {
         free(h);
         return NULL;
     }
-    sprintf(cpath, "%s" DATA "/%s", c->root, h);
+    sprintf(cpath, "%s/%s", c->root, h);
     if (cp(filename, cpath) != 0) {
         free(cpath);
         free(h);
