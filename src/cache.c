@@ -112,7 +112,7 @@ static int get_id(cache_t *c, char *cwd, char *command) {
  * Returns NULL on failure or the hash of the file data on success. It is the
  * caller's responsibility to free the returned pointer.
  */
-static char *cache_save(cache_t *c, char *filename) {
+static char *cache_save(cache_t *c, const char *filename) {
     char *h = filehash(filename);
     if (h == NULL)
         return NULL;
