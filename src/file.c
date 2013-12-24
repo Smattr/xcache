@@ -16,6 +16,20 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+static char *hex(unsigned char *hash) {
+    char *h = (char*)malloc(MD5_DIGEST_LENGTH * 2 + 1);
+    if (h == NULL)
+        return NULL;
+
+    char *p = h;
+    for (unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+        sprintf(p, "%02x", hash[i]);
+        p += 2;
+    }
+
+    return h;
+}
+
 char *filehash(const char *filename) {
     int fd = open(filename, O_RDONLY);
     if (fd < 0)
@@ -48,7 +62,13 @@ char *filehash(const char *filename) {
 
     munmap(addr, sz);
     close(fd);
-    return (char*)h;
+
+    char *ph = hex(h);
+    /* Note, it's possible hex just failed. In this case we naturally free h
+     * and return NULL to the caller anyway.
+     */
+    free(h);
+    return ph;
 }
 
 int cp(const char *from, const char *to) {
