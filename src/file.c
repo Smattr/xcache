@@ -43,8 +43,11 @@ char *filehash(const char *filename) {
     }
     size_t sz = st.st_size;
 
-    /* Mmap the file for MD5. */
-    void *addr = mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
+    /* Mmap the file for MD5. If the file is empty then we avoid mmaping as it
+     * will return failure and is not necessary.
+     */
+    void *addr = st.st_size == 0 ? NULL :
+        mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
     if (addr == MAP_FAILED) {
         close(fd);
         return NULL;
@@ -52,7 +55,8 @@ char *filehash(const char *filename) {
 
     unsigned char *h = (unsigned char*)malloc(MD5_DIGEST_LENGTH);
     if (h == NULL) {
-        munmap(addr, sz);
+        if (addr != NULL)
+            munmap(addr, sz);
         close(fd);
         return NULL;
     }
@@ -60,7 +64,8 @@ char *filehash(const char *filename) {
 
     /* Success! */
 
-    munmap(addr, sz);
+    if (addr != NULL)
+        munmap(addr, sz);
     close(fd);
 
     char *ph = hex(h);
