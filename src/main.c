@@ -317,7 +317,7 @@ bailout:;
     const char *outfile = get_stdout(target),
                *errfile = get_stderr(target);
 
-    if (success) {
+    if (success && ret == 0) {
         if (cache_write(cache, cwd, &argv[index], deps, outfile, errfile) != 0)
             /* This failure is non-critical in a sense. */
             DEBUG("Failed to write entry to cache\n");
