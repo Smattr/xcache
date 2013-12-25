@@ -42,12 +42,12 @@ proc_t *trace(const char **argv) {
     memset(p, 0, sizeof(*p));
 
     int stdout2 = STDOUT_FILENO;
-    p->out = tee_create(NULL, &stdout2);
+    p->out = tee_create(&stdout2);
     if (p->out == NULL)
         goto fail;
 
     int stderr2 = STDERR_FILENO;
-    p->err = tee_create(NULL, &stderr2);
+    p->err = tee_create(&stderr2);
     if (p->err == NULL)
         goto fail;
 

@@ -5,7 +5,7 @@
 
 typedef struct tee tee_t;
 
-tee_t *tee_create(int *input, int *output);
+tee_t *tee_create(int *output);
 char *tee_close(tee_t *t);
 
 #endif

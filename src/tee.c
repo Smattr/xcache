@@ -86,7 +86,7 @@ struct tee {
     int sigfd;
 };
 
-tee_t *tee_create(int *input, int *output) {
+tee_t *tee_create(int *output) {
     tee_t *t = (tee_t*)malloc(sizeof(*t));
     if (t == NULL)
         return NULL;
@@ -116,16 +116,9 @@ tee_t *tee_create(int *input, int *output) {
         free(t);
         return NULL;
     }
-    if (input != NULL) {
-        s->in = *input;
-        s->out = p[1];
-        *input = p[0];
-    } else {
-        assert(output != NULL);
-        s->in = p[0];
-        s->out = *output;
-        *output = p[1];
-    }
+    s->in = p[0];
+    s->out = *output;
+    *output = p[1];
 
     s->sig = q[0];
     t->sigfd = q[1];
