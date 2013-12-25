@@ -31,8 +31,8 @@ struct proc {
         FINALISED,
     } state;
 
-    tee_t *in, *out, *err;
-    char *infile, *outfile, *errfile;
+    tee_t *out, *err;
+    char *outfile, *errfile;
 };
 
 proc_t *trace(const char **argv) {
@@ -40,11 +40,6 @@ proc_t *trace(const char **argv) {
     if (p == NULL)
         return NULL;
     memset(p, 0, sizeof(*p));
-
-    int stdin2 = STDIN_FILENO;
-    p->in = tee_create(&stdin2, NULL);
-    if (p->in == NULL)
-        goto fail;
 
     int stdout2 = STDOUT_FILENO;
     p->out = tee_create(NULL, &stdout2);
@@ -61,8 +56,7 @@ proc_t *trace(const char **argv) {
 
         case 0: {
             /* We are the child. */
-            if (dup2(stdin2, STDIN_FILENO) == -1 ||
-                    dup2(stdout2, STDOUT_FILENO) == -1 ||
+            if (dup2(stdout2, STDOUT_FILENO) == -1 ||
                     dup2(stderr2, STDERR_FILENO) == -1)
                 exit(-1);
 
@@ -107,12 +101,6 @@ fail:
     }
     if (p->out != NULL) {
         char *t = tee_close(p->out);
-        if (t != NULL)
-            unlink(t);
-        free(t);
-    }
-    if (p->err != NULL) {
-        char *t = tee_close(p->err);
         if (t != NULL)
             unlink(t);
         free(t);
@@ -286,8 +274,6 @@ int complete(proc_t *proc) {
         proc->state = TERMINATED;
         proc->exit_status = WEXITSTATUS(status);
     }
-    assert(proc->infile == NULL);
-    proc->infile = tee_close(proc->in);
     assert(proc->outfile == NULL);
     proc->outfile = tee_close(proc->out);
     assert(proc->errfile == NULL);
@@ -311,8 +297,6 @@ int delete(proc_t *proc) {
         free(proc->errfile);
     if (proc->outfile != NULL)
         free(proc->outfile);
-    if (proc->infile != NULL)
-        free(proc->infile);
     free(proc);
     return 0;
 }
