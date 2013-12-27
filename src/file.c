@@ -102,7 +102,6 @@ int cp(const char *from, const char *to) {
         return -1;
     }
     ssize_t written = sendfile(out, in, NULL, sz);
-    fchown(out, st.st_uid, st.st_gid);
     close(out);
     close(in);
     chmod(from, st.st_mode);
