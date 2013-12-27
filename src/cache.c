@@ -357,7 +357,7 @@ int cache_dump(cache_t *cache, int id) {
             last_slash[0] = '/';
         }
 
-        int out = open(filename, O_CREAT|O_WRONLY);
+        int out = open(filename, O_CREAT|O_WRONLY, 0200);
         if (out < 0) {
             ERROR("Failed to open %s for writing\n", filename);
             goto fail;
@@ -390,6 +390,7 @@ int cache_dump(cache_t *cache, int id) {
         close(in);
         free(cached_copy);
         fchown(out, st.st_uid, st.st_gid);
+        fchmod(out, st.st_mode);
         close(out);
         struct utimbuf ut = {
             .actime = timestamp,
