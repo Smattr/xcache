@@ -130,6 +130,7 @@ int main(int argc, const char **argv) {
         /* Excellent news! We found a cache entry and don't need to run the
          * target program.
          */
+        DEBUG("Found matching cache entry\n");
         int res = cache_dump(cache, id);
         cache_close(cache);
         return res;
