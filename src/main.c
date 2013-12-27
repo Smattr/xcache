@@ -15,6 +15,7 @@
 #include "trace.h"
 #include "translate-syscall.h"
 #include <unistd.h>
+#include "util.h"
 
 static bool dryrun = false;
 
@@ -172,11 +173,18 @@ int main(int argc, const char **argv) {
                 "(%ld)\n", (argno), translate_syscall(s.call), s.call); \
             goto bailout; \
         } \
-        int _r = depset_add_##category(deps, _f); \
-        if (_r != 0) { \
-            DEBUG("Failed to add " #category " \"%s\"\n", _f); \
+        char *_fabs = abspath(_f); \
+        if (_fabs == NULL) { \
+            DEBUG("Failed to resolve path \"%s\"\n", _f); \
             goto bailout; \
         } \
+        int _r = depset_add_##category(deps, _fabs); \
+        if (_r != 0) { \
+            DEBUG("Failed to add " #category " \"%s\"\n", _fabs); \
+            free(_fabs); \
+            goto bailout; \
+        } \
+        free(_fabs); \
     } while (0)
 
         /* Any syscall we receive may be the kernel entry or exit. Handle entry
@@ -237,17 +245,24 @@ int main(int argc, const char **argv) {
                         "syscall open (%ld)\n", (long)SYS_open);
                     goto bailout;
                 }
-                if (flags & O_WRONLY)
-                    r |= depset_add_output(deps, fname);
-                else {
-                    r |= depset_add_input(deps, fname);
-                    if (flags & O_RDWR)
-                        r |= depset_add_output(deps, fname);
-                }
-                if (r != 0) {
-                    DEBUG("Failed to add dependency \"%s\"\n", fname);
+                char *absname = abspath(fname);
+                if (absname == NULL) {
+                    DEBUG("Failed to resolve \"%s\"\n", fname);
                     goto bailout;
                 }
+                if (flags & O_WRONLY)
+                    r |= depset_add_output(deps, absname);
+                else {
+                    r |= depset_add_input(deps, absname);
+                    if (flags & O_RDWR)
+                        r |= depset_add_output(deps, absname);
+                }
+                if (r != 0) {
+                    DEBUG("Failed to add dependency \"%s\"\n", absname);
+                    free(absname);
+                    goto bailout;
+                }
+                free(absname);
                 break;
             }
 

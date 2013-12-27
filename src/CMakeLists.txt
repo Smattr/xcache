@@ -13,7 +13,7 @@ set (VERSION_MAJOR 0)
 set (VERSION_MINOR 1)
 set (PROJ_NAME "\"xcache\"")
 
-set (LIBSOURCES cache.c db.c depset.c dict.c file.c log.c queries.c tee.c trace.c)
+set (LIBSOURCES abspath.c cache.c db.c depset.c dict.c file.c log.c queries.c tee.c trace.c)
 set (EXESOURCES main.c translate-syscall.c)
 
 # Handle building for different architectures.
