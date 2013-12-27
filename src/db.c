@@ -82,6 +82,30 @@ static int bind_time(sqlite3_stmt *s, const char *param, time_t value) {
     return sqlite3_bind_int64(s, index, (sqlite3_int64)value);
 }
 
+static int bind_mode(sqlite3_stmt *s, const char *param, mode_t value) {
+    int index = sqlite3_bind_parameter_index(s, param);
+    if (index == 0)
+        return !SQLITE_OK;
+
+    return sqlite3_bind_int(s, index, (int)value);
+}
+
+static int bind_uid(sqlite3_stmt *s, const char *param, uid_t value) {
+    int index = sqlite3_bind_parameter_index(s, param);
+    if (index == 0)
+        return !SQLITE_OK;
+
+    return sqlite3_bind_int(s, index, (int)value);
+}
+
+static int bind_gid(sqlite3_stmt *s, const char *param, gid_t value) {
+    int index = sqlite3_bind_parameter_index(s, param);
+    if (index == 0)
+        return !SQLITE_OK;
+
+    return sqlite3_bind_int(s, index, (int)value);
+}
+
 int db_select_id(db_t *db, int *id, const char *cwd, const char *command) {
     sqlite3_stmt *s;
     if (prepare(db, &s, query_getid) != SQLITE_OK)
@@ -157,7 +181,7 @@ fail:
 }
 
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
-        const char *contents) {
+        mode_t mode, uid_t uid, gid_t gid, const char *contents) {
     sqlite3_stmt *s;
     if (prepare(db, &s, query_addoutput) != SQLITE_OK)
         return -1;
@@ -167,6 +191,9 @@ int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
     if (bind_int(s, "@fk_operation", id) != SQLITE_OK ||
             bind_text(s, "@filename", filename) != SQLITE_OK ||
             bind_time(s, "@timestamp", timestamp) != SQLITE_OK ||
+            bind_mode(s, "@mode", mode) != SQLITE_OK ||
+            bind_uid(s, "@uid", uid) != SQLITE_OK ||
+            bind_gid(s, "@gid", gid) != SQLITE_OK ||
             bind_text(s, "@contents", contents) != SQLITE_OK)
         goto fail;
 
@@ -248,21 +275,27 @@ rowset_t *db_select_outputs(db_t *db, int id) {
 }
 
 int rowset_next_output(rowset_t *rows, const char **filename, time_t *timestamp,
-        const char **contents) {
+        mode_t *mode, uid_t *uid, gid_t *gid, const char **contents) {
     switch (sqlite3_step(rows->s)) {
         case SQLITE_DONE:
             rowset_discard(rows);
             return 1;
 
         case SQLITE_ROW:
-            assert(sqlite3_column_count(rows->s) == 3);
+            assert(sqlite3_column_count(rows->s) == 6);
             assert(sqlite3_column_type(rows->s, 0) == SQLITE_TEXT);
             *filename = (const char*)sqlite3_column_text(rows->s, 0);
             assert(*filename != NULL);
             assert(sqlite3_column_type(rows->s, 1) == SQLITE_INTEGER);
             *timestamp = (time_t)sqlite3_column_int64(rows->s, 1);
-            assert(sqlite3_column_type(rows->s, 2) == SQLITE_TEXT);
-            *contents = (const char*)sqlite3_column_text(rows->s, 2);
+            assert(sqlite3_column_type(rows->s, 2) == SQLITE_INTEGER);
+            *mode = (mode_t)sqlite3_column_int(rows->s, 2);
+            assert(sqlite3_column_type(rows->s, 3) == SQLITE_INTEGER);
+            *uid = (uid_t)sqlite3_column_int(rows->s, 3);
+            assert(sqlite3_column_type(rows->s, 4) == SQLITE_INTEGER);
+            *gid = (gid_t)sqlite3_column_int(rows->s, 4);
+            assert(sqlite3_column_type(rows->s, 5) == SQLITE_TEXT);
+            *contents = (const char*)sqlite3_column_text(rows->s, 5);
             return 0;
 
         default:

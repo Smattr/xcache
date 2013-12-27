@@ -95,14 +95,22 @@ int cp(const char *from, const char *to) {
     }
 
     /* Copy the file. */
-    int out = open(to, O_WRONLY|O_CREAT, 0644);
-    if (out < 0) {
-        close(in);
-        chmod(from, st.st_mode);
-        return -1;
+    int out;
+    if (!strcmp(to, "/dev/stdout")) {
+        out = STDOUT_FILENO;
+    } else if (!strcmp(to, "/dev/stderr")) {
+        out = STDERR_FILENO;
+    } else {
+        out = open(to, O_WRONLY|O_CREAT, 0200);
+        if (out < 0) {
+            close(in);
+            chmod(from, st.st_mode);
+            return -1;
+        }
     }
     ssize_t written = sendfile(out, in, NULL, sz);
-    close(out);
+    if (out != STDOUT_FILENO && out != STDERR_FILENO)
+        close(out);
     close(in);
     chmod(from, st.st_mode);
     if ((size_t)written != sz) {

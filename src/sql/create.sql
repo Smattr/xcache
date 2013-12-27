@@ -12,4 +12,7 @@ create table if not exists output (
     fk_operation integer references operation(id),
     filename text not null,
     timestamp integer not null,
+    mode integer not null,
+    uid integer not null,
+    gid integer not null,
     contents text not null);

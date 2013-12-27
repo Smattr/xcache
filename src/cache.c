@@ -232,7 +232,12 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (h == NULL)
             goto fail;
 
-        int r = db_insert_output(cache->db, id, key, value, h);
+        struct stat st;
+        if (stat(key, &st) != 0)
+            goto fail;
+
+        int r = db_insert_output(cache->db, id, key, value, st.st_mode,
+            st.st_uid, st.st_gid, h);
         free(h);
         if (r != 0)
             goto fail;
@@ -244,7 +249,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (h == NULL)
             goto fail;
 
-        int r = db_insert_output(cache->db, id, "/dev/stdout", 0, h);
+        int r = db_insert_output(cache->db, id, "/dev/stdout", 0, 0, 0, 0, h);
         free(h);
         if (r != 0)
             goto fail;
@@ -255,7 +260,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (h == NULL)
             goto fail;
 
-        int r = db_insert_output(cache->db, id, "/dev/stderr", 0, h);
+        int r = db_insert_output(cache->db, id, "/dev/stderr", 0, 0, 0, 0, h);
         free(h);
         if (r != 0)
             goto fail;
@@ -340,7 +345,11 @@ int cache_dump(cache_t *cache, int id) {
 
     const char *filename, *contents;
     time_t timestamp;
-    while (rowset_next_output(r, &filename, &timestamp, &contents) == 0) {
+    mode_t mode;
+    uid_t uid;
+    gid_t gid;
+    while (rowset_next_output(r, &filename, &timestamp, &mode, &uid, &gid,
+            &contents) == 0) {
         char *last_slash = strrchr(filename, '/');
         /* The path should contain at least one slash because it should be
          * absolute.
@@ -357,47 +366,22 @@ int cache_dump(cache_t *cache, int id) {
             last_slash[0] = '/';
         }
 
-        int out = open(filename, O_CREAT|O_WRONLY, 0200);
-        if (out < 0) {
-            ERROR("Failed to open %s for writing\n", filename);
-            goto fail;
-        }
         char *cached_copy = (char*)malloc(strlen(cache->root) + 1 + strlen(contents) + 1);
         if (cached_copy == NULL) {
             ERROR("Out of memory while dumping cache entry %s\n", filename);
-            close(out);
             goto fail;
         }
         sprintf(cached_copy, "%s/%s", cache->root, contents);
-        int in = open(cached_copy, O_RDONLY);
-        if (in < 0) {
-            ERROR("Failed to open cached copy %s of output %s\n", cached_copy,
-                filename);
-            free(cached_copy);
-            close(out);
-            goto fail;
-        }
-        struct stat st;
-        if (fstat(in, &st) != 0) {
-            ERROR("Failed to read size of cached copy %s of output %s\n",
-                cached_copy, filename);
-            close(in);
-            free(cached_copy);
-            close(out);
-            goto fail;
-        }
-        ssize_t copied = sendfile(out, in, NULL, st.st_size);
-        close(in);
+        int res = cp(cached_copy, filename);
         free(cached_copy);
-        fchown(out, st.st_uid, st.st_gid);
-        fchmod(out, st.st_mode);
-        close(out);
+        chown(filename, uid, gid);
+        chmod(filename, mode);
         struct utimbuf ut = {
             .actime = timestamp,
             .modtime = timestamp,
         };
         utime(filename, &ut);
-        if (copied != st.st_size) {
+        if (res != 0) {
             ERROR("Failed to write output %s\n", filename);
             goto fail;
         }
