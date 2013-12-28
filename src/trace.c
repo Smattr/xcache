@@ -36,10 +36,9 @@ struct proc {
 };
 
 proc_t *trace(const char **argv) {
-    proc_t *p = (proc_t*)malloc(sizeof(proc_t));
+    proc_t *p = (proc_t*)calloc(1, sizeof(proc_t));
     if (p == NULL)
         return NULL;
-    memset(p, 0, sizeof(*p));
 
     int stdout2 = STDOUT_FILENO;
     p->out = tee_create(&stdout2);

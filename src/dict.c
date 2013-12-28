@@ -14,12 +14,7 @@ typedef struct entry {
 } entry_t;
 
 dict_t *dict_new(void) {
-    size_t sz = sizeof(entry_t*) * ENTRIES;
-    dict_t *d = (dict_t*)malloc(sz);
-    if (d == NULL) {
-        return NULL;
-    }
-    memset((void*)d, 0, sz);
+    dict_t *d = (dict_t*)calloc(ENTRIES, sizeof(entry_t*));
     return d;
 }
 
