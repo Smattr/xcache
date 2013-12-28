@@ -236,7 +236,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (stat(key, &st) != 0)
             goto fail;
 
-        int r = db_insert_output(cache->db, id, key, value, st.st_mode,
+        int r = db_insert_output(cache->db, id, key, st.st_mtime, st.st_mode,
             st.st_uid, st.st_gid, h);
         free(h);
         if (r != 0)
