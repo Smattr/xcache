@@ -229,12 +229,12 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     if (si == NULL)
         goto fail;
     while (set_iter_next(si, (const char**)&key) == 0) {
-        char *h = cache_save(cache, key);
-        if (h == NULL)
-            goto fail;
-
         struct stat st;
         if (stat(key, &st) != 0)
+            continue;
+
+        char *h = cache_save(cache, key);
+        if (h == NULL)
             goto fail;
 
         int r = db_insert_output(cache->db, id, key, st.st_mtime, st.st_mode,
