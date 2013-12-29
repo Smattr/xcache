@@ -263,10 +263,9 @@ int complete(proc_t *proc) {
     assert(proc != NULL);
     assert(proc->pid > 0);
     if (proc->state == RUNNING_IN_USER || proc->state == RUNNING_IN_KERNEL) {
-        long r = ptrace(PTRACE_CONT, proc->pid, NULL, NULL);
-        if (r != 0) {
-            DEBUG("failed to resume process (%d)\n", errno);
-        }
+        long r = ptrace(PTRACE_DETACH, proc->pid, NULL, NULL);
+        if (r != 0)
+            DEBUG("failed to detach process (%d)\n", errno);
         int status;
         waitpid(proc->pid, &status, 0);
         assert(WIFEXITED(status));
