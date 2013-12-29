@@ -194,6 +194,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     if (command == NULL)
         return -1;
     iter_t *i = NULL;
+    set_iter_t *si = NULL;
     if (db_begin(cache->db) != 0) {
         free(command);
         return -1;
@@ -224,10 +225,10 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     i = NULL;
 
     /* Write the outputs. */
-    i = depset_iter_outputs(depset);
-    if (i == NULL)
+    si = depset_iter_outputs(depset);
+    if (si == NULL)
         goto fail;
-    while (iter_next(i, &key, (void**)&value)) {
+    while (set_iter_next(si, (const char**)&key) == 0) {
         char *h = cache_save(cache, key);
         if (h == NULL)
             goto fail;
@@ -242,7 +243,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (r != 0)
             goto fail;
     }
-    i = NULL;
+    si = NULL;
 
     if (outfile != NULL) {
         char *h = cache_save(cache, outfile);
@@ -273,6 +274,8 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
 fail:
     if (i != NULL)
         iter_destroy(i);
+    if (si != NULL)
+        set_iter_destroy(si);
     db_rollback(cache->db);
     if (command != NULL)
         free(command);

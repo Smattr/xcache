@@ -2,6 +2,8 @@
 #include "constants.h"
 #include "depset.h"
 #include "dict.h"
+#include "set.h"
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -23,7 +25,7 @@ static void *stamp(char *key, void *value) {
 
 struct depset {
     dict_t *inputs;
-    dict_t *outputs;
+    set_t *outputs;
 };
 
 depset_t *depset_new(void) {
@@ -36,7 +38,7 @@ depset_t *depset_new(void) {
         free(o);
         return NULL;
     }
-    o->outputs = dict_new();
+    o->outputs = set_new();
     if (o->outputs == NULL) {
         dict_destroy(o->inputs);
         free(o);
@@ -47,7 +49,7 @@ depset_t *depset_new(void) {
 
 int depset_add_input(depset_t *oper, char *filename) {
     assert(oper != NULL);
-    if (dict_find(oper->outputs, filename) != NULL) {
+    if (set_contains(oper->outputs, filename)) {
         /* This is already marked as an output; i.e. we are reading back in
          * something we effectively already know. No need to track this.
          */
@@ -62,16 +64,16 @@ iter_t *depset_iter_inputs(depset_t *oper) {
 
 int depset_add_output(depset_t *oper, char *filename) {
     assert(oper != NULL);
-    return dict_add(oper->outputs, filename, NULL);
+    return set_add(oper->outputs, filename);
 }
 
-iter_t *depset_iter_outputs(depset_t *oper) {
-    return dict_iter(oper->outputs);
+set_iter_t *depset_iter_outputs(depset_t *oper) {
+    return set_iter(oper->outputs);
 }
 
 void depset_destroy(depset_t *oper) {
     assert(oper != NULL);
     dict_destroy(oper->inputs);
-    dict_destroy(oper->outputs);
+    set_destroy(oper->outputs);
     free(oper);
 }

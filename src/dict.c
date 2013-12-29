@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include "util.h"
 
 #define ENTRIES 127
 
@@ -16,15 +17,6 @@ typedef struct entry {
 dict_t *dict_new(void) {
     dict_t *d = (dict_t*)calloc(ENTRIES, sizeof(entry_t*));
     return d;
-}
-
-static unsigned int hash(char *s) {
-    unsigned int h = 0;
-    assert(s != NULL);
-    for (; *s != '\0'; s++) {
-        h = *s + 63 * h;
-    }
-    return h % ENTRIES;
 }
 
 static entry_t *find(dict_t *dict, char *key, unsigned int index, entry_t **prev) {
@@ -46,7 +38,7 @@ static entry_t *find(dict_t *dict, char *key, unsigned int index, entry_t **prev
 }
 
 int dict_add(dict_t *dict, char *key, void *value) {
-    unsigned int index = hash(key);
+    unsigned int index = hash(ENTRIES, key);
     entry_t *e = find(dict, key, index, NULL);
     if (e == NULL) {
         e = (entry_t*)malloc(sizeof(entry_t));
@@ -67,7 +59,7 @@ int dict_add(dict_t *dict, char *key, void *value) {
 }
 
 int dict_add_if(dict_t *dict, char *key, void *(*guard)(char *key, void *current)) {
-    unsigned int index = hash(key);
+    unsigned int index = hash(ENTRIES, key);
     entry_t *e = find(dict, key, index, NULL);
     if (e == NULL) {
         /* TODO: slow */
@@ -78,7 +70,7 @@ int dict_add_if(dict_t *dict, char *key, void *(*guard)(char *key, void *current
 }
 
 void *dict_remove(dict_t *dict, char *key) {
-    unsigned int index = hash(key);
+    unsigned int index = hash(ENTRIES, key);
     entry_t *p, *prev;
 
     p = find(dict, key, index, &prev);
@@ -96,7 +88,7 @@ void *dict_remove(dict_t *dict, char *key) {
 }
 
 void *dict_find(dict_t *dict, char *key) {
-    unsigned int index = hash(key);
+    unsigned int index = hash(ENTRIES, key);
     entry_t *p;
 
     p = find(dict, key, index, NULL);
