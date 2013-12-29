@@ -10,6 +10,7 @@ typedef enum {
     L_WARNING = 1,
     L_INFO = 2,
     L_DEBUG = 3,
+    L_IDEBUG = 4,
 } verbosity_t;
 extern verbosity_t verbosity;
 
@@ -33,9 +34,10 @@ extern int log_initialised;
         } \
     } while (0)
 
-#define ERROR(args...) LOG(L_ERROR, args)
-#define WARN(args...)  LOG(L_WARNING, args)
-#define INFO(args...)  LOG(L_INFO, args)
-#define DEBUG(args...) LOG(L_DEBUG, args)
+#define ERROR(args...)  LOG(L_ERROR, args)
+#define WARN(args...)   LOG(L_WARNING, args)
+#define INFO(args...)   LOG(L_INFO, args)
+#define DEBUG(args...)  LOG(L_DEBUG, args)
+#define IDEBUG(args...) LOG(L_IDEBUG, args)
 
 #endif
