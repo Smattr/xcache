@@ -266,6 +266,10 @@ int main(int argc, const char **argv) {
                 break;
             }
 
+            case SYS_readlink:
+                ADD_AS(input, 1);
+                break;
+
             case SYS_stat:
                 ADD_AS(input, 1);
                 break;
@@ -286,7 +290,6 @@ int main(int argc, const char **argv) {
             case SYS_mount:
             case SYS_openat:
             case SYS_pivot_root:
-            case SYS_readlink:
             case SYS_readlinkat:
             case SYS_rename:
             case SYS_renameat:
