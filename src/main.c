@@ -291,15 +291,12 @@ int main(int argc, const char **argv) {
             case SYS_readlinkat:
             case SYS_rename:
             case SYS_renameat:
-            case SYS_rmdir:
             case SYS_statfs:
             case SYS_swapoff:
             case SYS_swapon:
             case SYS_symlink:
             case SYS_symlinkat:
             case SYS_truncate:
-            case SYS_unlink:
-            case SYS_unlinkat:
 #if __WORDSIZE == 32
             /* umount is not available on a 64-bit kernel. */
             case SYS_umount:
