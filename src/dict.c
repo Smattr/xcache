@@ -8,154 +8,107 @@
 
 #define ENTRIES 127
 
-typedef struct entry {
+typedef struct _entry {
     char *key;
     void *value;
-    struct entry *next;
+    struct _entry *next;
 } entry_t;
 
-dict_t *dict_new(void) {
-    dict_t *d = (dict_t*)calloc(ENTRIES, sizeof(entry_t*));
+struct dict {
+    entry_t **entries;
+    size_t size;
+    void *(*get_value)(const char *key);
+};
+
+dict_t *dict_new(void *(*get_value)(const char *key)) {
+    dict_t *d = (dict_t*)malloc(sizeof(*d));
+    if (d == NULL)
+        return NULL;
+    d->entries = (entry_t**)calloc(ENTRIES, sizeof(entry_t));
+    if (d->entries == NULL) {
+        free(d);
+        return NULL;
+    }
+    d->size = ENTRIES;
+    d->get_value = get_value;
     return d;
 }
 
-static entry_t *find(dict_t *dict, char *key, unsigned int index, entry_t **prev) {
-    assert(dict != NULL);
-    for (entry_t *p = dict[index], *q = NULL; p != NULL; q = p, p = p->next) {
-        if (!strcmp(p->key, key)) {
-            /* Found it. */
-            if (prev != NULL) {
-                *prev = q;
-            }
-            return p;
-        }
+static bool contains(dict_t *d, unsigned int index, const char *key) {
+    for (entry_t *e = d->entries[index]; e != NULL; e = e->next) {
+        if (!strcmp(e->key, key))
+            return true;
     }
-    /* Didn't find it. */
-    if (prev != NULL) {
-        *prev = NULL;
-    }
-    return NULL;
+    return false;
 }
 
-int dict_add(dict_t *dict, char *key, void *value) {
-    unsigned int index = hash(ENTRIES, key);
-    entry_t *e = find(dict, key, index, NULL);
-    if (e == NULL) {
-        e = (entry_t*)malloc(sizeof(entry_t));
-        if (e == NULL) {
-            return -1;
-        }
-        e->key = strdup(key);
-        if (e->key == NULL) {
-            free(e);
-            return -1;
-        }
-        e->next = dict[index];
-        dict[index] = e;
+int dict_add(dict_t *d, const char *key) {
+    unsigned int index = hash(d->size, key);
+    if (contains(d, index, key))
+        return 0;
+    entry_t *e = (entry_t*)malloc(sizeof(*e));
+    if (e == NULL)
+        return -1;
+    e->key = strdup(key);
+    if (e->key == NULL) {
+        free(e);
+        return -1;
     }
-    e->value = value;
-    
+    e->value = d->get_value(key);
+    if (e->value == NULL) {
+        free(e->key);
+        free(e);
+        return -1;
+    }
+    e->next = d->entries[index];
+    d->entries[index] = e;
     return 0;
 }
 
-int dict_add_if(dict_t *dict, char *key, void *(*guard)(char *key, void *current)) {
-    unsigned int index = hash(ENTRIES, key);
-    entry_t *e = find(dict, key, index, NULL);
-    if (e == NULL) {
-        /* TODO: slow */
-        return dict_add(dict, key, guard(key, NULL));
-    }
-    e->value = guard(key, e->value);
-    return 0;
-}
-
-void *dict_remove(dict_t *dict, char *key) {
-    unsigned int index = hash(ENTRIES, key);
-    entry_t *p, *prev;
-
-    p = find(dict, key, index, &prev);
-    if (p == NULL) {
-        return NULL;
-    } else if (prev != NULL) {
-        prev->next = p->next;
-    } else {
-        dict[index] = p->next;
-    }
-    void *value = p->value;
-    free(p->key);
-    free(p);
-    return value;
-}
-
-void *dict_find(dict_t *dict, char *key) {
-    unsigned int index = hash(ENTRIES, key);
-    entry_t *p;
-
-    p = find(dict, key, index, NULL);
-    if (p != NULL) {
-        return p->value;
-    }
-    return NULL;
-}
-
-struct iter {
+struct dict_iter {
     dict_t *dict;
     unsigned int index;
     entry_t *entry;
 };
 
-iter_t *dict_iter(dict_t *dict) {
-    iter_t *i = (iter_t*)malloc(sizeof(iter_t));
-    if (i == NULL) {
+dict_iter_t *dict_iter(dict_t *d) {
+    dict_iter_t *i = (dict_iter_t*)malloc(sizeof(*i));
+    if (i == NULL)
         return NULL;
-    }
-    i->dict = dict;
+    i->dict = d;
     i->index = 0;
-    i->entry = dict[0];
+    i->entry = d->entries[0];
     return i;
 }
 
-bool iter_next(iter_t *iter, char **key, void **value) {
-    assert(iter != NULL);
-    if (iter->entry != NULL) {
-        if (key != NULL) {
-            *key = iter->entry->key;
-        }
-        if (value != NULL) {
-            *value = iter->entry->value;
-        }
-        iter->entry = iter->entry->next;
-        return true;
-    }
-    for (iter->index++; iter->index < ENTRIES; iter->index++) {
-        if (iter->dict[iter->index] != NULL) {
-            if (key != NULL) {
-                *key = iter->dict[iter->index]->key;
-            }
-            if (value != NULL) {
-                *value = iter->dict[iter->index]->value;
-            }
-            iter->entry = iter->dict[iter->index]->next;
-            return true;
-        }
-    }
-    free(iter);
-    return false;
+void dict_iter_destroy(dict_iter_t *i) {
+    free(i);
 }
 
-void iter_destroy(iter_t *iter) {
-    free(iter);
+int dict_iter_next(dict_iter_t *i, char **key, void **value) {
+    while (i->index < i->dict->size && i->entry == NULL) {
+        i->index++;
+        i->entry = i->dict->entries[i->index];
+    }
+    if (i->index == i->dict->size) {
+        dict_iter_destroy(i);
+        return 1;
+    }
+    assert(i->entry != NULL);
+    *key = i->entry->key;
+    *value = i->entry->value;
+    i->entry = i->entry->next;
+    return 0;
 }
 
-void dict_destroy(dict_t *dict) {
-    assert(dict != NULL);
-    for (unsigned int i = 0; i < ENTRIES; i++) {
-        for (entry_t *e = dict[i]; e != NULL;) {
+void dict_destroy(dict_t *d) {
+    for (unsigned int i = 0; i < d->size; i++) {
+        for (entry_t *e = d->entries[i]; e != NULL;) {
             entry_t *next = e->next;
             free(e->key);
             free(e);
             e = next;
         }
     }
-    free(dict);
+    free(d);
 }
