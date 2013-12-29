@@ -234,13 +234,14 @@ int next_syscall(proc_t *proc, syscall_t *syscall) {
 
     syscall->call = syscall_number(proc);
     syscall->enter = (proc->state == RUNNING_IN_USER);
-    assert(!syscall->enter || syscall_result(proc) == -ENOSYS);
-    if (!syscall->enter) {
+    if (syscall->enter && syscall_result(proc) != -ENOSYS)
+        IDEBUG("warning: target appears to have invoked syscall %ld directly "
+            "(not via libc stubs)\n", syscall_number(proc));
+    if (!syscall->enter)
         syscall->result = syscall_result(proc);
-    }
-    if (proc->state == RUNNING_IN_USER) {
+    if (proc->state == RUNNING_IN_USER)
         proc->state = RUNNING_IN_KERNEL;
-    } else {
+    else {
         assert(proc->state == RUNNING_IN_KERNEL);
         proc->state = RUNNING_IN_USER;
     }
