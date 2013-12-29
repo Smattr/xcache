@@ -213,11 +213,9 @@ int main(int argc, const char **argv) {
                         translate_syscall(s.call), s.call);
                     goto bailout;
 
-#if 0
                 default:
-                    DEBUG("irrelevant syscall entry %s (%ld)\n",
+                    IDEBUG("irrelevant syscall entry %s (%ld)\n",
                         translate_syscall(s.call), s.call);
-#endif
             }
             acknowledge_syscall(target);
             continue;
@@ -312,11 +310,9 @@ int main(int argc, const char **argv) {
                     translate_syscall(s.call), s.call);
                 goto bailout;
 
-#if 0
             default:
-                DEBUG("irrelevant syscall exit %s (%ld)\n",
+                IDEBUG("irrelevant syscall exit %s (%ld)\n",
                     translate_syscall(s.call), s.call);
-#endif
         }
         acknowledge_syscall(target);
 
