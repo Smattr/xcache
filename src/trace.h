@@ -2,28 +2,30 @@
 #define _XCACHE_TRACE_H_
 
 #include <stdbool.h>
+#include <unistd.h>
 
-typedef struct proc proc_t;
+typedef struct tracee tracee_t;
 
 typedef struct {
+    pid_t pid;
     long call;
     bool enter;
     long result;
 } syscall_t;
 
-proc_t *trace(const char **argv);
+tracee_t *trace(const char **argv);
 
-int next_syscall(proc_t *proc, syscall_t *s);
-int acknowledge_syscall(proc_t *proc);
+int next_syscall(tracee_t *tracee, syscall_t *syscall);
+int acknowledge_syscall(syscall_t *syscall);
 
-int delete(proc_t *proc);
+int delete(tracee_t *tracee);
 
-int complete(proc_t *proc);
+int complete(tracee_t *tracee);
 
-char *syscall_getstring(proc_t *proc, int arg);
-long syscall_getarg(proc_t *proc, int arg);
+char *syscall_getstring(syscall_t *syscall, int arg);
+long syscall_getarg(syscall_t *syscall, int arg);
 
-const char *get_stdout(proc_t *proc);
-const char *get_stderr(proc_t *proc);
+const char *get_stdout(tracee_t *tracee);
+const char *get_stderr(tracee_t *tracee);
 
 #endif

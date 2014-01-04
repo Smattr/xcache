@@ -154,7 +154,7 @@ int main(int argc, const char **argv) {
         return -1;
     }
 
-    proc_t *target = trace(&argv[index]);
+    tracee_t *target = trace(&argv[index]);
     if (target == NULL) {
         ERROR("Failed to start and trace target %s\n", argv[index]);
         return -1;
@@ -167,7 +167,7 @@ int main(int argc, const char **argv) {
 
 #define ADD_AS(category, argno) \
     do { \
-        char *_f = syscall_getstring(target, (argno)); \
+        char *_f = syscall_getstring(&s, (argno)); \
         if (_f == NULL) { \
             DEBUG("Failed to retrieve string argument %d from syscall %s " \
                 "(%ld)\n", (argno), translate_syscall(s.call), s.call); \
@@ -217,7 +217,7 @@ int main(int argc, const char **argv) {
                     IDEBUG("irrelevant syscall entry %s (%ld)\n",
                         translate_syscall(s.call), s.call);
             }
-            acknowledge_syscall(target);
+            acknowledge_syscall(&s);
             continue;
         }
 
@@ -235,8 +235,8 @@ int main(int argc, const char **argv) {
                 break;
 
             case SYS_open: {
-                int flags = (int)syscall_getarg(target, 2);
-                char *fname = syscall_getstring(target, 1);
+                int flags = (int)syscall_getarg(&s, 2);
+                char *fname = syscall_getstring(&s, 1);
                 int r = 0;
                 if (fname == NULL) {
                     DEBUG("Failed to retrieve string argument 1 from " \
@@ -311,7 +311,7 @@ int main(int argc, const char **argv) {
                 IDEBUG("irrelevant syscall exit %s (%ld)\n",
                     translate_syscall(s.call), s.call);
         }
-        acknowledge_syscall(target);
+        acknowledge_syscall(&s);
 
 #undef ADD_AS
 
@@ -324,6 +324,8 @@ int main(int argc, const char **argv) {
     success = true;
 
 bailout:;
+    if (!success)
+        acknowledge_syscall(&s);
     int ret = complete(target);
 
     const char *outfile = get_stdout(target),
