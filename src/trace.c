@@ -21,10 +21,10 @@
 struct proc {
     pid_t pid;
     enum {
-        RUNNING_IN_USER,
-        BLOCKED_SYSENTER,
-        RUNNING_IN_KERNEL,
-        BLOCKED_SYSEXIT,
+        IN_USER,
+        SYSENTER,
+        IN_KERNEL,
+        SYSEXIT,
         TERMINATED,
         DETACHED,
         FINALISED,
@@ -100,7 +100,7 @@ tracee_t *trace(const char **argv) {
         DEBUG("failed first resume of tracee (%d)\n", errno);
         goto fail;
     }
-    t->root.state = RUNNING_IN_USER;
+    t->root.state = IN_USER;
     return t;
 
 fail:
@@ -187,7 +187,7 @@ long syscall_getarg(syscall_t *syscall, int arg) {
 
 int next_syscall(tracee_t *tracee, syscall_t *syscall) {
     assert(tracee != NULL);
-    if (tracee->root.state != RUNNING_IN_USER && tracee->root.state != RUNNING_IN_KERNEL) {
+    if (tracee->root.state != IN_USER && tracee->root.state != IN_KERNEL) {
         DEBUG("attempt to retrieve a syscall from a stopped process\n");
         return -1;
     }
@@ -257,7 +257,7 @@ retry:;
         if (p == NULL)
             return -1;
         p->pid = pid;
-        p->state = RUNNING_IN_USER;
+        p->state = IN_USER;
         p->next = tracee->child;
         tracee->child = p;
         long r = pt_runtosyscall(pid);
@@ -269,7 +269,7 @@ retry:;
     }
     syscall->proc = p;
     syscall->call = syscall_number(pid);
-    syscall->enter = (p->state == RUNNING_IN_USER);
+    syscall->enter = (p->state == IN_USER);
     if (syscall->enter && syscall_result(pid) != -ENOSYS)
         /* Maybe not especially relevant, but the libc syscall entry stubs
          * setup -ENOSYS in the syscall result register. This means we can
@@ -281,26 +281,26 @@ retry:;
             "(not via libc stubs)\n", syscall_number(pid));
     if (!syscall->enter)
         syscall->result = syscall_result(pid);
-    if (p->state == RUNNING_IN_USER)
-        p->state = BLOCKED_SYSENTER;
+    if (p->state == IN_USER)
+        p->state = SYSENTER;
     else {
-        assert(p->state == RUNNING_IN_KERNEL);
-        p->state = BLOCKED_SYSEXIT;
+        assert(p->state == IN_KERNEL);
+        p->state = SYSEXIT;
     }
 
     return 0;
 }
 
 int acknowledge_syscall(syscall_t *syscall) {
-    assert(syscall->proc->state == BLOCKED_SYSENTER ||
-           syscall->proc->state == BLOCKED_SYSEXIT);
+    assert(syscall->proc->state == SYSENTER ||
+           syscall->proc->state == SYSEXIT);
     long r = pt_runtosyscall(syscall->proc->pid);
     if (r != 0)
         DEBUG("failed to resume process (%d)\n", errno);
-    if (syscall->proc->state == BLOCKED_SYSENTER)
-        syscall->proc->state = RUNNING_IN_KERNEL;
+    if (syscall->proc->state == SYSENTER)
+        syscall->proc->state = IN_KERNEL;
     else
-        syscall->proc->state = RUNNING_IN_USER;
+        syscall->proc->state = IN_USER;
     return (int)r;
 }
 
@@ -320,7 +320,7 @@ static int finish(pid_t pid) {
 }
 
 void unblock(proc_t *proc) {
-    if (proc->state == BLOCKED_SYSENTER || proc->state == BLOCKED_SYSEXIT)
+    if (proc->state == SYSENTER || proc->state == SYSEXIT)
         pt_continue(proc->pid);
 }
 
