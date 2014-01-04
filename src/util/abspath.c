@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "../util.h"
 
 char *abspath(const char *relpath) {
     assert(relpath != NULL);

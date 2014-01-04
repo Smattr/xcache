@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
-#include "util.h"
+#include "../util.h"
 
 unsigned int hash(size_t limit, const char *s) {
     unsigned int h = 0;
