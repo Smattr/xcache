@@ -60,4 +60,9 @@ ssize_t reduce(const char *path, ssize_t reduction);
  */
 bool get(char *buffer, size_t limit, FILE *f);
 
+typedef struct file_iter file_iter_t;
+file_iter_t *file_iter(const char *path);
+void file_iter_destroy(file_iter_t *fi);
+char *file_iter_next(file_iter_t *fi);
+
 #endif
