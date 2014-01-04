@@ -6,7 +6,6 @@
 #include "dict.h"
 #include <errno.h>
 #include <fcntl.h>
-#include "util/file.h"
 #include <limits.h>
 #include "log.h"
 #include <stdbool.h>
@@ -19,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "util.h"
 #include <utime.h>
 
 /* Subdirectory of the cache root under which to cache file contents of output

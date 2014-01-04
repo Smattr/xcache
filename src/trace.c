@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "util/file.h"
 #include <linux/limits.h>
 #include "log.h"
 #include <pthread.h>
@@ -17,6 +16,7 @@
 #include "tee.h"
 #include "trace.h"
 #include <unistd.h>
+#include "util.h"
 
 struct proc {
     pid_t pid;

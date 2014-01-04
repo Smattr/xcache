@@ -2,7 +2,6 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "file.h"
 #include <openssl/md5.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -14,6 +13,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "../util.h"
 
 int mkdirp(const char *path) {
     assert(path != NULL);

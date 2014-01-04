@@ -1,5 +1,4 @@
 #include <assert.h>
-#include "util/file.h"
 #include <linux/limits.h>
 #include "log.h"
 #include "ptrace-wrapper.h"
@@ -11,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "util.h"
 
 long pt_traceme(void) {
     return ptrace(PTRACE_TRACEME, 0, NULL, NULL);
