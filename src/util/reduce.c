@@ -15,39 +15,31 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-ssize_t du(const char *path) {
+ssize_t reduce(const char *path, ssize_t reduction) {
     assert(path != NULL);
+    assert(reduction > 0);
 
     file_iter_t *fi = file_iter(path);
     if (fi == NULL)
         return -1;
 
-    ssize_t sz = 0;
+    ssize_t removed = 0;
     char *fname;
-    while ((fname = file_iter_next(fi)) != NULL) {
+    while (removed < reduction && (fname = file_iter_next(fi)) != NULL) {
         struct stat st;
         if (stat(fname, &st) != 0) {
             file_iter_destroy(fi);
             return -1;
         }
-        sz += st.st_size;
+        if (unlink(fname) != 0) {
+            file_iter_destroy(fi);
+            return -1;
+        }
+        removed += st.st_size;
     }
-    return sz;
-}
 
-bool get(char *buffer, size_t limit, FILE *f) {
-    if (limit == 0)
-        return false;
-    while (limit > 1) {
-        int c = fgetc(f);
-        if (c == EOF)
-            return false;
-        else if (c == '\0')
-            break;
-        *buffer++ = c;
-        limit--;
-    }
-    assert(limit >= 1);
-    *buffer = '\0';
-    return true;
+    if (fname != NULL)
+        file_iter_destroy(fi);
+
+    return removed;
 }
