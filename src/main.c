@@ -3,7 +3,7 @@
 #include "config.h"
 #include "depset.h"
 #include <fcntl.h>
-#include "file.h"
+#include "util/file.h"
 #include "log.h"
 #include <stdbool.h>
 #include <stdio.h>

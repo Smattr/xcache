@@ -6,7 +6,7 @@
 #include "dict.h"
 #include <errno.h>
 #include <fcntl.h>
-#include "file.h"
+#include "util/file.h"
 #include <limits.h>
 #include "log.h"
 #include <stdbool.h>

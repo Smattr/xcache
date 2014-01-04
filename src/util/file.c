@@ -3,7 +3,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include "file.h"
-#include "log.h"
 #include <openssl/md5.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -150,7 +149,6 @@ int mkdirp(const char *path) {
             *p = '\0';
             int r = mkdir(path, 0775);
             if (r != 0 && errno != EEXIST) {
-                DEBUG("Failed to create directory \"%s\"\n", abspath);
                 *p = '/';
                 if (path[0] != '/')
                     free(abspath);
@@ -160,7 +158,6 @@ int mkdirp(const char *path) {
         }
     }
     if (mkdir(path, 0775) != 0 && errno != EEXIST) {
-        DEBUG("Failed to create directory \"%s\"\n", abspath);
         if (path[0] != '/')
             free(abspath);
         return -1;
