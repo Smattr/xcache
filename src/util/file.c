@@ -15,53 +15,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int mkdirp(const char *path) {
-    assert(path != NULL);
-
-    char *abspath;
-    if (path[0] == '/')
-        /* Path is already absolute. */
-        abspath = (char*)path;
-    else {
-        char *cwd = getcwd(NULL, 0);
-        if (cwd == NULL)
-            return -1;
-        abspath = (char*)realloc(cwd, strlen(cwd) + 1 + strlen(path) + 1);
-        if (abspath == NULL) {
-            free(cwd);
-            return -1;
-        }
-        strcat(abspath, "/");
-        strcat(abspath, path);
-    }
-
-    /* We commit a white lie, in that we told the caller we weren't going to
-     * modify their string and we do. I think it's acceptable because we undo
-     * the changes we make.
-     */
-    for (char *p = abspath + 1; *p != '\0'; p++) {
-        if (*p == '/') {
-            *p = '\0';
-            int r = mkdir(path, 0775);
-            if (r != 0 && errno != EEXIST) {
-                *p = '/';
-                if (path[0] != '/')
-                    free(abspath);
-                return -1;
-            }
-            *p = '/';
-        }
-    }
-    if (mkdir(path, 0775) != 0 && errno != EEXIST) {
-        if (path[0] != '/')
-            free(abspath);
-        return -1;
-    }
-    if (path[0] != '/')
-        free(abspath);
-    return 0;
-}
-
 typedef struct {
     DIR *dir;
     off_t root_len;
