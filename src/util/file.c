@@ -15,26 +15,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-ssize_t du(const char *path) {
-    assert(path != NULL);
-
-    file_iter_t *fi = file_iter(path);
-    if (fi == NULL)
-        return -1;
-
-    ssize_t sz = 0;
-    char *fname;
-    while ((fname = file_iter_next(fi)) != NULL) {
-        struct stat st;
-        if (stat(fname, &st) != 0) {
-            file_iter_destroy(fi);
-            return -1;
-        }
-        sz += st.st_size;
-    }
-    return sz;
-}
-
 bool get(char *buffer, size_t limit, FILE *f) {
     if (limit == 0)
         return false;
