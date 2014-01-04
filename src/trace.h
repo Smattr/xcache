@@ -16,7 +16,7 @@ typedef struct {
 
 tracee_t *trace(const char **argv);
 
-int next_syscall(tracee_t *tracee, syscall_t *syscall);
+syscall_t *next_syscall(tracee_t *tracee);
 int acknowledge_syscall(syscall_t *syscall);
 
 int delete(tracee_t *tracee);

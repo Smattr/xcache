@@ -162,15 +162,15 @@ int main(int argc, const char **argv) {
 
     bool success = false;
 
-    syscall_t s;
-    while (next_syscall(target, &s) == 0) {
+    syscall_t *s;
+    while ((s = next_syscall(target)) != NULL) {
 
 #define ADD_AS(category, argno) \
     do { \
-        char *_f = syscall_getstring(&s, (argno)); \
+        char *_f = syscall_getstring(s, (argno)); \
         if (_f == NULL) { \
             DEBUG("Failed to retrieve string argument %d from syscall %s " \
-                "(%ld)\n", (argno), translate_syscall(s.call), s.call); \
+                "(%ld)\n", (argno), translate_syscall(s->call), s->call); \
             goto bailout; \
         } \
         char *_fabs = abspath(_f); \
@@ -192,8 +192,8 @@ int main(int argc, const char **argv) {
          * entry is relevant for us. The relevant ones are essentially ones
          * that destroy some resource we need to measure before it disappears.
          */
-        if (s.enter) {
-            switch (s.call) {
+        if (s->enter) {
+            switch (s->call) {
 
                 case SYS_rename:
                     ADD_AS(input, 1);
@@ -210,21 +210,21 @@ int main(int argc, const char **argv) {
                 case SYS_renameat:
                 case SYS_unlinkat:
                     DEBUG("bailing out due to unhandled syscall %s (%ld)\n",
-                        translate_syscall(s.call), s.call);
+                        translate_syscall(s->call), s->call);
                     goto bailout;
 
                 default:
                     IDEBUG("irrelevant syscall entry %s (%ld)\n",
-                        translate_syscall(s.call), s.call);
+                        translate_syscall(s->call), s->call);
             }
-            acknowledge_syscall(&s);
+            acknowledge_syscall(s);
             continue;
         }
 
         /* We should now only be handling syscall exits. */
-        assert(!s.enter);
+        assert(!s->enter);
 
-        switch (s.call) {
+        switch (s->call) {
 
             case SYS_access:
                 ADD_AS(input, 1);
@@ -235,8 +235,8 @@ int main(int argc, const char **argv) {
                 break;
 
             case SYS_open: {
-                int flags = (int)syscall_getarg(&s, 2);
-                char *fname = syscall_getstring(&s, 1);
+                int flags = (int)syscall_getarg(s, 2);
+                char *fname = syscall_getstring(s, 1);
                 int r = 0;
                 if (fname == NULL) {
                     DEBUG("Failed to retrieve string argument 1 from " \
@@ -304,14 +304,14 @@ int main(int argc, const char **argv) {
             case SYS_umount2:
             case SYS_uselib:
                 DEBUG("bailing out due to unhandled syscall %s (%ld)\n",
-                    translate_syscall(s.call), s.call);
+                    translate_syscall(s->call), s->call);
                 goto bailout;
 
             default:
                 IDEBUG("irrelevant syscall exit %s (%ld)\n",
-                    translate_syscall(s.call), s.call);
+                    translate_syscall(s->call), s->call);
         }
-        acknowledge_syscall(&s);
+        acknowledge_syscall(s);
 
 #undef ADD_AS
 

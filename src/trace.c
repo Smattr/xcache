@@ -185,11 +185,11 @@ long syscall_getarg(syscall_t *syscall, int arg) {
     return pt_peekreg(syscall->proc->pid, offset);
 }
 
-int next_syscall(tracee_t *tracee, syscall_t *syscall) {
+syscall_t *next_syscall(tracee_t *tracee) {
     assert(tracee != NULL);
     if (tracee->root.state != IN_USER && tracee->root.state != IN_KERNEL) {
         DEBUG("attempt to retrieve a syscall from a stopped process\n");
-        return -1;
+        return NULL;
     }
 
 retry:;
@@ -217,7 +217,7 @@ retry:;
         tracee->root.state = TERMINATED;
         tracee->exit_status = WEXITSTATUS(status);
         DEBUG("tracee exited with status %d\n", tracee->exit_status);
-        return -1;
+        return NULL;
     }
 
     if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP &&
@@ -255,7 +255,7 @@ retry:;
         assert(WSTOPSIG(status) == SIGSTOP);
         p = (proc_t*)malloc(sizeof(*p));
         if (p == NULL)
-            return -1;
+            return NULL;
         p->pid = pid;
         p->state = IN_USER;
         p->next = tracee->child;
@@ -267,10 +267,13 @@ retry:;
         /* We still don't have a syscall for the caller, so try again. */
         goto retry;
     }
-    syscall->proc = p;
-    syscall->call = syscall_number(pid);
-    syscall->enter = (p->state == IN_USER);
-    if (syscall->enter && syscall_result(pid) != -ENOSYS)
+    syscall_t *s = (syscall_t*)malloc(sizeof(*s));
+    if (s == NULL)
+        return NULL;
+    s->proc = p;
+    s->call = syscall_number(pid);
+    s->enter = (p->state == IN_USER);
+    if (s->enter && syscall_result(pid) != -ENOSYS)
         /* Maybe not especially relevant, but the libc syscall entry stubs
          * setup -ENOSYS in the syscall result register. This means we can
          * detect a 'raw' syscall entry by the absence of this value. Note, for
@@ -279,8 +282,8 @@ retry:;
          */
         IDEBUG("warning: target appears to have invoked syscall %ld directly "
             "(not via libc stubs)\n", syscall_number(pid));
-    if (!syscall->enter)
-        syscall->result = syscall_result(pid);
+    if (!s->enter)
+        s->result = syscall_result(pid);
     if (p->state == IN_USER)
         p->state = SYSENTER;
     else {
@@ -288,7 +291,7 @@ retry:;
         p->state = SYSEXIT;
     }
 
-    return 0;
+    return s;
 }
 
 int acknowledge_syscall(syscall_t *syscall) {
@@ -301,6 +304,7 @@ int acknowledge_syscall(syscall_t *syscall) {
         syscall->proc->state = IN_KERNEL;
     else
         syscall->proc->state = IN_USER;
+    free(syscall);
     return (int)r;
 }
 
