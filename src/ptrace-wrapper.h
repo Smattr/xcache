@@ -23,6 +23,9 @@ long pt_peekreg(pid_t pid, off_t reg);
  */
 char *pt_peekstring(pid_t pid, off_t reg);
 
+/* Continue execution of a blocked process. */
+long pt_continue(pid_t pid);
+
 /* Pass an event, provided as a wait-/waitpid-returned status, to a traced
  * (blocked) process.
  */

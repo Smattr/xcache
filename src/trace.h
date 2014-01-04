@@ -5,9 +5,10 @@
 #include <unistd.h>
 
 typedef struct tracee tracee_t;
+typedef struct proc proc_t;
 
 typedef struct {
-    pid_t pid;
+    proc_t *proc;
     long call;
     bool enter;
     long result;

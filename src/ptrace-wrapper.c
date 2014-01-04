@@ -70,11 +70,15 @@ char *pt_peekstring(pid_t pid, off_t reg) {
     return s;
 }
 
+long pt_continue(pid_t pid) {
+    return ptrace(PTRACE_CONT, pid, NULL, NULL);
+}
+
 void pt_passthrough(pid_t pid, int event) {
     assert(WIFSTOPPED(event));
     int sig = WSTOPSIG(event);
     if (sig == SIGTRAP)
-        ptrace(PTRACE_CONT, pid, NULL, NULL);
+        pt_continue(pid);
     else
         ptrace(PTRACE_CONT, pid, NULL, sig);
 }

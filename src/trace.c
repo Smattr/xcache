@@ -18,18 +18,19 @@
 #include "trace.h"
 #include <unistd.h>
 
-typedef struct _proc {
+struct proc {
     pid_t pid;
     enum {
-        SETUP = 0,
         RUNNING_IN_USER,
+        BLOCKED_SYSENTER,
         RUNNING_IN_KERNEL,
+        BLOCKED_SYSEXIT,
         TERMINATED,
         DETACHED,
         FINALISED,
     } state;
-    struct _proc *next;
-} proc_t;
+    struct proc *next;
+};
 
 struct tracee {
     unsigned char exit_status;
@@ -174,14 +175,14 @@ char *syscall_getstring(syscall_t *syscall, int arg) {
     if (offset == -1)
         return NULL;
 
-    return pt_peekstring(syscall->pid, offset);
+    return pt_peekstring(syscall->proc->pid, offset);
 }
 
 long syscall_getarg(syscall_t *syscall, int arg) {
     long offset = register_offset(arg);
     if (offset == -1)
         return -1;
-    return pt_peekreg(syscall->pid, offset);
+    return pt_peekreg(syscall->proc->pid, offset);
 }
 
 int next_syscall(tracee_t *tracee, syscall_t *syscall) {
@@ -266,7 +267,7 @@ retry:;
         /* We still don't have a syscall for the caller, so try again. */
         goto retry;
     }
-    syscall->pid = pid;
+    syscall->proc = p;
     syscall->call = syscall_number(pid);
     syscall->enter = (p->state == RUNNING_IN_USER);
     if (syscall->enter && syscall_result(pid) != -ENOSYS)
@@ -281,19 +282,25 @@ retry:;
     if (!syscall->enter)
         syscall->result = syscall_result(pid);
     if (p->state == RUNNING_IN_USER)
-        p->state = RUNNING_IN_KERNEL;
+        p->state = BLOCKED_SYSENTER;
     else {
         assert(p->state == RUNNING_IN_KERNEL);
-        p->state = RUNNING_IN_USER;
+        p->state = BLOCKED_SYSEXIT;
     }
 
     return 0;
 }
 
 int acknowledge_syscall(syscall_t *syscall) {
-    long r = pt_runtosyscall(syscall->pid);
+    assert(syscall->proc->state == BLOCKED_SYSENTER ||
+           syscall->proc->state == BLOCKED_SYSEXIT);
+    long r = pt_runtosyscall(syscall->proc->pid);
     if (r != 0)
         DEBUG("failed to resume process (%d)\n", errno);
+    if (syscall->proc->state == BLOCKED_SYSENTER)
+        syscall->proc->state = RUNNING_IN_KERNEL;
+    else
+        syscall->proc->state = RUNNING_IN_USER;
     return (int)r;
 }
 
@@ -312,15 +319,22 @@ static int finish(pid_t pid) {
     }
 }
 
+void unblock(proc_t *proc) {
+    if (proc->state == BLOCKED_SYSENTER || proc->state == BLOCKED_SYSEXIT)
+        pt_continue(proc->pid);
+}
+
 int complete(tracee_t *tracee) {
-    if (tracee->root.state == RUNNING_IN_USER || tracee->root.state == RUNNING_IN_KERNEL) {
+    if (tracee->root.state != TERMINATED) {
         for (proc_t *p = tracee->child; p != NULL;) {
+            unblock(p);
             pt_detach(p->pid);
             proc_t *q = p;
             p = p->next;
             free(q);
         }
         tracee->root.state = TERMINATED;
+        unblock(&tracee->root);
         tracee->exit_status = finish(tracee->root.pid);
     }
     assert(tracee->outfile == NULL);

@@ -324,8 +324,6 @@ int main(int argc, const char **argv) {
     success = true;
 
 bailout:;
-    if (!success)
-        acknowledge_syscall(&s);
     int ret = complete(target);
 
     const char *outfile = get_stdout(target),
