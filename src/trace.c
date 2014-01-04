@@ -26,7 +26,6 @@ struct proc {
         IN_KERNEL,
         SYSEXIT,
         TERMINATED,
-        DETACHED,
         FINALISED,
     } state;
     struct proc *next;
