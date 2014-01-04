@@ -6,6 +6,7 @@
 #include <linux/limits.h>
 #include "log.h"
 #include <pthread.h>
+#include "ptrace-wrapper.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,10 +65,9 @@ tracee_t *trace(const char **argv) {
                     dup2(stderr2, STDERR_FILENO) == -1)
                 exit(-1);
 
-            long r = ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-            if (r != 0) {
+            long r = pt_traceme();
+            if (r != 0)
                 exit(-1);
-            }
             execvp(argv[0], (char**)argv);
 
             /* Exec failed. */
@@ -88,14 +88,13 @@ tracee_t *trace(const char **argv) {
         goto fail;
     }
 
-    long r = ptrace(PTRACE_SETOPTIONS, t->root.pid, NULL,
-        PTRACE_O_TRACEFORK|PTRACE_O_TRACEVFORK|PTRACE_O_TRACECLONE);
+    long r = pt_tracechildren(t->root.pid);
     if (r != 0) {
         DEBUG("failed to set tracing to catch forks (%d)\n", errno);
         goto fail;
     }
 
-    r = ptrace(PTRACE_SYSCALL, t->root.pid, NULL, NULL);
+    r = pt_runtosyscall(t->root.pid);
     if (r != 0) {
         DEBUG("failed first resume of tracee (%d)\n", errno);
         goto fail;
@@ -120,64 +119,16 @@ fail:
     return NULL;
 }
 
-static long peekuser(pid_t pid, off_t offset) {
-    return ptrace(PTRACE_PEEKUSER, pid, (void*)offset, NULL);
-}
-
-static char *peekstring(pid_t pid, off_t reg) {
-    char filename[100];
-
-    void *addr = (void*)peekuser(pid, reg);
-    if (addr == NULL) {
-        DEBUG("attempt to read as a string an argument the target passed as "
-            "(nil)\n");
-        return NULL;
-    }
-
-    /* At this point we could PTRACE_PEEKDATA to read the string, but this only
-     * lets us read word-by-word and hence is quite slow. On Linux, it's faster
-     * to do this through the /proc file system.
-     */
-
-    sprintf(filename, "/proc/%d/mem", pid);
-    FILE *f = fopen(filename, "r");
-    if (f == NULL) {
-        DEBUG("failed to open %s to read string\n", filename);
-        return NULL;
-    }
-
-    if (fseek(f, (off_t)addr, SEEK_SET) != 0) {
-        DEBUG("failed to seek %s\n", filename);
-        fclose(f);
-        return NULL;
-    }
-
-    char *s = (char*)malloc(PATH_MAX + 1);
-    if (s == NULL) {
-        fclose(f);
-        return NULL;
-    }
-
-    bool r = get(s, PATH_MAX + 1, f);
-    fclose(f);
-    if (!r) {
-        free(s);
-        return NULL;
-    }
-
-    return s;
-}
-
 #define OFFSET(reg) \
     (__builtin_offsetof(struct user, regs) + \
      __builtin_offsetof(struct user_regs_struct, reg))
 
 static long syscall_number(pid_t pid) {
-    return peekuser(pid, OFFSET(REG_SYSNO));
+    return pt_peekreg(pid, OFFSET(REG_SYSNO));
 }
 
 static long syscall_result(pid_t pid) {
-    return peekuser(pid, OFFSET(REG_RESULT));
+    return pt_peekreg(pid, OFFSET(REG_RESULT));
 }
 
 static long register_offset(int arg) {
@@ -223,14 +174,14 @@ char *syscall_getstring(syscall_t *syscall, int arg) {
     if (offset == -1)
         return NULL;
 
-    return peekstring(syscall->pid, offset);
+    return pt_peekstring(syscall->pid, offset);
 }
 
 long syscall_getarg(syscall_t *syscall, int arg) {
     long offset = register_offset(arg);
     if (offset == -1)
         return -1;
-    return peekuser(syscall->pid, offset);
+    return pt_peekreg(syscall->pid, offset);
 }
 
 int next_syscall(tracee_t *tracee, syscall_t *syscall) {
@@ -281,7 +232,7 @@ retry:;
          * to just ignore the SIGTRAP in the parent and start tracking the
          * child when we receive its initial SIGSTOP.
          */
-        long r = ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+        long r = pt_runtosyscall(pid);
         if (r != 0)
             DEBUG("failed to resume parent process %d (errno: %d)\n", pid,
                 errno);
@@ -308,7 +259,7 @@ retry:;
         p->state = RUNNING_IN_USER;
         p->next = tracee->child;
         tracee->child = p;
-        long r = ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+        long r = pt_runtosyscall(pid);
         if (r != 0)
             DEBUG("warning: failed to continue forked child %d (errno: %d)\n",
                 pid, errno);
@@ -340,49 +291,18 @@ retry:;
 }
 
 int acknowledge_syscall(syscall_t *syscall) {
-    long r = ptrace(PTRACE_SYSCALL, syscall->pid, NULL, NULL);
+    long r = pt_runtosyscall(syscall->pid);
     if (r != 0)
         DEBUG("failed to resume process (%d)\n", errno);
     return (int)r;
 }
 
-static void passthrough(pid_t pid, int event) {
-    if (WIFSTOPPED(event)) {
-        int sig = WSTOPSIG(event);
-        if (sig == SIGTRAP) {
-            ptrace(PTRACE_CONT, pid, NULL, NULL);
-        } else {
-            ptrace(PTRACE_CONT, pid, NULL, sig);
-        }
-    }
-}
-
-static void detach(pid_t pid) {
-    kill(pid, SIGSTOP);
+static int finish(pid_t pid) {
     while (true) {
         int status;
         waitpid(pid, &status, 0);
         if (WIFSTOPPED(status)) {
-            if (WSTOPSIG(status) == SIGSTOP) {
-                long r = ptrace(PTRACE_DETACH, pid, NULL, SIGCONT);
-                assert(r == 0);
-                break;
-            } else {
-                passthrough(pid, status);
-            }
-        } else {
-            assert(WIFSIGNALED(status) || WIFEXITED(status));
-            break;
-        }
-    }
-}
-
-static int fin(pid_t pid) {
-    while (true) {
-        int status;
-        waitpid(pid, &status, 0);
-        if (WIFSTOPPED(status)) {
-            passthrough(pid, status);
+            pt_passthrough(pid, status);
         } else if (WIFEXITED(status)) {
             return WEXITSTATUS(status);
         } else {
@@ -395,13 +315,13 @@ static int fin(pid_t pid) {
 int complete(tracee_t *tracee) {
     if (tracee->root.state == RUNNING_IN_USER || tracee->root.state == RUNNING_IN_KERNEL) {
         for (proc_t *p = tracee->child; p != NULL;) {
-            detach(p->pid);
+            pt_detach(p->pid);
             proc_t *q = p;
             p = p->next;
             free(q);
         }
         tracee->root.state = TERMINATED;
-        tracee->exit_status = fin(tracee->root.pid);
+        tracee->exit_status = finish(tracee->root.pid);
     }
     assert(tracee->outfile == NULL);
     tracee->outfile = tee_close(tracee->out);
