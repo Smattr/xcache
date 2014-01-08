@@ -1,5 +1,6 @@
 #include "arch_syscall.h"
 #include <assert.h>
+#include "collection/list.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/limits.h>
@@ -7,6 +8,7 @@
 #include <pthread.h>
 #include "ptrace-wrapper.h"
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ptrace.h>
@@ -28,23 +30,31 @@ struct proc {
         TERMINATED,
         FINALISED,
     } state;
-    struct proc *next;
 };
 
 struct tracee {
     unsigned char exit_status;
     proc_t root;
 
-    proc_t *child;
+    list_t *children;
 
     tee_t *out, *err;
     char *outfile, *errfile;
 };
 
+static void *proc_key(void *proc) {
+    proc_t *p = (proc_t*)proc;
+    return (void*)(uintptr_t)p->pid;
+}
+
 tracee_t *trace(const char **argv) {
     tracee_t *t = (tracee_t*)calloc(1, sizeof(*t));
     if (t == NULL)
         return NULL;
+
+    t->children = list(proc_key);
+    if (t->children == NULL)
+        goto fail;
 
     int stdout2 = STDOUT_FILENO;
     t->out = tee_create(&stdout2);
@@ -199,13 +209,9 @@ retry:;
         if (pid != tracee->root.pid) {
             /* A forked child exited. */
             IDEBUG("child %d exited\n", pid);
-            proc_t *p, *q;
-            for (q = NULL, p = tracee->child; p != NULL && p->pid != pid; q = p, p = p->next);
+            proc_t *p = (proc_t*)list_remove(tracee->children,
+                (void*)(uintptr_t)pid);
             assert(p != NULL && p->pid == pid);
-            if (q == NULL)
-                tracee->child = p->next;
-            else
-                q->next = p->next;
             free(p);
             goto retry;
         }
@@ -246,7 +252,7 @@ retry:;
     if (pid == tracee->root.pid)
         p = &tracee->root;
     else
-        for (p = tracee->child; p != NULL && p->pid != pid; p = p->next);
+        p = (proc_t*)list_find(tracee->children, (void*)(uintptr_t)pid);
     if (p == NULL) {
         /* We've hit a signal in a new (untraced) process. This is the first
          * we've seen of a forked child process, so let's start tracing it.
@@ -257,8 +263,7 @@ retry:;
             return NULL;
         p->pid = pid;
         p->state = IN_USER;
-        p->next = tracee->child;
-        tracee->child = p;
+        list_add(tracee->children, p);
         long r = pt_runtosyscall(pid);
         if (r != 0)
             DEBUG("warning: failed to continue forked child %d (errno: %d)\n",
@@ -329,12 +334,10 @@ void unblock(proc_t *proc) {
 
 int complete(tracee_t *tracee) {
     if (tracee->root.state != TERMINATED) {
-        for (proc_t *p = tracee->child; p != NULL;) {
+        for (proc_t *p; (p = list_pop(tracee->children)) != NULL;) {
             unblock(p);
             pt_detach(p->pid);
-            proc_t *q = p;
-            p = p->next;
-            free(q);
+            free(p);
         }
         tracee->root.state = TERMINATED;
         unblock(&tracee->root);
@@ -363,6 +366,7 @@ int delete(tracee_t *tracee) {
         free(tracee->errfile);
     if (tracee->outfile != NULL)
         free(tracee->outfile);
+    list_destroy(tracee->children);
     free(tracee);
     return 0;
 }
