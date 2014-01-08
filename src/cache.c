@@ -1,9 +1,9 @@
 #include <assert.h>
 #include "cache.h"
+#include "collection/dict.h"
 #include "constants.h"
 #include "db.h"
 #include "depset.h"
-#include "dict.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
