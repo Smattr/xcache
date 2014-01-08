@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include "util.h"
+#include "../util.h"
 
 #define ENTRIES 127
 

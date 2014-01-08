@@ -2,7 +2,7 @@
 #define _XCACHE_DEPSET_H_
 
 #include "collection/dict.h"
-#include "set.h"
+#include "collection/set.h"
 
 typedef struct depset depset_t;
 

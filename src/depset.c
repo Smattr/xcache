@@ -1,8 +1,8 @@
 #include <assert.h>
 #include "collection/dict.h"
+#include "collection/set.h"
 #include "constants.h"
 #include "depset.h"
-#include "set.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
