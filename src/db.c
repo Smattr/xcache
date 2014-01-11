@@ -145,6 +145,45 @@ fail:
     return result;
 }
 
+int db_remove_id(db_t *db, int id) {
+    sqlite3_stmt *s = NULL;
+
+    int result = -1;
+
+    if (prepare(db, &s, QUERY(deleteoutput)) != SQLITE_OK)
+        goto fail;
+    if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
+        goto fail;
+    if (sqlite3_step(s) != SQLITE_DONE)
+        goto fail;
+    sqlite3_finalize(s);
+    s = NULL;
+
+    if (prepare(db, &s, QUERY(deleteinput)) != SQLITE_OK)
+        goto fail;
+    if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
+        goto fail;
+    if (sqlite3_step(s) != SQLITE_DONE)
+        goto fail;
+    sqlite3_finalize(s);
+    s = NULL;
+
+    if (prepare(db, &s, QUERY(deleteoperation)) != SQLITE_OK)
+        goto fail;
+    if (bind_int(s, "@id", id) != SQLITE_OK)
+        goto fail;
+    if (sqlite3_step(s) != SQLITE_DONE)
+        goto fail;
+
+    result = 0;
+
+fail:
+    if (s != NULL)
+        sqlite3_finalize(s);
+
+    return result;
+}
+
 int db_insert_id(db_t *db, int *id, const char *cwd, const char *command) {
     sqlite3_stmt *s;
     if (prepare(db, &s, QUERY(addoperation)) != SQLITE_OK)
