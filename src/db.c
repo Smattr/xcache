@@ -80,6 +80,19 @@ static int bind_text(sqlite3_stmt *s, const char *param, const char *value) {
     return sqlite3_bind_text(s, index, value, -1, SQLITE_STATIC);
 }
 
+#define X(c_type, sql_type) \
+    static c_type column_##c_type(sqlite3_stmt *s, int index) { \
+        assert(sqlite3_column_type(s, index) == SQLITE_INTEGER); \
+        return (c_type)sqlite3_column_##sql_type(s, index); \
+    }
+#include "sql-type-mapping.h"
+#undef X
+
+static const char *column_text(sqlite3_stmt *s, int index) {
+    assert(sqlite3_column_type(s, index) == SQLITE_TEXT);
+    return (const char*)sqlite3_column_text(s, index);
+}
+
 int db_select_id(db_t *db, int *id, const char *cwd, const char *command) {
     sqlite3_stmt *s;
     if (prepare(db, &s, query_getid) != SQLITE_OK)
@@ -95,8 +108,7 @@ int db_select_id(db_t *db, int *id, const char *cwd, const char *command) {
         goto fail;
 
     assert(sqlite3_column_count(s) == 1);
-    assert(sqlite3_column_type(s, 0) == SQLITE_INTEGER);
-    *id = sqlite3_column_int(s, 0);
+    *id = column_int(s, 0);
 
     assert(sqlite3_step(s) == SQLITE_DONE);
 
@@ -217,11 +229,9 @@ int rowset_next_input(rowset_t *rows, const char **filename, time_t *timestamp) 
 
         case SQLITE_ROW:
             assert(sqlite3_column_count(rows->s) == 2);
-            assert(sqlite3_column_type(rows->s, 0) == SQLITE_TEXT);
-            *filename = (const char*)sqlite3_column_text(rows->s, 0);
+            *filename = column_text(rows->s, 0);
             assert(*filename != NULL);
-            assert(sqlite3_column_type(rows->s, 1) == SQLITE_INTEGER);
-            *timestamp = (time_t)sqlite3_column_int64(rows->s, 1);
+            *timestamp = column_time_t(rows->s, 1);
             return 0;
 
         default:
@@ -257,19 +267,13 @@ int rowset_next_output(rowset_t *rows, const char **filename, time_t *timestamp,
 
         case SQLITE_ROW:
             assert(sqlite3_column_count(rows->s) == 6);
-            assert(sqlite3_column_type(rows->s, 0) == SQLITE_TEXT);
-            *filename = (const char*)sqlite3_column_text(rows->s, 0);
+            *filename = column_text(rows->s, 0);
             assert(*filename != NULL);
-            assert(sqlite3_column_type(rows->s, 1) == SQLITE_INTEGER);
-            *timestamp = (time_t)sqlite3_column_int64(rows->s, 1);
-            assert(sqlite3_column_type(rows->s, 2) == SQLITE_INTEGER);
-            *mode = (mode_t)sqlite3_column_int(rows->s, 2);
-            assert(sqlite3_column_type(rows->s, 3) == SQLITE_INTEGER);
-            *uid = (uid_t)sqlite3_column_int(rows->s, 3);
-            assert(sqlite3_column_type(rows->s, 4) == SQLITE_INTEGER);
-            *gid = (gid_t)sqlite3_column_int(rows->s, 4);
-            assert(sqlite3_column_type(rows->s, 5) == SQLITE_TEXT);
-            *contents = (const char*)sqlite3_column_text(rows->s, 5);
+            *timestamp = column_time_t(rows->s, 1);
+            *mode = column_mode_t(rows->s, 2);
+            *uid = column_uid_t(rows->s, 3);
+            *gid = column_gid_t(rows->s, 4);
+            *contents = column_text(rows->s, 5);
             return 0;
 
         default:
