@@ -3,6 +3,7 @@
 #include "queries.h"
 #include <sqlite3.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 struct db {
@@ -58,52 +59,25 @@ static int prepare(db_t *db, sqlite3_stmt **s, const char *query) {
     return sqlite3_prepare_v2(db->handle, query, -1, s, NULL);
 }
 
+#define X(c_type, sql_type) \
+    static int bind_##c_type(sqlite3_stmt *s, const char *param, const c_type value) { \
+        int index = sqlite3_bind_parameter_index(s, param); \
+        if (index == 0) \
+            return !SQLITE_OK; \
+        if (!strcmp(#sql_type, "int64")) \
+            return sqlite3_bind_##sql_type(s, index, (sqlite3_int64)value); \
+        else \
+            return sqlite3_bind_##sql_type(s, index, value); \
+    }
+#include "sql-type-mapping.h"
+#undef X
+
 static int bind_text(sqlite3_stmt *s, const char *param, const char *value) {
     int index = sqlite3_bind_parameter_index(s, param);
     if (index == 0)
         return !SQLITE_OK;
 
     return sqlite3_bind_text(s, index, value, -1, SQLITE_STATIC);
-}
-
-static int bind_int(sqlite3_stmt *s, const char *param, int value) {
-    int index = sqlite3_bind_parameter_index(s, param);
-    if (index == 0)
-        return !SQLITE_OK;
-
-    return sqlite3_bind_int(s, index, value);
-}
-
-static int bind_time(sqlite3_stmt *s, const char *param, time_t value) {
-    int index = sqlite3_bind_parameter_index(s, param);
-    if (index == 0)
-        return !SQLITE_OK;
-
-    return sqlite3_bind_int64(s, index, (sqlite3_int64)value);
-}
-
-static int bind_mode(sqlite3_stmt *s, const char *param, mode_t value) {
-    int index = sqlite3_bind_parameter_index(s, param);
-    if (index == 0)
-        return !SQLITE_OK;
-
-    return sqlite3_bind_int(s, index, (int)value);
-}
-
-static int bind_uid(sqlite3_stmt *s, const char *param, uid_t value) {
-    int index = sqlite3_bind_parameter_index(s, param);
-    if (index == 0)
-        return !SQLITE_OK;
-
-    return sqlite3_bind_int(s, index, (int)value);
-}
-
-static int bind_gid(sqlite3_stmt *s, const char *param, gid_t value) {
-    int index = sqlite3_bind_parameter_index(s, param);
-    if (index == 0)
-        return !SQLITE_OK;
-
-    return sqlite3_bind_int(s, index, (int)value);
 }
 
 int db_select_id(db_t *db, int *id, const char *cwd, const char *command) {
@@ -166,7 +140,7 @@ int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp) {
 
     if (bind_int(s, "@fk_operation", id) != SQLITE_OK ||
             bind_text(s, "@filename", filename) != SQLITE_OK ||
-            bind_time(s, "@timestamp", timestamp) != SQLITE_OK)
+            bind_time_t(s, "@timestamp", timestamp) != SQLITE_OK)
         goto fail;
 
     if (sqlite3_step(s) != SQLITE_DONE)
@@ -190,10 +164,10 @@ int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
 
     if (bind_int(s, "@fk_operation", id) != SQLITE_OK ||
             bind_text(s, "@filename", filename) != SQLITE_OK ||
-            bind_time(s, "@timestamp", timestamp) != SQLITE_OK ||
-            bind_mode(s, "@mode", mode) != SQLITE_OK ||
-            bind_uid(s, "@uid", uid) != SQLITE_OK ||
-            bind_gid(s, "@gid", gid) != SQLITE_OK ||
+            bind_time_t(s, "@timestamp", timestamp) != SQLITE_OK ||
+            bind_mode_t(s, "@mode", mode) != SQLITE_OK ||
+            bind_uid_t(s, "@uid", uid) != SQLITE_OK ||
+            bind_gid_t(s, "@gid", gid) != SQLITE_OK ||
             bind_text(s, "@contents", contents) != SQLITE_OK)
         goto fail;
 
