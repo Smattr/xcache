@@ -13,7 +13,7 @@ set (VERSION_MAJOR 0)
 set (VERSION_MINOR 1)
 set (PROJ_NAME "\"xcache\"")
 
-set (LIBSOURCES cache.c collection/list.c db.c depset.c collection/dict.c log.c ptrace-wrapper.c queries.c collection/set.c tee.c trace.c util/abspath.c util/cp.c util/du.c util/filehash.c util/fileiter.c util/get.c util/hash.c util/mkdirp.c util/reduce.c)
+set (LIBSOURCES cache.c collection/list.c db.c depset.c collection/dict.c log.c ptrace-wrapper.c collection/set.c tee.c trace.c util/abspath.c util/cp.c util/du.c util/filehash.c util/fileiter.c util/get.c util/hash.c util/mkdirp.c util/reduce.c)
 set (EXESOURCES main.c translate-syscall.c)
 
 # Handle building for different architectures.
@@ -32,9 +32,9 @@ include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 
 # Tell CMake how to build the bits of SQL as C strings.
 ADD_CUSTOM_COMMAND (
-    OUTPUT "${CMAKE_BINARY_DIR}/queries.c"
-    COMMAND "${CMAKE_SOURCE_DIR}/sql/to_c.sh" "${CMAKE_BINARY_DIR}/queries.c" "${CMAKE_SOURCE_DIR}/sql/addinput.sql" "${CMAKE_SOURCE_DIR}/sql/addoperation.sql" "${CMAKE_SOURCE_DIR}/sql/addoutput.sql" "${CMAKE_SOURCE_DIR}/sql/create.sql" "${CMAKE_SOURCE_DIR}/sql/getid.sql" "${CMAKE_SOURCE_DIR}/sql/getinputs.sql" "${CMAKE_SOURCE_DIR}/sql/getoutputs.sql" "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/to_c.sh"
+    OUTPUT "${CMAKE_BINARY_DIR}/queries.h"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/sql"
+    COMMAND find . -iname "*.sql" -exec xxd -i "{}" \; > "${CMAKE_BINARY_DIR}/queries.h"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/addinput.sql"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/addoperation.sql"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/addoutput.sql"
@@ -44,6 +44,7 @@ ADD_CUSTOM_COMMAND (
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/getoutputs.sql"
     DEPENDS "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
     VERBATIM)
+SET (LIBSOURCES ${LIBSOURCES} "${CMAKE_BINARY_DIR}/queries.h")
 
 # Dump CMake settings so we can use them from C.
 configure_file (

@@ -1,18 +1,44 @@
 #include <assert.h>
 #include "db.h"
+#include "macros.h"
 #include "queries.h"
 #include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+/* Expand the name of a query file in sql/ into the symbol name xxd generates
+ * for that query.
+ */
+#define QUERY(query) __##query##_sql
+
 struct db {
     sqlite3 *handle;
 };
 
-int db_exec(db_t *db, const char *query) {
-    return sqlite3_exec(db->handle, query, NULL, NULL, NULL) != SQLITE_OK;
+/* Wrapper around sqlite3_prepare_v2. */
+static int _prepare(db_t *db, sqlite3_stmt **s, const char *query, int len) {
+    return sqlite3_prepare_v2(db->handle, query, len, s, NULL);
 }
+#define prepare(db, s, query) _prepare((db), (s), (const char*)(query), JOIN(query, _len))
+
+/* Wrapper around sqlite3_exec. Note, we use sqlite3_prepare_v2, rather than
+ * sqlite3_exec because we want to explicitly specify the length of the query.
+ */
+static int _exec(db_t *db, const char *query, int len) {
+    sqlite3_stmt *s;
+    int r = _prepare(db, &s, query, len);
+    if (r != SQLITE_OK)
+        return -1;
+    r = sqlite3_step(s);
+    if (r != SQLITE_DONE)
+        return -1;
+    r = sqlite3_finalize(s);
+    if (r != SQLITE_OK)
+        return -1;
+    return 0;
+}
+#define exec(db, query) _exec((db), (const char*)(query), JOIN(query, _len))
 
 db_t *db_open(const char *path) {
     db_t *d = (db_t*)malloc(sizeof(*d));
@@ -25,7 +51,7 @@ db_t *db_open(const char *path) {
         return NULL;
     }
 
-    if (db_exec(d, query_create) != 0) {
+    if (exec(d, QUERY(create)) != 0) {
         db_close(d);
         free(d);
         return NULL;
@@ -35,17 +61,17 @@ db_t *db_open(const char *path) {
 }
 
 int db_begin(db_t *db) {
-    return db_exec(db, "begin transaction");
+    return _exec(db, "begin transaction", -1);
 }
 int db_commit(db_t *db) {
-    return db_exec(db, "commit transaction");
+    return _exec(db, "commit transaction", -1);
 }
 int db_rollback(db_t *db) {
-    return db_exec(db, "rollback transaction");
+    return _exec(db, "rollback transaction", -1);
 }
 
 int db_clear(db_t *db) {
-    return db_exec(db, query_truncate);
+    return exec(db, QUERY(truncate));
 }
 
 int db_close(db_t *db) {
@@ -53,10 +79,6 @@ int db_close(db_t *db) {
         return -1;
     free(db);
     return 0;
-}
-
-static int prepare(db_t *db, sqlite3_stmt **s, const char *query) {
-    return sqlite3_prepare_v2(db->handle, query, -1, s, NULL);
 }
 
 #define X(c_type, sql_type) \
@@ -95,7 +117,7 @@ static const char *column_text(sqlite3_stmt *s, int index) {
 
 int db_select_id(db_t *db, int *id, const char *cwd, const char *command) {
     sqlite3_stmt *s;
-    if (prepare(db, &s, query_getid) != SQLITE_OK)
+    if (prepare(db, &s, QUERY(getid)) != SQLITE_OK)
         return -1;
 
     int result = -1;
@@ -122,7 +144,7 @@ fail:
 
 int db_insert_id(db_t *db, int *id, const char *cwd, const char *command) {
     sqlite3_stmt *s;
-    if (prepare(db, &s, query_addoperation) != SQLITE_OK)
+    if (prepare(db, &s, QUERY(addoperation)) != SQLITE_OK)
         return -1;
 
     int result = -1;
@@ -145,7 +167,7 @@ fail:
 
 int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp) {
     sqlite3_stmt *s;
-    if (prepare(db, &s, query_addinput) != SQLITE_OK)
+    if (prepare(db, &s, QUERY(addinput)) != SQLITE_OK)
         return -1;
 
     int result = -1;
@@ -169,7 +191,7 @@ fail:
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
         mode_t mode, uid_t uid, gid_t gid, const char *contents) {
     sqlite3_stmt *s;
-    if (prepare(db, &s, query_addoutput) != SQLITE_OK)
+    if (prepare(db, &s, QUERY(addoutput)) != SQLITE_OK)
         return -1;
 
     int result = -1;
@@ -208,7 +230,7 @@ rowset_t *db_select_inputs(db_t *db, int id) {
     if (r == NULL)
         return NULL;
 
-    if (prepare(db, &r->s, query_getinputs) != SQLITE_OK) {
+    if (prepare(db, &r->s, QUERY(getinputs)) != SQLITE_OK) {
         free(r);
         return NULL;
     }
@@ -245,7 +267,7 @@ rowset_t *db_select_outputs(db_t *db, int id) {
     if (r == NULL)
         return NULL;
 
-    if (prepare(db, &r->s, query_getoutputs) != SQLITE_OK) {
+    if (prepare(db, &r->s, QUERY(getoutputs)) != SQLITE_OK) {
         free(r);
         return NULL;
     }
@@ -281,4 +303,3 @@ int rowset_next_output(rowset_t *rows, const char **filename, time_t *timestamp,
             return -1;
     }
 }
-

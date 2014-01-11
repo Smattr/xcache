@@ -8,7 +8,6 @@ typedef struct db db_t;
 typedef struct rowset rowset_t;
 
 db_t *db_open(const char *path);
-int db_exec(db_t *db, const char *query);
 int db_close(db_t *db);
 
 int db_begin(db_t *db);
