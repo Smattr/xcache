@@ -22,21 +22,24 @@ static int _prepare(db_t *db, sqlite3_stmt **s, const char *query, int len) {
 }
 #define prepare(db, s, query) _prepare((db), (s), (const char*)(query), JOIN(query, _len))
 
-/* Wrapper around sqlite3_exec. Note, we use sqlite3_prepare_v2, rather than
- * sqlite3_exec because we want to explicitly specify the length of the query.
- */
+/* Wrapper around sqlite3_exec. */
 static int _exec(db_t *db, const char *query, int len) {
-    sqlite3_stmt *s;
-    int r = _prepare(db, &s, query, len);
-    if (r != SQLITE_OK)
-        return -1;
-    r = sqlite3_step(s);
-    if (r != SQLITE_DONE)
-        return -1;
-    r = sqlite3_finalize(s);
-    if (r != SQLITE_OK)
-        return -1;
-    return 0;
+    char *q;
+    if (len == -1) {
+        q = strdup(query);
+        if (q == NULL)
+            return -1;
+    } else {
+        q = malloc(len + 1);
+        if (q == NULL)
+            return -1;
+        strncpy(q, query, len);
+        q[len] = '\0';
+    }
+
+    int r = sqlite3_exec(db->handle, q, NULL, NULL, NULL);
+    free(q);
+    return r;
 }
 #define exec(db, query) _exec((db), (const char*)(query), JOIN(query, _len))
 
