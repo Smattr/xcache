@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *abspath(const char *relpath);
+char *abspath(char *relpath);
 
 unsigned int hash(size_t limit, const char *s);
 
