@@ -15,6 +15,7 @@ set (PROJ_NAME "\"xcache\"")
 
 set (LIBSOURCES cache.c collection/list.c db.c depset.c collection/dict.c log.c ptrace-wrapper.c collection/set.c tee.c trace.c util/abspath.c util/cp.c util/du.c util/filehash.c util/fileiter.c util/get.c util/hash.c util/mkdirp.c util/reduce.c)
 set (EXESOURCES main.c translate-syscall.c)
+set (TESTSOURCES test.c)
 
 # Handle building for different architectures.
 execute_process (
@@ -69,7 +70,7 @@ set_target_properties (libxcache.so PROPERTIES SUFFIX "")
 add_executable (xcache ${EXESOURCES})
 target_link_libraries (xcache libxcache)
 
-add_executable (xcache-tests ${EXESOURCES} ${LIBSOURCES})
+add_executable (xcache-tests ${TESTSOURCES} ${LIBSOURCES})
 set_target_properties (xcache-tests PROPERTIES COMPILE_DEFINITIONS "XCACHE_TEST=1")
 
 find_library (PTHREADS pthread)
