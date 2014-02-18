@@ -2,9 +2,50 @@
 
 # xcache
 
+Xcache is a tool for tracing and then caching the outputs of arbitrary
+programs. You run something once with xcache observing it. If its inputs have
+not changed the next time you execute it, xcache can retrieve the outputs it
+cached from the previous run and avoid re-executing the program.
+
+The purpose of this is to save time spent executing programs that do
+complicated calculations. The prime example is a compiler. Running a compiler
+on a large program can take a long time due to time spent computing
+optimisations. Xcache can save you spending this time repeatedly in future
+compilations.
+
+If you are familiar with [ccache](https://ccache.samba.org/), xcache tries to
+do the same thing but for any program, not just your C compiler.
+
+## How Does It Work?
+
+Internally xcache uses the Linux ptrace infrastructure. It traps the target
+(the program being traced) every time it makes a relevant syscall and records
+any new input or output. After a successful run, a cache entry is stored on
+disk with metadata in a SQLite database.
+
+When invoked with any target program, xcache first checks its cache for a
+successful previous execution of this program in the same environment. If the
+inputs have changed since this entry was made, the entry is discarded and the
+program is re-run. If, however, the inputs have not changed, the cached entry
+can be retrieved saving you runtime.
+
+To learn more, read the source.
+
+## Status
+
+Almost nothing works at the moment. I'm still hacking fairly heavily on the
+code and comments are sparse. This README will be updated when the code is in
+better shape.
+
+## Feedback and Support
+
+I'm happy to take questions via email or respond to issues through the
+Bitbucket tracker. However, please bear in mind that this is not my full time
+job and I may take a little while to respond.
+
 ## Legal
 
-Copyright (c) 2013, Matthew Fernandez
+Copyright (c) 2014, Matthew Fernandez
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
