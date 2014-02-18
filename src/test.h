@@ -13,6 +13,13 @@
  */
 void register_test(const char *name, int (*fn)(void));
 
+#define test_assert(expr) \
+    do { \
+        if (!(expr)) { \
+            return -1; \
+        } \
+    } while (0)
+
 /* Keyword to be used on static functions. This allows us to write out-of-line
  * tests, even for static functions, and have them be compiled as non-static in
  * the test suite.
@@ -35,8 +42,14 @@ void register_test(const char *name, int (*fn)(void));
 
 /* Equivalents in the case when we are not running the test suite. */
 #define register_test(fn) /* nothing */
+#define test_assert(expr) \
+    do { \
+        if (!(expr)) { \
+            /* do nothing */ \
+        } \
+    } while (0)
 #define STATIC static
-#define TEST(fn) static void __attribute__((unused)) testcase_##fn(void)
+#define TEST(fn) static int __attribute__((unused)) testcase_##fn(void)
 
 #endif
 

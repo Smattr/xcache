@@ -1,10 +1,16 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../test.h"
 #include <unistd.h>
 #include "../util.h"
 
-static const char *atom(char **path) {
+/* Returns a path component from the front of the given string and updates the
+ * pointer to point at the remaining path. Returns NULL on no more path
+ * elements remaining. As the input pointer is modified, the caller should
+ * retain a copy of the pointer if they need to free this memory later.
+ */
+STATIC const char *atom(char **path) {
     char *start = *path;
     while (*start == '/')
         start++;
@@ -24,7 +30,7 @@ static const char *atom(char **path) {
     return start;
 }
 
-static char *append(char *dest, char *src) {
+STATIC char *append(char *dest, char *src) {
     assert(dest != NULL);
 
     size_t len = strlen(dest);
@@ -80,4 +86,68 @@ char *abspath(char *relpath) {
 
     abs = append(abs, relpath);
     return abs;
+}
+
+TEST(atom_nothing) {
+    char *s = strdup("");
+    assert(s != NULL);
+    const char *a = atom(&s);
+    test_assert(a == NULL);
+    return 0;
+}
+
+TEST(atom_slash) {
+    char *s = strdup("/");
+    assert(s != NULL);
+    const char *a = atom(&s);
+    test_assert(a == NULL);
+    return 0;
+}
+
+TEST(atom_slashslash) {
+    char *s = strdup("//");
+    assert(s != NULL);
+    const char *a = atom(&s);
+    test_assert(a == NULL);
+    return 0;
+}
+
+TEST(atom_single) {
+    char *s = strdup("hello");
+    assert(s != NULL);
+    const char *a = atom(&s);
+    test_assert(!strcmp(a, "hello"));
+    a = atom(&s);
+    test_assert(a == NULL);
+    return 0;
+}
+
+TEST(atom_single_abs) {
+    char *s = strdup("/hello");
+    assert(s != NULL);
+    const char *a = atom(&s);
+    test_assert(!strcmp(a, "hello"));
+    a = atom(&s);
+    test_assert(a == NULL);
+    return 0;
+}
+
+TEST(atom_single_trailing) {
+    char *s = strdup("hello/");
+    assert(s != NULL);
+    const char *a = atom(&s);
+    test_assert(!strcmp(a, "hello"));
+    a = atom(&s);
+    test_assert(a == NULL);
+    return 0;
+}
+
+TEST(atom_single_abs_trailing) {
+    char *s = strdup("/hello/");
+    assert(s != NULL);
+    const char *a = atom(&s);
+    test_assert(!strcmp(a, "hello"));
+    a = atom(&s);
+    test_assert(a == NULL);
+    return 0;
 }
