@@ -30,11 +30,9 @@ static int _exec(db_t *db, const char *query, int len) {
         if (q == NULL)
             return -1;
     } else {
-        q = malloc(len + 1);
+        q = strndup(query, len);
         if (q == NULL)
             return -1;
-        strncpy(q, query, len);
-        q[len] = '\0';
     }
 
     int r = sqlite3_exec(db->handle, q, NULL, NULL, NULL);
