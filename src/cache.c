@@ -1,3 +1,4 @@
+#define _GNU_SOURCE /* for asprintf */
 #include <assert.h>
 #include "cache.h"
 #include "collection/dict.h"
@@ -56,12 +57,12 @@ cache_t *cache_open(const char *path, ssize_t limit) {
     if (c == NULL)
         return NULL;
 
-    char *db_path = (char*)malloc(strlen(path) + 1 + strlen(DB) + 1);
-    if (db_path == NULL) {
+    char *db_path;
+    int err = asprintf(&db_path, "%s/" DB, path);
+    if (err == -1) {
         free(c);
         return NULL;
     }
-    sprintf(db_path, "%s/" DB, path);
     c->db = db_open(db_path);
     free(db_path);
     if (c->db == NULL) {
@@ -69,13 +70,12 @@ cache_t *cache_open(const char *path, ssize_t limit) {
         return NULL;
     }
 
-    c->root = (char*)malloc(strlen(path) + strlen(DATA) + 1);
-    if (c->root == NULL) {
+    err = asprintf(&c->root, "%s" DATA, path);
+    if (err == -1) {
         db_close(c->db);
         free(c);
         return NULL;
     }
-    sprintf(c->root, "%s" DATA, path);
     if (mkdirp(c->root) != 0) {
         free(c->root);
         db_close(c->db);
@@ -151,12 +151,12 @@ static char *cache_save(cache_t *c, const char *filename) {
         }
     }
 
-    char *cpath = (char*)malloc(strlen(c->root) + 1 + strlen(h) + 1);
-    if (cpath == NULL) {
+    char *cpath;
+    int err = asprintf(&cpath, "%s/%s", c->root, h);
+    if (err == -1) {
         free(h);
         return NULL;
     }
-    sprintf(cpath, "%s/%s", c->root, h);
     if (cp(filename, cpath) != 0) {
         free(cpath);
         free(h);
@@ -369,12 +369,12 @@ int cache_dump(cache_t *cache, int id) {
             last_slash[0] = '/';
         }
 
-        char *cached_copy = (char*)malloc(strlen(cache->root) + 1 + strlen(contents) + 1);
-        if (cached_copy == NULL) {
+        char *cached_copy;
+        int err = asprintf(&cached_copy, "%s/%s", cache->root, contents);
+        if (err == -1) {
             ERROR("Out of memory while dumping cache entry %s\n", filename);
             goto fail;
         }
-        sprintf(cached_copy, "%s/%s", cache->root, contents);
         int res = cp(cached_copy, filename);
         free(cached_copy);
         chown(filename, uid, gid);

@@ -1,3 +1,4 @@
+#define _GNU_SOURCE /* for asprintf */
 #include <assert.h>
 #include "cache.h"
 #include "config.h"
@@ -48,10 +49,10 @@ static char *default_cache_dir(void) {
     char *home = getenv("HOME");
     if (home == NULL)
         return NULL;
-    char *d = (char*)malloc(strlen(home) + strlen("/.xcache") + 1);
-    if (d == NULL)
+    char *d;
+    int err = asprintf(&d, "%s/.xcache", home);
+    if (err == -1)
         return NULL;
-    sprintf(d, "%s/.xcache", home);
     return d;
 }
 

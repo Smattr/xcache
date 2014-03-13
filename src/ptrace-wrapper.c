@@ -1,3 +1,4 @@
+#define _GNU_SOURCE /* for asprintf */
 #include <assert.h>
 #include <linux/limits.h>
 #include "log.h"
@@ -30,8 +31,6 @@ long pt_peekreg(pid_t pid, off_t reg) {
 }
 
 char *pt_peekstring(pid_t pid, off_t reg) {
-    char filename[100];
-
     void *addr = (void*)pt_peekreg(pid, reg);
     if (addr == NULL)
         return NULL;
@@ -41,7 +40,10 @@ char *pt_peekstring(pid_t pid, off_t reg) {
      * to do this through the /proc file system.
      */
 
-    sprintf(filename, "/proc/%d/mem", pid);
+    char *filename;
+    int err = asprintf(&filename, "/proc/%d/mem", pid);
+    if (err == -1)
+        return NULL;
     FILE *f = fopen(filename, "r");
     if (f == NULL) {
         DEBUG("failed to open %s to read string\n", filename);
