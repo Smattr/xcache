@@ -9,7 +9,6 @@
 #include <fcntl.h>
 #include <limits.h>
 #include "log.h"
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>

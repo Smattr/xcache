@@ -1,9 +1,6 @@
 #include <assert.h>
 #include <dirent.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <openssl/md5.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
