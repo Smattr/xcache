@@ -23,7 +23,7 @@ int mkdirp(const char *path) {
         char *cwd = getcwd(NULL, 0);
         if (cwd == NULL)
             return -1;
-        abspath = (char*)realloc(cwd, strlen(cwd) + 1 + strlen(path) + 1);
+        abspath = realloc(cwd, strlen(cwd) + 1 + strlen(path) + 1);
         if (abspath == NULL) {
             free(cwd);
             return -1;

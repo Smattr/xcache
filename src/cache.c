@@ -52,7 +52,7 @@ struct cache {
 };
 
 cache_t *cache_open(const char *path, ssize_t limit) {
-    cache_t *c = (cache_t*)malloc(sizeof(cache_t));
+    cache_t *c = malloc(sizeof(*c));
     if (c == NULL)
         return NULL;
 
@@ -175,7 +175,7 @@ static char *to_command(const char **args) {
         return NULL;
     for (unsigned int i = 1; args[i] != NULL; i++) {
         sz += strlen(args[i]) + 1;
-        char *tmp = (char*)realloc(command, sz);
+        char *tmp = realloc(command, sz);
         if (tmp == NULL) {
             free(command);
             return NULL;

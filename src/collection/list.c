@@ -13,14 +13,14 @@ struct list {
 };
 
 list_t *list(void *(*key)(void *node)) {
-    list_t *l = (list_t*)calloc(1, sizeof(*l));
+    list_t *l = calloc(1, sizeof(*l));
     l->key = key;
     return l;
 }
 
 int list_add(list_t *l, void *value) {
     assert(l != NULL);
-    node_t *n = malloc(sizeof(node_t));
+    node_t *n = malloc(sizeof(*n));
     if (n == NULL)
         return -1;
 

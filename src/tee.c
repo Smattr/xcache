@@ -87,7 +87,7 @@ struct tee {
 };
 
 tee_t *tee_create(int *output) {
-    tee_t *t = (tee_t*)malloc(sizeof(*t));
+    tee_t *t = malloc(sizeof(*t));
     if (t == NULL)
         return NULL;
 
@@ -107,7 +107,7 @@ tee_t *tee_create(int *output) {
         return NULL;
     }
 
-    spipe_t *s = (spipe_t*)malloc(sizeof(*s));
+    spipe_t *s = malloc(sizeof(*s));
     if (s == NULL) {
         close(q[0]);
         close(q[1]);

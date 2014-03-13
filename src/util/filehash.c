@@ -13,7 +13,7 @@
 #include "../util.h"
 
 static char *hex(unsigned char *hash) {
-    char *h = (char*)malloc(MD5_DIGEST_LENGTH * 2 + 1);
+    char *h = malloc(MD5_DIGEST_LENGTH * 2 + 1);
     if (h == NULL)
         return NULL;
 
@@ -49,7 +49,7 @@ char *filehash(const char *filename) {
         return NULL;
     }
 
-    unsigned char *h = (unsigned char*)malloc(MD5_DIGEST_LENGTH);
+    unsigned char *h = malloc(MD5_DIGEST_LENGTH);
     if (h == NULL) {
         if (addr != NULL)
             munmap(addr, sz);

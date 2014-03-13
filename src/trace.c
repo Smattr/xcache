@@ -48,7 +48,7 @@ static void *proc_key(void *proc) {
 }
 
 tracee_t *trace(const char **argv) {
-    tracee_t *t = (tracee_t*)calloc(1, sizeof(*t));
+    tracee_t *t = calloc(1, sizeof(*t));
     if (t == NULL)
         return NULL;
 
@@ -258,7 +258,7 @@ retry:;
          * we've seen of a forked child process, so let's start tracing it.
          */
         assert(WSTOPSIG(status) == SIGSTOP);
-        p = (proc_t*)malloc(sizeof(*p));
+        p = malloc(sizeof(*p));
         if (p == NULL)
             return NULL;
         p->pid = pid;
@@ -271,7 +271,7 @@ retry:;
         /* We still don't have a syscall for the caller, so try again. */
         goto retry;
     }
-    syscall_t *s = (syscall_t*)malloc(sizeof(*s));
+    syscall_t *s = malloc(sizeof(*s));
     if (s == NULL)
         return NULL;
     s->proc = p;

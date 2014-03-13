@@ -44,7 +44,7 @@ static int _exec(db_t *db, const char *query, int len) {
 #define exec(db, query) _exec((db), (const char*)(query), JOIN(query, _len))
 
 db_t *db_open(const char *path) {
-    db_t *d = (db_t*)malloc(sizeof(*d));
+    db_t *d = malloc(sizeof(*d));
     if (d == NULL)
         return NULL;
 
@@ -305,7 +305,7 @@ int rowset_next_input(rowset_t *rows, const char **filename, time_t *timestamp) 
 }
 
 rowset_t *db_select_outputs(db_t *db, int id) {
-    rowset_t *r = (rowset_t*)malloc(sizeof(*r));
+    rowset_t *r = malloc(sizeof(*r));
     if (r == NULL)
         return NULL;
 

@@ -56,7 +56,7 @@ char *pt_peekstring(pid_t pid, off_t reg) {
         return NULL;
     }
 
-    char *s = (char*)malloc(PATH_MAX + 1);
+    char *s = malloc(PATH_MAX + 1);
     if (s == NULL) {
         fclose(f);
         return NULL;

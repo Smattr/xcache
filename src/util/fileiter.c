@@ -22,7 +22,7 @@ struct file_iter {
 file_iter_t *file_iter(const char *path) {
     assert(path != NULL);
 
-    file_iter_t *fi = (file_iter_t*)malloc(sizeof(*fi));
+    file_iter_t *fi = malloc(sizeof(*fi));
     if (fi == NULL)
         return NULL;
 
@@ -33,7 +33,7 @@ file_iter_t *file_iter(const char *path) {
     }
 
     fi->root_len = strlen(path) + 1;
-    fi->path = (char*)malloc(fi->root_len + NAME_MAX + 1);
+    fi->path = malloc(fi->root_len + NAME_MAX + 1);
     if (fi->path == NULL) {
         closedir(fi->dir);
         free(fi);

@@ -21,10 +21,10 @@ struct dict {
 };
 
 dict_t *dict_new(void *(*get_value)(const char *key)) {
-    dict_t *d = (dict_t*)malloc(sizeof(*d));
+    dict_t *d = malloc(sizeof(*d));
     if (d == NULL)
         return NULL;
-    d->entries = (entry_t**)calloc(ENTRIES, sizeof(entry_t));
+    d->entries = calloc(ENTRIES, sizeof(*d->entries));
     if (d->entries == NULL) {
         free(d);
         return NULL;
@@ -46,7 +46,7 @@ int dict_add(dict_t *d, const char *key) {
     unsigned int index = hash(d->size, key);
     if (contains(d, index, key))
         return 0;
-    entry_t *e = (entry_t*)malloc(sizeof(*e));
+    entry_t *e = malloc(sizeof(*e));
     if (e == NULL)
         return -1;
     e->key = strdup(key);
@@ -72,7 +72,7 @@ struct dict_iter {
 };
 
 dict_iter_t *dict_iter(dict_t *d) {
-    dict_iter_t *i = (dict_iter_t*)malloc(sizeof(*i));
+    dict_iter_t *i = malloc(sizeof(*i));
     if (i == NULL)
         return NULL;
     i->dict = d;

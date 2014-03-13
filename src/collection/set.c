@@ -18,10 +18,10 @@ struct set {
 };
 
 set_t *set_new(void) {
-    set_t *s = (set_t*)malloc(sizeof(set_t));
+    set_t *s = malloc(sizeof(*s));
     if (s == NULL)
         return NULL;
-    s->entries = (entry_t**)calloc(ENTRIES, sizeof(entry_t*));
+    s->entries = calloc(ENTRIES, sizeof(*s->entries));
     if (s->entries == NULL) {
         free(s);
         return NULL;
@@ -44,7 +44,7 @@ int set_add(set_t *s, const char *item) {
 
     unsigned int index = hash(s->size, item);
     if (!contains(s, index, item)) {
-        entry_t *e = (entry_t*)malloc(sizeof(entry_t));
+        entry_t *e = malloc(sizeof(*e));
         if (e == NULL)
             return -1;
         e->item = strdup(item);
@@ -82,7 +82,7 @@ struct set_iter {
 };
 
 set_iter_t *set_iter(set_t *s) {
-    set_iter_t *i = (set_iter_t*)malloc(sizeof(set_iter_t));
+    set_iter_t *i = malloc(sizeof(*i));
     if (i == NULL)
         return NULL;
     i->set = s;

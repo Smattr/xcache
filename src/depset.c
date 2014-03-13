@@ -21,7 +21,7 @@ struct depset {
 };
 
 depset_t *depset_new(void) {
-    depset_t *o = (depset_t*)malloc(sizeof(depset_t));
+    depset_t *o = malloc(sizeof(*o));
     if (o == NULL)
         return NULL;
     o->inputs = dict_new(stamp);
