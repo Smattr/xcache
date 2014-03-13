@@ -22,8 +22,7 @@ int log_init(const char *filename) {
 }
 
 void log_deinit(void) {
-    if (log_file != stderr) {
+    if (log_file != stderr)
         fclose(log_file);
-    }
     log_initialised = 0;
 }
