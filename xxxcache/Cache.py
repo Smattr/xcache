@@ -1,4 +1,4 @@
-import Artefact, cPickle, File, os
+import Artefact, cPickle, File, os, shutil
 
 class Cache(object):
     def __init__(self, root):
