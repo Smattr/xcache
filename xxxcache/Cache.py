@@ -23,7 +23,8 @@ class Cache(object):
         return os.path.join(self.root, d)
 
     def sync(self):
-        os.makedirs(self.root)
+        if not os.path.exists(self.root):
+            os.makedirs(self.root)
         with open(self.db, 'w') as f:
             cPickle.dump(self.data, f)
             
