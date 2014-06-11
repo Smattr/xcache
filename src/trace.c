@@ -36,15 +36,15 @@ struct tracee {
     unsigned char exit_status;
     proc_t root;
 
-    list_t *children;
+    list_t children;
 
     tee_t *out, *err;
     char *outfile, *errfile;
 };
 
-static void *proc_key(void *proc) {
+static int proc_cmp(void *proc, void *pid) {
     proc_t *p = (proc_t*)proc;
-    return (void*)(uintptr_t)p->pid;
+    return p->pid != (pid_t)(unsigned long)pid;
 }
 
 tracee_t *trace(const char **argv) {
@@ -52,8 +52,7 @@ tracee_t *trace(const char **argv) {
     if (t == NULL)
         return NULL;
 
-    t->children = list(proc_key);
-    if (t->children == NULL)
+    if (list(&t->children, proc_cmp) != 0)
         goto fail;
 
     int stdout2 = STDOUT_FILENO;
@@ -209,7 +208,7 @@ retry:;
         if (pid != tracee->root.pid) {
             /* A forked child exited. */
             IDEBUG("child %d exited\n", pid);
-            proc_t *p = (proc_t*)list_remove(tracee->children,
+            proc_t *p = list_remove(&tracee->children,
                 (void*)(uintptr_t)pid);
             assert(p != NULL && p->pid == pid);
             free(p);
@@ -252,7 +251,7 @@ retry:;
     if (pid == tracee->root.pid)
         p = &tracee->root;
     else
-        p = (proc_t*)list_find(tracee->children, (void*)(uintptr_t)pid);
+        p = list_find(&tracee->children, (void*)(uintptr_t)pid);
     if (p == NULL) {
         /* We've hit a signal in a new (untraced) process. This is the first
          * we've seen of a forked child process, so let's start tracing it.
@@ -263,7 +262,7 @@ retry:;
             return NULL;
         p->pid = pid;
         p->state = IN_USER;
-        list_add(tracee->children, p);
+        list_add(&tracee->children, p);
         long r = pt_runtosyscall(pid);
         if (r != 0)
             DEBUG("warning: failed to continue forked child %d (errno: %d)\n",
@@ -334,11 +333,14 @@ void unblock(proc_t *proc) {
 
 int complete(tracee_t *tracee) {
     if (tracee->root.state != TERMINATED) {
-        for (proc_t *p; (p = list_pop(tracee->children)) != NULL;) {
+        void dealloc(void *data, void *_ __attribute__((unused))) {
+            proc_t *p = data;
             unblock(p);
             pt_detach(p->pid);
             free(p);
         }
+        list_foreach(&tracee->children, dealloc, NULL);
+        list_destroy(&tracee->children);
         tracee->root.state = TERMINATED;
         unblock(&tracee->root);
         tracee->exit_status = finish(tracee->root.pid);
@@ -366,7 +368,7 @@ int delete(tracee_t *tracee) {
         free(tracee->errfile);
     if (tracee->outfile != NULL)
         free(tracee->outfile);
-    list_destroy(tracee->children);
+    list_destroy(&tracee->children);
     free(tracee);
     return 0;
 }

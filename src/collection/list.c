@@ -1,76 +1,42 @@
 #include <assert.h>
+#include <glib.h>
 #include "list.h"
 #include <stdlib.h>
+#include <string.h>
 
-typedef struct _node {
-    void *value;
-    struct _node *next;
-} node_t;
-
-struct list {
-    node_t *head;
-    void *(*key)(void *node);
-};
-
-list_t *list(void *(*key)(void *node)) {
-    list_t *l = calloc(1, sizeof(*l));
-    l->key = key;
-    return l;
+int list(list_t *l, int (*comparator)(void *a, void *b)) {
+    memset(l, 0, sizeof(*l));
+    l->comparator = comparator;
+    return 0;
 }
 
 int list_add(list_t *l, void *value) {
     assert(l != NULL);
-    node_t *n = malloc(sizeof(*n));
-    if (n == NULL)
-        return -1;
-
-    n->value = value;
-    n->next = l->head;
-    l->head = n;
+    l->head = g_slist_prepend(l->head, (gpointer)value);
     return 0;
 }
 
 void *list_find(list_t *l, void *key) {
-    assert(l != NULL);
-    for (node_t *p = l->head; p != NULL; p = p->next) {
-        if (l->key(p->value) == key) {
-            return p->value;
-        }
-    }
-    return NULL;
+    GSList *found = g_slist_find_custom(l->head, (gconstpointer)key,
+        (GCompareFunc)l->comparator);
+    if (found == NULL)
+        return NULL;
+    return found->data;
 }
 
 void *list_remove(list_t *l, void *key) {
-    assert(l != NULL);
-    for (node_t *p = l->head, *q = NULL; p != NULL; q = p, p = p->next) {
-        if (l->key(p->value) == key) {
-            /* Found it. */
-            if (q == NULL)
-                l->head = p->next;
-            else
-                q->next = p->next;
-            void *v = p->value;
-            free(p);
-            return v;
-        }
-    }
-    /* Didn't find it. */
-    return NULL;
+    void *elem = list_find(l, key);
+    if (elem == NULL)
+        return NULL;
+    l->head = g_slist_remove(l->head, elem);
+    return elem;
 }
 
-void *list_pop(list_t *l) {
-    assert(l != NULL);
-    if (l->head == NULL)
-        return NULL;
-
-    node_t *p = l->head;
-    l->head = l->head->next;
-    void *v = p->value;
-    free(p);
-    return v;
+int list_foreach(list_t *l, void (*f)(void *value, void *data), void *data) {
+    g_slist_foreach(l->head, f, data);
+    return 0;
 }
 
 void list_destroy(list_t *l) {
-    assert(l != NULL);
-    free(l);
+    g_slist_free(l->head);
 }

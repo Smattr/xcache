@@ -56,6 +56,33 @@ configure_file (
     "${PROJECT_BINARY_DIR}/config.h")
 include_directories ("${PROJECT_BINARY_DIR}")
 
+# Go on a long, and often unfulfilling, journey to find GLib.
+find_path (
+  GLIB_CORE_INCLUDES glib.h
+  PATHS ${CMAKE_EXTRA_INCLUDES} PATH_SUFFIXES glib-2.0/ glib-2.0/include NO_DEFAULT_PATH)
+if (NOT GLIB_CORE_INCLUDES)
+    find_path (
+      GLIB_CORE_INCLUDES glib.h
+      PATHS /usr/local/include /usr/include /include /sw/include /usr/lib /usr/lib64 /usr/lib/x86_64-linux-gnu/ ${CMAKE_EXTRA_INCLUDES} PATH_SUFFIXES glib-2.0/ glib-2.0/include)
+endif (NOT GLIB_CORE_INCLUDES)
+if (NOT GLIB_CORE_INCLUDES)
+    message ("warning: failed to find glib.h")
+endif (NOT GLIB_CORE_INCLUDES)
+include_directories (${GLIB_CORE_INCLUDES})
+
+find_path (
+  GLIB_CONFIG_INCLUDES glibconfig.h
+  PATHS ${CMAKE_EXTRA_INCLUDES} ${CMAKE_EXTRA_LIBRARIES} PATH_SUFFIXES glib-2.0/ glib-2.0/include NO_DEFAULT_PATH)
+if (NOT GLIB_CONFIG_INCLUDES)
+    find_path (
+      GLIB_CONFIG_INCLUDES glibconfig.h
+      PATHS /usr/local/include /usr/include /include /sw/include /usr/lib /usr/lib64 /usr/lib/x86_64-linux-gnu/ /usr/lib/i386-linux-gnu ${CMAKE_EXTRA_INCLUDES} ${CMAKE_EXTRA_LIBRARIES} PATH_SUFFIXES glib-2.0 glib-2.0/include)
+endif (NOT GLIB_CONFIG_INCLUDES)
+if (NOT GLIB_CONFIG_INCLUDES)
+    message ("warning: failed to find glibconfig.h")
+endif (NOT GLIB_CONFIG_INCLUDES)
+include_directories (${GLIB_CONFIG_INCLUDES})
+
 # Build xcache as a library in case anyone wants to reuse it.
 add_library (libxcache ${LIBSOURCES})
 set_target_properties (libxcache PROPERTIES PREFIX "")
@@ -73,6 +100,16 @@ target_link_libraries (xcache libxcache)
 add_executable (xcache-tests ${TESTSOURCES} ${LIBSOURCES})
 set_target_properties (xcache-tests PROPERTIES COMPILE_DEFINITIONS "XCACHE_TEST=1")
 
+find_library (
+  GLIB NAMES glib-2.0
+  PATHS ${CMAKE_EXTRA_LIBRARIES} PATH_SUFFIXES glib-2.0/ NO_DEFAULT_PATH)
+if (NOT GLIB)
+    find_library (
+      GLIB NAMES glib-2.0
+      PATHS /usr/local/lib /usr/lib /lib /sw/lib ${CMAKE_EXTRA_LIBRARIES} PATH_SUFFIXES glib-2.0/)
+endif (NOT GLIB)
+target_link_libraries (xcache ${GLIB})
+target_link_libraries (xcache-tests ${GLIB})
 find_library (PTHREADS pthread)
 target_link_libraries (xcache ${PTHREADS})
 target_link_libraries (xcache-tests ${PTHREADS})
