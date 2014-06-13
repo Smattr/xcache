@@ -43,6 +43,18 @@ I'm happy to take questions via email or respond to issues through the
 Bitbucket tracker. However, please bear in mind that this is not my full time
 job and I may take a little while to respond.
 
+## xxxcache
+
+You'll find a quick-and-dirty Python implementation in xxxcache/. This has
+primarily been used during development and debugging, but can be used as a
+complete caching solution in limited circumstances. Specifically, if the target
+you're tracing is well understood and has constrained inputs this could work
+well for you. Note that it can be difficult to get solid gains with xxxcache if
+you're tracing a native process simply because the startup of the Python
+runtime can dwarf any other factors.
+
+You can find more about xxxcache in xxxcache/README.md.
+
 ## Legal
 
 Copyright (c) 2014, Matthew Fernandez
