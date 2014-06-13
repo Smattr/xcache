@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+'''
+This is an example os how to use the functionality in xxxcache. It
+demonstrates caching of 'cp'. Not particularly useful, but 'cp' is a nice
+comprehensible program.
+
+Below we check to see if we can find an entry in the cache associated with the
+given input and the output path. If so, we're done. If not we need to locate
+the real 'cp' and execute it. After executing it we cache its result so next
+time we can avoid executing it.
+'''
+
+import os, shutil, subprocess, sys
+
+# Make sure we can import xxxcache.
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+import xxxcache
+
+if len(sys.argv) != 3:
+    print >>sys.stderr, 'usage: %s source destination' % sys.argv[0]
+    sys.exit(-1)
+
+# Path to ourself.
+me = os.path.realpath(__file__)
+
+cache_root = os.path.join(os.path.dirname(me), '.xxxcache')
+
+cache = xxxcache.Cache(cache_root)
+
+# See if we can find the output in the cache.
+src = xxxcache.File(sys.argv[1])
+dst = xxxcache.String(os.path.abspath(sys.argv[2]))
+cached = cache.get(src, dst)
+
+if cached is not None:
+    # We found it.
+    print 'found \'%s\' in cache' % sys.argv[2]
+    shutil.copy2(cached, sys.argv[2])
+
+    sys.exit(0)
+
+else:
+
+    # We didn't find it in the cache so we need to execute the real cp.
+    print 'didn\'t find \'%s\' in cache' % sys.argv[2]
+    real_cp = xxxcache.resolve('cp', [me])
+    ret = subprocess.call([real_cp] + sys.argv[1:])
+
+    # Let's cache the output for next time.
+    print 'saving output'
+    dst = xxxcache.File(sys.argv[2])
+    cache.set(src, dst)
+
+    sys.exit(ret)
