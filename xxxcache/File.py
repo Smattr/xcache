@@ -1,6 +1,8 @@
 import Artefact, os
 
 class File(Artefact.Artefact):
+    '''An input/output representing a file.'''
+
     def __init__(self, path):
         self.path = os.path.abspath(path)
 
