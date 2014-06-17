@@ -17,7 +17,7 @@ static void *stamp(const char *key) {
 
 struct depset {
     dict_t inputs;
-    set_t *outputs;
+    set_t outputs;
 };
 
 depset_t *depset_new(void) {
@@ -28,8 +28,7 @@ depset_t *depset_new(void) {
         free(o);
         return NULL;
     }
-    o->outputs = set_new();
-    if (o->outputs == NULL) {
+    if (set(&o->outputs) != 0) {
         dict_destroy(&o->inputs);
         free(o);
         return NULL;
@@ -38,7 +37,7 @@ depset_t *depset_new(void) {
 }
 
 int depset_add_input(depset_t *d, char *filename) {
-    if (set_contains(d->outputs, filename))
+    if (set_contains(&d->outputs, filename))
         /* This is already marked as an output; i.e. we are reading back in
          * something we effectively already know. No need to track this.
          */
@@ -51,15 +50,15 @@ int depset_iter_inputs(depset_t *d, dict_iter_t *i) {
 }
 
 int depset_add_output(depset_t *d, char *filename) {
-    return set_add(d->outputs, filename);
+    return set_add(&d->outputs, filename);
 }
 
-set_iter_t *depset_iter_outputs(depset_t *d) {
-    return set_iter(d->outputs);
+int depset_iter_outputs(depset_t *d, set_iter_t *i) {
+    return set_iter(&d->outputs, i);
 }
 
 void depset_destroy(depset_t *d) {
     dict_destroy(&d->inputs);
-    set_destroy(d->outputs);
+    set_destroy(&d->outputs);
     free(d);
 }
