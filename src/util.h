@@ -8,8 +8,6 @@
 
 char *abspath(char *relpath);
 
-unsigned int hash(size_t limit, const char *s);
-
 /* Return the hash of the contents of a file. The caller should not rely on any
  * property of the hash except it being deterministic and printable. This
  * includes that the caller should not assume a particular hashing algorithm is
