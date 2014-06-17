@@ -224,7 +224,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     set_iter_t si;
     if (depset_iter_outputs(depset, &si) != 0)
         goto fail;
-    while (set_iter_next(&si, (const char**)&key) == 0) {
+    while (set_iter_next(&si, (const char**)&key)) {
         struct stat st;
         if (stat(key, &st) != 0)
             continue;
