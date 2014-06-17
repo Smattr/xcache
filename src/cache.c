@@ -192,7 +192,6 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     char *command = to_command(args);
     if (command == NULL)
         return -1;
-    dict_iter_t *di = NULL;
     set_iter_t *si = NULL;
     if (db_begin(cache->db) != 0) {
         free(command);
@@ -212,16 +211,15 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     assert(id >= 0);
 
     /* Write the inputs. */
-    di = depset_iter_inputs(depset);
-    if (di == NULL)
+    dict_iter_t di;
+    if (depset_iter_inputs(depset, &di) != 0)
         goto fail;
     char *key;
     time_t value;
-    while (dict_iter_next(di, &key, (void**)&value) == 0) {
+    while (dict_iter_next(&di, &key, (void**)&value)) {
         if (db_insert_input(cache->db, id, key, value) != 0)
             goto fail;
     }
-    di = NULL;
 
     /* Write the outputs. */
     si = depset_iter_outputs(depset);
@@ -271,8 +269,6 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     return 0;
 
 fail:
-    if (di != NULL)
-        dict_iter_destroy(di);
     if (si != NULL)
         set_iter_destroy(si);
     db_rollback(cache->db);

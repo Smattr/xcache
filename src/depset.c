@@ -16,7 +16,7 @@ static void *stamp(const char *key) {
 }
 
 struct depset {
-    dict_t *inputs;
+    dict_t inputs;
     set_t *outputs;
 };
 
@@ -24,14 +24,13 @@ depset_t *depset_new(void) {
     depset_t *o = malloc(sizeof(*o));
     if (o == NULL)
         return NULL;
-    o->inputs = dict_new(stamp);
-    if (o->inputs == NULL) {
+    if (dict(&o->inputs, stamp) != 0) {
         free(o);
         return NULL;
     }
     o->outputs = set_new();
     if (o->outputs == NULL) {
-        dict_destroy(o->inputs);
+        dict_destroy(&o->inputs);
         free(o);
         return NULL;
     }
@@ -44,11 +43,11 @@ int depset_add_input(depset_t *d, char *filename) {
          * something we effectively already know. No need to track this.
          */
         return 0;
-    return dict_add(d->inputs, filename);
+    return dict_add(&d->inputs, filename);
 }
 
-dict_iter_t *depset_iter_inputs(depset_t *d) {
-    return dict_iter(d->inputs);
+int depset_iter_inputs(depset_t *d, dict_iter_t *i) {
+    return dict_iter(&d->inputs, i);
 }
 
 int depset_add_output(depset_t *d, char *filename) {
@@ -60,7 +59,7 @@ set_iter_t *depset_iter_outputs(depset_t *d) {
 }
 
 void depset_destroy(depset_t *d) {
-    dict_destroy(d->inputs);
+    dict_destroy(&d->inputs);
     set_destroy(d->outputs);
     free(d);
 }
