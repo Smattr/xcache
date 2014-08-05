@@ -31,25 +31,6 @@ if (NOT IS_DIRECTORY "${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/arch/${ARCH}")
 
-# Tell CMake how to build the bits of SQL as C strings.
-ADD_CUSTOM_COMMAND (
-    OUTPUT "${CMAKE_BINARY_DIR}/queries.h"
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/sql"
-    COMMAND find . -iname "*.sql" -exec xxd -i "{}" \; > "${CMAKE_BINARY_DIR}/queries.h"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/addinput.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/addoperation.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/addoutput.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/create.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/deleteinput.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/deleteoperation.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/deleteoutput.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/getid.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/getinputs.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/getoutputs.sql"
-    DEPENDS "${CMAKE_SOURCE_DIR}/sql/truncate.sql"
-    VERBATIM)
-SET (LIBSOURCES ${LIBSOURCES} "${CMAKE_BINARY_DIR}/queries.h")
-
 # Dump CMake settings so we can use them from C.
 configure_file (
     "${PROJECT_SOURCE_DIR}/config.in.h"

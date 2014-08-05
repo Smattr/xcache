@@ -1,45 +1,23 @@
 #include <assert.h>
 #include "db.h"
-#include "macros.h"
-#include "queries.h"
 #include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-/* Expand the name of a query file in sql/ into the symbol name xxd generates
- * for that query.
- */
-#define QUERY(query) __##query##_sql
 
 struct db {
     sqlite3 *handle;
 };
 
 /* Wrapper around sqlite3_prepare_v2. */
-static int _prepare(db_t *db, sqlite3_stmt **s, const char *query, int len) {
-    return sqlite3_prepare_v2(db->handle, query, len, s, NULL);
+static int prepare(db_t *db, sqlite3_stmt **s, const char *query) {
+    return sqlite3_prepare_v2(db->handle, query, -1, s, NULL);
 }
-#define prepare(db, s, query) _prepare((db), (s), (const char*)(query), JOIN(query, _len))
 
 /* Wrapper around sqlite3_exec. */
-static int _exec(db_t *db, const char *query, int len) {
-    char *q;
-    if (len == -1) {
-        q = strdup(query);
-        if (q == NULL)
-            return -1;
-    } else {
-        q = strndup(query, len);
-        if (q == NULL)
-            return -1;
-    }
-
-    int r = sqlite3_exec(db->handle, q, NULL, NULL, NULL);
-    free(q);
-    return r;
+static int exec(db_t *db, const char *query) {
+    return sqlite3_exec(db->handle, query, NULL, NULL, NULL);
 }
-#define exec(db, query) _exec((db), (const char*)(query), JOIN(query, _len))
 
 db_t *db_open(const char *path) {
     db_t *d = malloc(sizeof(*d));
@@ -52,7 +30,26 @@ db_t *db_open(const char *path) {
         return NULL;
     }
 
-    if (exec(d, QUERY(create)) != 0) {
+    char *query =
+        "create table if not exists operation ("
+        "    id integer primary key autoincrement,"
+        "    cwd text not null,"
+        "    command text not null);"
+
+        "create table if not exists input ("
+        "    fk_operation integer references operation(id),"
+        "    filename text not null,"
+        "    timestamp integer not null);"
+
+        "create table if not exists output ("
+        "    fk_operation integer references operation(id),"
+        "    filename text not null,"
+        "    timestamp integer not null,"
+        "    mode integer not null,"
+        "    uid integer not null,"
+        "    gid integer not null,"
+        "    contents text not null);";
+    if (exec(d, query) != 0) {
         db_close(d);
         free(d);
         return NULL;
@@ -62,17 +59,20 @@ db_t *db_open(const char *path) {
 }
 
 int db_begin(db_t *db) {
-    return _exec(db, "begin transaction", -1);
+    return exec(db, "begin transaction");
 }
 int db_commit(db_t *db) {
-    return _exec(db, "commit transaction", -1);
+    return exec(db, "commit transaction");
 }
 int db_rollback(db_t *db) {
-    return _exec(db, "rollback transaction", -1);
+    return exec(db, "rollback transaction");
 }
 
 int db_clear(db_t *db) {
-    return exec(db, QUERY(truncate));
+    return exec(db,
+        "delete from input;"
+        "delete from output;"
+        "delete from operation;");
 }
 
 int db_close(db_t *db) {
@@ -118,7 +118,8 @@ static const char *column_text(sqlite3_stmt *s, int index) {
 
 int db_select_id(db_t *db, int *id, const char *cwd, const char *command) {
     sqlite3_stmt *s;
-    if (prepare(db, &s, QUERY(getid)) != SQLITE_OK)
+    char *getid = "select id from operation where cwd = @cwd and command = @command;";
+    if (prepare(db, &s, getid) != SQLITE_OK)
         return -1;
 
     int result = -1;
@@ -148,7 +149,9 @@ int db_remove_id(db_t *db, int id) {
 
     int result = -1;
 
-    if (prepare(db, &s, QUERY(deleteoutput)) != SQLITE_OK)
+    char *deleteoutput = "delete from output where fk_operation = @id;";
+
+    if (prepare(db, &s, deleteoutput) != SQLITE_OK)
         goto fail;
     if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
         goto fail;
@@ -157,7 +160,9 @@ int db_remove_id(db_t *db, int id) {
     sqlite3_finalize(s);
     s = NULL;
 
-    if (prepare(db, &s, QUERY(deleteinput)) != SQLITE_OK)
+    char *deleteinput = "delete from intput where fk_operation = @id;";
+
+    if (prepare(db, &s, deleteinput) != SQLITE_OK)
         goto fail;
     if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
         goto fail;
@@ -166,7 +171,8 @@ int db_remove_id(db_t *db, int id) {
     sqlite3_finalize(s);
     s = NULL;
 
-    if (prepare(db, &s, QUERY(deleteoperation)) != SQLITE_OK)
+    char *deleteoperation = "delete from operation where id = @id;";
+    if (prepare(db, &s, deleteoperation) != SQLITE_OK)
         goto fail;
     if (bind_int(s, "@id", id) != SQLITE_OK)
         goto fail;
@@ -184,7 +190,8 @@ fail:
 
 int db_insert_id(db_t *db, int *id, const char *cwd, const char *command) {
     sqlite3_stmt *s;
-    if (prepare(db, &s, QUERY(addoperation)) != SQLITE_OK)
+    char *add = "insert into operation (cwd, command) values (@cwd, @command);";
+    if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
     int result = -1;
@@ -207,7 +214,9 @@ fail:
 
 int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp) {
     sqlite3_stmt *s;
-    if (prepare(db, &s, QUERY(addinput)) != SQLITE_OK)
+    char *add = "insert into input (fk_operation, filename, timestamp) values "
+        "(@fk_operation, @filename, @timestamp);";
+    if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
     int result = -1;
@@ -231,7 +240,10 @@ fail:
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
         mode_t mode, uid_t uid, gid_t gid, const char *contents) {
     sqlite3_stmt *s;
-    if (prepare(db, &s, QUERY(addoutput)) != SQLITE_OK)
+    char *add = "insert into output (fk_operation, filename, timestamp, mode, "
+        "uid, gid, contents) values (@fk_operation, @filename, @timestamp, "
+        "@mode, @uid, @gid, @contents);";
+    if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
     int result = -1;
@@ -270,7 +282,9 @@ rowset_t *db_select_inputs(db_t *db, int id) {
     if (r == NULL)
         return NULL;
 
-    if (prepare(db, &r->s, QUERY(getinputs)) != SQLITE_OK) {
+    char *getinputs = "select filename, timestamp from input where "
+        "fk_operation = @fk_operation;";
+    if (prepare(db, &r->s, getinputs) != SQLITE_OK) {
         free(r);
         return NULL;
     }
@@ -307,7 +321,9 @@ rowset_t *db_select_outputs(db_t *db, int id) {
     if (r == NULL)
         return NULL;
 
-    if (prepare(db, &r->s, QUERY(getoutputs)) != SQLITE_OK) {
+    char *getoutputs = "select filename, timestamp, mode, uid, gid, contents "
+        "from output where fk_operation = @fk_operation;";
+    if (prepare(db, &r->s, getoutputs) != SQLITE_OK) {
         free(r);
         return NULL;
     }
