@@ -9,8 +9,6 @@ typedef struct {
     sqlite3 *handle;
 } db_t;
 
-typedef struct rowset rowset_t;
-
 int db_open(db_t *db, const char *path);
 int db_close(db_t *db);
 
@@ -26,12 +24,10 @@ int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp);
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
     mode_t mode, const char *contents);
 
-void rowset_discard(rowset_t *rows);
-
-rowset_t *db_select_inputs(db_t *db, int id);
-int rowset_next_input(rowset_t *rows, const char **filename, time_t *timestamp);
-rowset_t *db_select_outputs(db_t *db, int id);
-int rowset_next_output(rowset_t *rows, const char **filename, time_t *timestamp,
-    mode_t *mode, const char **contents);
+int db_for_inputs(db_t *db, int id,
+    int (*cb)(const char *filename, time_t timestamp));
+int db_for_outputs(db_t *db, int id,
+    int (*cb)(const char *filename, time_t timestamp, mode_t mode,
+    const char *contents));
 
 #endif

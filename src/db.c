@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "db.h"
 #include <sqlite3.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -252,92 +253,91 @@ fail:
     return result;
 }
 
-struct rowset {
-    sqlite3_stmt *s;
-};
-
-void rowset_discard(rowset_t *rows) {
-    sqlite3_finalize(rows->s);
-    free(rows);
-}
-
-rowset_t *db_select_inputs(db_t *db, int id) {
-    rowset_t *r = (rowset_t*)malloc(sizeof(*r));
-    if (r == NULL)
-        return NULL;
+int db_for_inputs(db_t *db, int id,
+        int (*cb)(const char *filename, time_t timestamp)) {
+    sqlite3_stmt *s = NULL;
 
     char *getinputs = "select filename, timestamp from input where "
         "fk_operation = @fk_operation;";
-    if (prepare(db, &r->s, getinputs) != SQLITE_OK) {
-        free(r);
-        return NULL;
+    if (prepare(db, &s, getinputs) != SQLITE_OK)
+        goto fail;
+
+    if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
+        goto fail;
+
+    while (true) {
+        switch (sqlite3_step(s)) {
+            case SQLITE_DONE:
+                sqlite3_finalize(s);
+                return 0;
+
+            case SQLITE_ROW:
+                assert(sqlite3_column_count(s) == 2);
+                const char *filename = column_text(s, 0);
+                assert(filename != NULL);
+                time_t timestamp = column_time_t(s, 1);
+                int r = cb(filename, timestamp);
+                if (r != 0) {
+                    sqlite3_finalize(s);
+                    return r;
+                }
+                break;
+
+            default:
+                goto fail;
+        }
     }
 
-    if (bind_int(r->s, "@fk_operation", id) != SQLITE_OK) {
-        rowset_discard(r);
-        return NULL;
-    }
+    assert(!"unreachable");
 
-    return r;
+fail:
+    if (s != NULL)
+        sqlite3_finalize(s);
+    return -1;
 }
 
-int rowset_next_input(rowset_t *rows, const char **filename, time_t *timestamp) {
-    switch (sqlite3_step(rows->s)) {
-        case SQLITE_DONE:
-            rowset_discard(rows);
-            return 1;
-
-        case SQLITE_ROW:
-            assert(sqlite3_column_count(rows->s) == 2);
-            *filename = column_text(rows->s, 0);
-            assert(*filename != NULL);
-            *timestamp = column_time_t(rows->s, 1);
-            return 0;
-
-        default:
-            rowset_discard(rows);
-            return -1;
-    }
-}
-
-rowset_t *db_select_outputs(db_t *db, int id) {
-    rowset_t *r = malloc(sizeof(*r));
-    if (r == NULL)
-        return NULL;
+int db_for_outputs(db_t *db, int id,
+        int (*cb)(const char *filename, time_t timestamp, mode_t mode,
+        const char *contents)) {
+    sqlite3_stmt *s = NULL;
 
     char *getoutputs = "select filename, timestamp, mode, contents "
         "from output where fk_operation = @fk_operation;";
-    if (prepare(db, &r->s, getoutputs) != SQLITE_OK) {
-        free(r);
-        return NULL;
+    if (prepare(db, &s, getoutputs) != SQLITE_OK)
+        goto fail;
+
+    if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
+        goto fail;
+
+    while (true) {
+        switch (sqlite3_step(s)) {
+            case SQLITE_DONE:
+                sqlite3_finalize(s);
+                return 0;
+
+            case SQLITE_ROW:
+                assert(sqlite3_column_count(s) == 4);
+                const char *filename = column_text(s, 0);
+                assert(filename != NULL);
+                time_t timestamp = column_time_t(s, 1);
+                mode_t mode = column_mode_t(s, 2);
+                const char *contents = column_text(s, 3);
+                int r = cb(filename, timestamp, mode, contents);
+                if (r != 0) {
+                    sqlite3_finalize(s);
+                    return r;
+                }
+                break;
+
+            default:
+                goto fail;
+        }
     }
 
-    if (bind_int(r->s, "@fk_operation", id) != SQLITE_OK) {
-        rowset_discard(r);
-        return NULL;
-    }
+    assert(!"unreachable");
 
-    return r;
-}
-
-int rowset_next_output(rowset_t *rows, const char **filename, time_t *timestamp,
-        mode_t *mode, const char **contents) {
-    switch (sqlite3_step(rows->s)) {
-        case SQLITE_DONE:
-            rowset_discard(rows);
-            return 1;
-
-        case SQLITE_ROW:
-            assert(sqlite3_column_count(rows->s) == 4);
-            *filename = column_text(rows->s, 0);
-            assert(*filename != NULL);
-            *timestamp = column_time_t(rows->s, 1);
-            *mode = column_mode_t(rows->s, 2);
-            *contents = column_text(rows->s, 3);
-            return 0;
-
-        default:
-            rowset_discard(rows);
-            return -1;
-    }
+fail:
+    if (s != NULL)
+        sqlite3_finalize(s);
+    return -1;
 }

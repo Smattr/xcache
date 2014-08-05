@@ -238,19 +238,14 @@ int cache_locate(cache_t *cache, const char **args) {
     free(command);
     free(cwd);
 
-    rowset_t *r = db_select_inputs(&cache->db, id);
-    if (r == NULL)
-        goto fail;
-    const char *filename;
-    time_t timestamp;
-    while (rowset_next_input(r, &filename, &timestamp) == 0) {
+    int f(const char *filename, time_t timestamp) {
         struct stat st;
         if (stat(filename, &st) != 0) {
             if (errno == ENOENT && timestamp == MISSING)
                 /* The file doesn't exist, but we expected it not to. */
-                continue;
+                return 0;
             DEBUG("Failed to stat %s\n", filename);
-            goto fail;
+            return -1;
         } else if (st.st_mtime != timestamp) {
             /* This is actually the expected case; that we found the input file
              * but its timestamp has changed.
@@ -258,29 +253,20 @@ int cache_locate(cache_t *cache, const char **args) {
             DEBUG("Found %s but its timestamp was %llu, not %llu as expected\n",
                 filename, (long long unsigned)st.st_mtime,
                 (long long unsigned)timestamp);
-            goto fail;
+            return -1;
         }
+        return 0;
     }
-    r = NULL;
+    if (db_for_inputs(&cache->db, id, f) != 0)
+        return -1;
 
     /* We found it with matching inputs. */
     return id;
-
-fail:
-    if (r != NULL)
-        rowset_discard(r);
-    return -1;
 }
 
 int cache_dump(cache_t *cache, int id) {
-    rowset_t *r = db_select_outputs(&cache->db, id);
-    if (r == NULL)
-        return -1;
-
-    const char *filename, *contents;
-    time_t timestamp;
-    mode_t mode;
-    while (rowset_next_output(r, &filename, &timestamp, &mode, &contents) == 0) {
+    int f(const char *filename, time_t timestamp, mode_t mode,
+            const char *contents) {
         char *last_slash = strrchr(filename, '/');
         /* The path should contain at least one slash because it should be
          * absolute.
@@ -292,7 +278,7 @@ int cache_dump(cache_t *cache, int id) {
             int m = mkdirp(filename);
             if (m != 0) {
                 ERROR("Failed to create directory %s\n", filename);
-                goto fail;
+                return -1;
             }
             last_slash[0] = '/';
         }
@@ -301,7 +287,7 @@ int cache_dump(cache_t *cache, int id) {
         int err = asprintf(&cached_copy, "%s/%s", cache->root, contents);
         if (err == -1) {
             ERROR("Out of memory while dumping cache entry %s\n", filename);
-            goto fail;
+            return -1;
         }
         int res = cp(cached_copy, filename);
         free(cached_copy);
@@ -313,17 +299,14 @@ int cache_dump(cache_t *cache, int id) {
         utime(filename, &ut);
         if (res != 0) {
             ERROR("Failed to write output %s\n", filename);
-            goto fail;
+            return -1;
         }
+        return 0;
     }
-    r = NULL;
+    if (db_for_outputs(&cache->db, id, f) != 0)
+        return -1;
 
     return 0;
-
-fail:
-    if (r != NULL)
-        rowset_discard(r);
-    return -1;
 }
 
 int cache_close(cache_t *cache) {
