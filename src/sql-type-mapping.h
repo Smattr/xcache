@@ -1,5 +1,3 @@
-X(gid_t, int)
 X(int, int)
 X(mode_t, int)
 X(time_t, int64)
-X(uid_t, int)

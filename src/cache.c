@@ -174,8 +174,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (h == NULL)
             goto fail;
 
-        int r = db_insert_output(&cache->db, id, key, st.st_mtime, st.st_mode,
-            st.st_uid, st.st_gid, h);
+        int r = db_insert_output(&cache->db, id, key, st.st_mtime, st.st_mode, h);
         free(h);
         if (r != 0)
             goto fail;
@@ -186,7 +185,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (h == NULL)
             goto fail;
 
-        int r = db_insert_output(&cache->db, id, "/dev/stdout", 0, 0, 0, 0, h);
+        int r = db_insert_output(&cache->db, id, "/dev/stdout", 0, 0, h);
         free(h);
         if (r != 0)
             goto fail;
@@ -197,7 +196,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (h == NULL)
             goto fail;
 
-        int r = db_insert_output(&cache->db, id, "/dev/stderr", 0, 0, 0, 0, h);
+        int r = db_insert_output(&cache->db, id, "/dev/stderr", 0, 0, h);
         free(h);
         if (r != 0)
             goto fail;
@@ -281,10 +280,7 @@ int cache_dump(cache_t *cache, int id) {
     const char *filename, *contents;
     time_t timestamp;
     mode_t mode;
-    uid_t uid;
-    gid_t gid;
-    while (rowset_next_output(r, &filename, &timestamp, &mode, &uid, &gid,
-            &contents) == 0) {
+    while (rowset_next_output(r, &filename, &timestamp, &mode, &contents) == 0) {
         char *last_slash = strrchr(filename, '/');
         /* The path should contain at least one slash because it should be
          * absolute.
@@ -309,7 +305,6 @@ int cache_dump(cache_t *cache, int id) {
         }
         int res = cp(cached_copy, filename);
         free(cached_copy);
-        chown(filename, uid, gid);
         chmod(filename, mode);
         struct utimbuf ut = {
             .actime = timestamp,

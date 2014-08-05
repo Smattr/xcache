@@ -24,7 +24,7 @@ int db_select_id(db_t *db, int *id, const char *cwd, const char *command);
 int db_insert_id(db_t *db, int *id, const char *cwd, const char *command);
 int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp);
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
-    mode_t mode, uid_t uid, gid_t gid, const char *contents);
+    mode_t mode, const char *contents);
 
 void rowset_discard(rowset_t *rows);
 
@@ -32,6 +32,6 @@ rowset_t *db_select_inputs(db_t *db, int id);
 int rowset_next_input(rowset_t *rows, const char **filename, time_t *timestamp);
 rowset_t *db_select_outputs(db_t *db, int id);
 int rowset_next_output(rowset_t *rows, const char **filename, time_t *timestamp,
-    mode_t *mode, uid_t *uid, gid_t *gid, const char **contents);
+    mode_t *mode, const char **contents);
 
 #endif
