@@ -5,10 +5,6 @@
 #include <string.h>
 #include <time.h>
 
-struct db {
-    sqlite3 *handle;
-};
-
 /* Wrapper around sqlite3_prepare_v2. */
 static int prepare(db_t *db, sqlite3_stmt **s, const char *query) {
     return sqlite3_prepare_v2(db->handle, query, -1, s, NULL);
@@ -19,16 +15,10 @@ static int exec(db_t *db, const char *query) {
     return sqlite3_exec(db->handle, query, NULL, NULL, NULL);
 }
 
-db_t *db_open(const char *path) {
-    db_t *d = malloc(sizeof(*d));
-    if (d == NULL)
-        return NULL;
-
-    int r = sqlite3_open(path, &d->handle);
-    if (r != SQLITE_OK) {
-        free(d);
-        return NULL;
-    }
+int db_open(db_t *db, const char *path) {
+    int r = sqlite3_open(path, &db->handle);
+    if (r != SQLITE_OK)
+        return -1;
 
     char *query =
         "create table if not exists operation ("
@@ -49,13 +39,12 @@ db_t *db_open(const char *path) {
         "    uid integer not null,"
         "    gid integer not null,"
         "    contents text not null);";
-    if (exec(d, query) != 0) {
-        db_close(d);
-        free(d);
-        return NULL;
+    if (exec(db, query) != 0) {
+        db_close(db);
+        return -1;
     }
 
-    return d;
+    return 0;
 }
 
 int db_begin(db_t *db) {
@@ -78,7 +67,6 @@ int db_clear(db_t *db) {
 int db_close(db_t *db) {
     if (sqlite3_close(db->handle) != SQLITE_OK)
         return -1;
-    free(db);
     return 0;
 }
 

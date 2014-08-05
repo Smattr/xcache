@@ -1,13 +1,17 @@
 #ifndef _XCACHE_DB_H_
 #define _XCACHE_DB_H_
 
+#include <sqlite3.h>
 #include <sys/types.h>
 #include <time.h>
 
-typedef struct db db_t;
+typedef struct {
+    sqlite3 *handle;
+} db_t;
+
 typedef struct rowset rowset_t;
 
-db_t *db_open(const char *path);
+int db_open(db_t *db, const char *path);
 int db_close(db_t *db);
 
 int db_begin(db_t *db);

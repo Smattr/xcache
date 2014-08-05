@@ -31,7 +31,7 @@
 struct cache {
 
     /* Underlying data store for metadata about dependency graphs. */
-    db_t *db;
+    db_t db;
 
     /* Absolute path (without a trailing slash) to the directory to store cache
      * metadata and file data in.
@@ -50,22 +50,20 @@ cache_t *cache_open(const char *path) {
         free(c);
         return NULL;
     }
-    c->db = db_open(db_path);
-    free(db_path);
-    if (c->db == NULL) {
+    if (db_open(&c->db, db_path) != 0) {
         free(c);
         return NULL;
     }
 
     err = asprintf(&c->root, "%s" DATA, path);
     if (err == -1) {
-        db_close(c->db);
+        db_close(&c->db);
         free(c);
         return NULL;
     }
     if (mkdirp(c->root) != 0) {
         free(c->root);
-        db_close(c->db);
+        db_close(&c->db);
         free(c);
         return NULL;
     }
@@ -75,7 +73,7 @@ cache_t *cache_open(const char *path) {
 
 static int get_id(cache_t *c, char *cwd, char *command) {
     int id;
-    if (db_select_id(c->db, &id, cwd, command) != 0)
+    if (db_select_id(&c->db, &id, cwd, command) != 0)
         return -1;
     return id;
 }
@@ -135,7 +133,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     char *command = to_command(args);
     if (command == NULL)
         return -1;
-    if (db_begin(cache->db) != 0) {
+    if (db_begin(&cache->db) != 0) {
         free(command);
         return -1;
     }
@@ -144,7 +142,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     if (id < 0) {
         /* This entry was not found in the cache. */
         /* Write the entry to the dep table. */
-        if (db_insert_id(cache->db, &id, cwd, command) != 0)
+        if (db_insert_id(&cache->db, &id, cwd, command) != 0)
             goto fail;
     }
     free(command);
@@ -159,7 +157,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
     char *key;
     time_t value;
     while (dict_iter_next(&di, &key, (void**)&value)) {
-        if (db_insert_input(cache->db, id, key, value) != 0)
+        if (db_insert_input(&cache->db, id, key, value) != 0)
             goto fail;
     }
 
@@ -176,7 +174,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (h == NULL)
             goto fail;
 
-        int r = db_insert_output(cache->db, id, key, st.st_mtime, st.st_mode,
+        int r = db_insert_output(&cache->db, id, key, st.st_mtime, st.st_mode,
             st.st_uid, st.st_gid, h);
         free(h);
         if (r != 0)
@@ -188,7 +186,7 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (h == NULL)
             goto fail;
 
-        int r = db_insert_output(cache->db, id, "/dev/stdout", 0, 0, 0, 0, h);
+        int r = db_insert_output(&cache->db, id, "/dev/stdout", 0, 0, 0, 0, h);
         free(h);
         if (r != 0)
             goto fail;
@@ -199,25 +197,25 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
         if (h == NULL)
             goto fail;
 
-        int r = db_insert_output(cache->db, id, "/dev/stderr", 0, 0, 0, 0, h);
+        int r = db_insert_output(&cache->db, id, "/dev/stderr", 0, 0, 0, 0, h);
         free(h);
         if (r != 0)
             goto fail;
     }
 
-    if (db_commit(cache->db) != 0)
+    if (db_commit(&cache->db) != 0)
         goto fail;
     return 0;
 
 fail:
-    db_rollback(cache->db);
+    db_rollback(&cache->db);
     if (command != NULL)
         free(command);
     return -1;
 }
 
 int cache_clear(cache_t *cache) {
-    return db_clear(cache->db);
+    return db_clear(&cache->db);
 }
 
 int cache_locate(cache_t *cache, const char **args) {
@@ -241,7 +239,7 @@ int cache_locate(cache_t *cache, const char **args) {
     free(command);
     free(cwd);
 
-    rowset_t *r = db_select_inputs(cache->db, id);
+    rowset_t *r = db_select_inputs(&cache->db, id);
     if (r == NULL)
         goto fail;
     const char *filename;
@@ -276,7 +274,7 @@ fail:
 }
 
 int cache_dump(cache_t *cache, int id) {
-    rowset_t *r = db_select_outputs(cache->db, id);
+    rowset_t *r = db_select_outputs(&cache->db, id);
     if (r == NULL)
         return -1;
 
@@ -335,7 +333,7 @@ fail:
 
 int cache_close(cache_t *cache) {
     assert(cache != NULL);
-    if (db_close(cache->db) != 0)
+    if (db_close(&cache->db) != 0)
         return -1;
     free(cache);
     return 0;
