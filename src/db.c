@@ -146,7 +146,7 @@ int db_remove_id(db_t *db, int id) {
     sqlite3_finalize(s);
     s = NULL;
 
-    char *deleteinput = "delete from intput where fk_operation = @id;";
+    char *deleteinput = "delete from input where fk_operation = @id;";
 
     if (prepare(db, &s, deleteinput) != SQLITE_OK)
         goto fail;
