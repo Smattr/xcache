@@ -37,21 +37,9 @@ struct cache {
      * metadata and file data in.
      */
     char *root;
-
-    /* Size limit to place on the data section of the cache. Older entries will
-     * be evicted to make space for newer entries. This size limit does *not*
-     * include the space used by the SQLite database.
-     */
-    ssize_t limit; /* bytes */
-
-    /* Current size of the data section of the cache. Only gets initialised
-     * when we're not using an unlimited cache.
-     */
-    ssize_t size; /* bytes */
-
 };
 
-cache_t *cache_open(const char *path, ssize_t limit) {
+cache_t *cache_open(const char *path) {
     cache_t *c = malloc(sizeof(*c));
     if (c == NULL)
         return NULL;
@@ -82,17 +70,6 @@ cache_t *cache_open(const char *path, ssize_t limit) {
         return NULL;
     }
 
-    if (limit == DATA_SIZE_UNSET)
-        c->limit = DATA_LIMIT_DEFAULT;
-    else {
-        c->limit = limit;
-        /* We'll need to stat every file in the cache to measure its current
-         * size if we ever save anything, but we may never need to, so let's
-         * just do this on demand later.
-         */
-        c->size = DATA_SIZE_UNSET;
-    }
-
     return c;
 }
 
@@ -115,40 +92,6 @@ static char *cache_save(cache_t *c, const char *filename) {
     char *h = filehash(filename);
     if (h == NULL)
         return NULL;
-
-    if (c->size != DATA_LIMIT_UNLIMITED) {
-        /* Only take the overhead of an extra stat here to check the filesize
-         * if the cache is not unlimited.
-         */
-        struct stat st;
-        if (stat(filename, &st) != 0)
-            return NULL;
-        if (st.st_size > c->limit)
-            /* This file would never fit in the cache, even if it were empty.
-             */
-            return NULL;
-        if (c->size == DATA_SIZE_UNSET) {
-            /* We haven't measured the cache yet. Time for a coffee. */
-            c->size = du(c->root);
-            if (c->size == -1) {
-                /* Failed to measure the cache. Who knows why. */
-                c->size = DATA_SIZE_UNSET;
-                return NULL;
-            }
-        }
-        /* We must have measured the cache by here. */
-        assert(c->size != DATA_SIZE_UNSET);
-        if (st.st_size + c->size > c->limit) {
-            /* This file will not fit in the cache as it stands. */
-            ssize_t removed = reduce(c->root, st.st_size + c->size - c->limit);
-            if (removed == -1)
-                /* We failed to prune the cache. */
-                return NULL;
-            c->size -= removed;
-            /* We should now be able to fit this item. */
-            assert(c->size + st.st_size <= c->limit);
-        }
-    }
 
     char *cpath;
     int err = asprintf(&cpath, "%s/%s", c->root, h);

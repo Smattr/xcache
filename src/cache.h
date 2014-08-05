@@ -6,10 +6,7 @@
 
 typedef struct cache cache_t;
 
-#define DATA_LIMIT_DEFAULT ((ssize_t)(100 * 1024 * 1024)) /* bytes */
-#define DATA_LIMIT_UNLIMITED SSIZE_MAX
-#define DATA_SIZE_UNSET ((ssize_t)-1)
-cache_t *cache_open(const char *path, ssize_t size);
+cache_t *cache_open(const char *path);
 
 int cache_clear(cache_t *cache);
 
