@@ -13,3 +13,6 @@ syntax: regexp
 
 # Editor files
 \.swp$
+
+# Compiled Python
+.*\.pyc$
