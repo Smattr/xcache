@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "db.h"
+#include <limits.h>
 #include <sqlite3.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -25,7 +26,9 @@ int db_open(db_t *db, const char *path) {
         "create table if not exists operation ("
         "    id integer primary key autoincrement,"
         "    cwd text not null,"
-        "    command text not null);"
+        "    arg_lens blob not null,"
+        "    arg_lens_sz integer not null,"
+        "    argv text not null);"
 
         "create table if not exists input ("
         "    fk_operation integer references operation(id),"
@@ -90,6 +93,19 @@ static int bind_text(sqlite3_stmt *s, const char *param, const char *value) {
     return sqlite3_bind_text(s, index, value, -1, SQLITE_STATIC);
 }
 
+static int bind_blob(sqlite3_stmt *s, const char *param, const void *value,
+        unsigned int size) {
+    if (size > INT_MAX)
+        /* Cast below will cause overflow. */
+        return !SQLITE_OK;
+
+    int index = sqlite3_bind_parameter_index(s, param);
+    if (index == 0)
+        return !SQLITE_OK;
+
+    return sqlite3_bind_blob(s, index, value, (int)size, SQLITE_STATIC);
+}
+
 #define X(c_type, sql_type) \
     static c_type column_##c_type(sqlite3_stmt *s, int index) { \
         assert(sqlite3_column_type(s, index) == SQLITE_INTEGER); \
@@ -103,16 +119,18 @@ static const char *column_text(sqlite3_stmt *s, int index) {
     return (const char*)sqlite3_column_text(s, index);
 }
 
-int db_select_id(db_t *db, int *id, const char *cwd, const char *command) {
+int db_select_id(db_t *db, int *id, const fingerprint_t *fp) {
     sqlite3_stmt *s;
-    char *getid = "select id from operation where cwd = @cwd and command = @command;";
+    char *getid = "select id from operation where cwd = @cwd and arg_lens = @arg_lens and arg_lens_sz = @arg_lens_sz and argv = @argv;";
     if (prepare(db, &s, getid) != SQLITE_OK)
         return -1;
 
     int result = -1;
 
-    if (bind_text(s, "@cwd", cwd) != SQLITE_OK ||
-            bind_text(s, "@command", command) != SQLITE_OK)
+    if (bind_text(s, "@cwd", fp->cwd) != SQLITE_OK ||
+            bind_blob(s, "@arg_lens", fp->arg_lens, fp->arg_lens_sz * sizeof(*fp->arg_lens)) ||
+            bind_int(s, "@arg_lens_sz", fp->arg_lens_sz) ||
+            bind_text(s, "@argv", fp->argv) != SQLITE_OK)
         goto fail;
 
     if (sqlite3_step(s) != SQLITE_ROW)
@@ -175,22 +193,24 @@ fail:
     return result;
 }
 
-int db_insert_id(db_t *db, int *id, const char *cwd, const char *command) {
+int db_insert_id(db_t *db, int *id, const fingerprint_t *fp) {
     sqlite3_stmt *s;
-    char *add = "insert into operation (cwd, command) values (@cwd, @command);";
+    char *add = "insert into operation (cwd, arg_lens, arg_lens_sz, argv) values (@cwd, @arg_lens, @arg_lens_sz, @argv);";
     if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
     int result = -1;
 
-    if (bind_text(s, "@cwd", cwd) != SQLITE_OK ||
-            bind_text(s, "@command", command) != SQLITE_OK)
+    if (bind_text(s, "@cwd", fp->cwd) != SQLITE_OK ||
+            bind_blob(s, "@arg_lens", fp->arg_lens, fp->arg_lens_sz * sizeof(*fp->arg_lens)) ||
+            bind_int(s, "@arg_lens_sz", fp->arg_lens_sz) ||
+            bind_text(s, "@argv", fp->argv) != SQLITE_OK)
         goto fail;
 
     if (sqlite3_step(s) != SQLITE_DONE)
         goto fail;
 
-    result = db_select_id(db, id, cwd, command);
+    result = db_select_id(db, id, fp);
     assert(result == 0);
 
 fail:

@@ -126,7 +126,7 @@ int main(int argc, const char **argv) {
         return -1;
     }
 
-    int id = cache_locate(cache, &argv[index]);
+    int id = cache_locate(cache, argc - index, &argv[index]);
     if (id >= 0) {
         /* Excellent news! We found a cache entry and don't need to run the
          * target program.
@@ -140,13 +140,6 @@ int main(int argc, const char **argv) {
     /* If we've reached this point, we failed to locate a suitable cached entry
      * for this execution. We need to actually run the program itself.
      */
-
-    char *cwd = getcwd(NULL, 0);
-    if (cwd == NULL) {
-        ERROR("Failed to read current working directory\n");
-        cache_close(cache);
-        return -1;
-    }
 
     depset_t *deps = depset_new();
     if (deps == NULL) {
@@ -345,7 +338,7 @@ bailout:;
                *errfile = get_stderr(target);
 
     if (success && ret == 0) {
-        if (cache_write(cache, cwd, &argv[index], deps, outfile, errfile) != 0)
+        if (cache_write(cache, argc - index, &argv[index], deps, outfile, errfile) != 0)
             /* This failure is non-critical in a sense. */
             DEBUG("Failed to write entry to cache\n");
     }

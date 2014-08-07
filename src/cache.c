@@ -71,9 +71,9 @@ cache_t *cache_open(const char *path) {
     return c;
 }
 
-static int get_id(cache_t *c, char *cwd, char *command) {
+static int get_id(cache_t *c, fingerprint_t *fp) {
     int id;
-    if (db_select_id(&c->db, &id, cwd, command) != 0)
+    if (db_select_id(&c->db, &id, fp) != 0)
         return -1;
     return id;
 }
@@ -106,47 +106,25 @@ static char *cache_save(cache_t *c, const char *filename) {
     return h;
 }
 
-static char *to_command(const char **args) {
-    assert(args != NULL);
-    assert(args[0] != NULL);
-
-    size_t sz = strlen(args[0]) + 1;
-    char *command = strdup(args[0]);
-    if (command == NULL)
-        return NULL;
-    for (unsigned int i = 1; args[i] != NULL; i++) {
-        sz += strlen(args[i]) + 1;
-        char *tmp = realloc(command, sz);
-        if (tmp == NULL) {
-            free(command);
-            return NULL;
-        }
-        command = tmp;
-        strcat(command, " ");
-        strcat(command, args[i]);
-    }
-    return command;
-}
-
-int cache_write(cache_t *cache, char *cwd, const char **args,
+int cache_write(cache_t *cache, int argc, const char **argv,
         depset_t *depset, const char *outfile, const char *errfile) {
-    char *command = to_command(args);
-    if (command == NULL)
+    fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
+    if (fp == NULL)
         return -1;
     if (db_begin(&cache->db) != 0) {
-        free(command);
+        fingerprint_destroy(fp);
         return -1;
     }
 
-    int id = get_id(cache, cwd, command);
+    int id = get_id(cache, fp);
     if (id < 0) {
         /* This entry was not found in the cache. */
         /* Write the entry to the dep table. */
-        if (db_insert_id(&cache->db, &id, cwd, command) != 0)
+        if (db_insert_id(&cache->db, &id, fp) != 0)
             goto fail;
     }
-    free(command);
-    command = NULL;
+    fingerprint_destroy(fp);
+    fp = NULL;
 
     assert(id >= 0);
 
@@ -208,8 +186,8 @@ int cache_write(cache_t *cache, char *cwd, const char **args,
 
 fail:
     db_rollback(&cache->db);
-    if (command != NULL)
-        free(command);
+    if (fp != NULL)
+        fingerprint_destroy(fp);
     return -1;
 }
 
@@ -217,26 +195,19 @@ int cache_clear(cache_t *cache) {
     return db_clear(&cache->db);
 }
 
-int cache_locate(cache_t *cache, const char **args) {
-    char *command = to_command(args);
-    if (command == NULL)
+int cache_locate(cache_t *cache, int argc, const char **argv) {
+    fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
+    if (fp == NULL)
         return -1;
-    char *cwd = getcwd(NULL, 0);
-    if (cwd == NULL) {
-        free(command);
-        return -1;
-    }
 
-    int id = get_id(cache, cwd, command);
+    int id = get_id(cache, fp);
     if (id == -1) {
         DEBUG("Failed to locate cache entry for \"%s\" in directory \"%s\"\n",
-            command, cwd);
-        free(command);
-        free(cwd);
+            fp->argv, fp->cwd);
+        fingerprint_destroy(fp);
         return -1;
     }
-    free(command);
-    free(cwd);
+    fingerprint_destroy(fp);
 
     int f(const char *filename, time_t timestamp) {
         struct stat st;

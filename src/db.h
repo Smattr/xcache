@@ -1,6 +1,7 @@
 #ifndef _XCACHE_DB_H_
 #define _XCACHE_DB_H_
 
+#include "fingerprint.h"
 #include <sqlite3.h>
 #include <sys/types.h>
 #include <time.h>
@@ -17,9 +18,9 @@ int db_commit(db_t *db);
 int db_rollback(db_t *db);
 
 int db_clear(db_t *db);
-int db_select_id(db_t *db, int *id, const char *cwd, const char *command);
+int db_select_id(db_t *db, int *id, const fingerprint_t *fp);
 
-int db_insert_id(db_t *db, int *id, const char *cwd, const char *command);
+int db_insert_id(db_t *db, int *id, const fingerprint_t *fp);
 int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp);
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
     mode_t mode, const char *contents);
