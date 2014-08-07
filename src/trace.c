@@ -143,7 +143,7 @@ static long syscall_result(pid_t pid) {
 static long register_offset(int arg) {
     switch (arg) {
 
-        /* Dependending on our architecture, we may only have a subset of the
+        /* Depending on our architecture, we may only have a subset of the
          * following registers.
          */
 #ifdef REG_ARG1
