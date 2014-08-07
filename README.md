@@ -43,6 +43,12 @@ I'm happy to take questions via email or respond to issues through the
 Bitbucket tracker. However, please bear in mind that this is not my full time
 job and I may take a little while to respond.
 
+## Testing
+
+Some limited unit tests are implemented inline. These are built as the
+executable, xcache-tests. Some even more limited integration tests are in the
+tests/ subdirectory.
+
 ## xxxcache
 
 You'll find a quick-and-dirty Python implementation in xxxcache/. This has
