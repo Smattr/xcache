@@ -169,6 +169,13 @@ int main(int argc, const char **argv) {
     do { \
         char *_f = syscall_getstring(s, (argno)); \
         if (_f == NULL) { \
+            if (s->call == SYS_execve) { \
+                /* A successful execve results in two entry SIGTRAPs, the
+                 * second one with an argument of NULL. Presumably the second
+                 * trap is an artefact of the program loader.
+                 */ \
+                break; \
+            } \
             DEBUG("Failed to retrieve string argument %d from syscall %s " \
                 "(%ld)\n", (argno), translate_syscall(s->call), s->call); \
             goto bailout; \
@@ -194,6 +201,14 @@ int main(int argc, const char **argv) {
          */
         if (s->enter) {
             switch (s->call) {
+
+                /* We need to handle execve on kernel entry because our
+                 * original address space containing the input argument is gone
+                 * on kernel exit.
+                 */
+                case SYS_execve:
+                    ADD_AS(input, 1);
+                    break;
 
                 case SYS_rename:
                     ADD_AS(input, 1);

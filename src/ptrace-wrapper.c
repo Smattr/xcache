@@ -14,7 +14,13 @@
 #include "util.h"
 
 long pt_traceme(void) {
-    return ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+    long r = ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+    if (r != 0)
+        return r;
+    /* Induce a trap to give our parent (the tracer) an opportunity to attach
+     * before we call execve.
+     */
+    return raise(SIGSTOP);
 }
 
 long pt_tracechildren(pid_t pid) {
