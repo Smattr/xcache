@@ -14,7 +14,7 @@ typedef struct {
     char *cwd;
 
     /* Characters is each argument */
-    uint32_t *arg_lens;
+    unsigned int *arg_lens;
     unsigned int arg_lens_sz;
 
     /* Concatenated arguments */
