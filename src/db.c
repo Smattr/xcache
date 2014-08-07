@@ -23,7 +23,7 @@ int db_open(db_t *db, const char *path) {
         return -1;
 
     char *query =
-        "create table if not exists operation ("
+        "create table if not exists trace ("
         "    id integer primary key autoincrement,"
         "    cwd text not null,"
         "    arg_lens blob not null,"
@@ -31,12 +31,12 @@ int db_open(db_t *db, const char *path) {
         "    argv text not null);"
 
         "create table if not exists input ("
-        "    fk_operation integer references operation(id),"
+        "    fk_trace integer references trace(id),"
         "    filename text not null,"
         "    timestamp integer not null);"
 
         "create table if not exists output ("
-        "    fk_operation integer references operation(id),"
+        "    fk_trace integer references trace(id),"
         "    filename text not null,"
         "    timestamp integer not null,"
         "    mode integer not null,"
@@ -63,7 +63,7 @@ int db_clear(db_t *db) {
     return exec(db,
         "delete from input;"
         "delete from output;"
-        "delete from operation;");
+        "delete from trace;");
 }
 
 int db_close(db_t *db) {
@@ -121,7 +121,7 @@ static const char *column_text(sqlite3_stmt *s, int index) {
 
 int db_select_id(db_t *db, int *id, const fingerprint_t *fp) {
     sqlite3_stmt *s;
-    char *getid = "select id from operation where cwd = @cwd and arg_lens = @arg_lens and arg_lens_sz = @arg_lens_sz and argv = @argv;";
+    char *getid = "select id from trace where cwd = @cwd and arg_lens = @arg_lens and arg_lens_sz = @arg_lens_sz and argv = @argv;";
     if (prepare(db, &s, getid) != SQLITE_OK)
         return -1;
 
@@ -154,30 +154,30 @@ int db_remove_id(db_t *db, int id) {
 
     int result = -1;
 
-    char *deleteoutput = "delete from output where fk_operation = @id;";
+    char *deleteoutput = "delete from output where fk_trace = @id;";
 
     if (prepare(db, &s, deleteoutput) != SQLITE_OK)
         goto fail;
-    if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
+    if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
         goto fail;
     if (sqlite3_step(s) != SQLITE_DONE)
         goto fail;
     sqlite3_finalize(s);
     s = NULL;
 
-    char *deleteinput = "delete from input where fk_operation = @id;";
+    char *deleteinput = "delete from input where fk_trace = @id;";
 
     if (prepare(db, &s, deleteinput) != SQLITE_OK)
         goto fail;
-    if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
+    if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
         goto fail;
     if (sqlite3_step(s) != SQLITE_DONE)
         goto fail;
     sqlite3_finalize(s);
     s = NULL;
 
-    char *deleteoperation = "delete from operation where id = @id;";
-    if (prepare(db, &s, deleteoperation) != SQLITE_OK)
+    char *deletetrace = "delete from trace where id = @id;";
+    if (prepare(db, &s, deletetrace) != SQLITE_OK)
         goto fail;
     if (bind_int(s, "@id", id) != SQLITE_OK)
         goto fail;
@@ -195,7 +195,7 @@ fail:
 
 int db_insert_id(db_t *db, int *id, const fingerprint_t *fp) {
     sqlite3_stmt *s;
-    char *add = "insert into operation (cwd, arg_lens, arg_lens_sz, argv) values (@cwd, @arg_lens, @arg_lens_sz, @argv);";
+    char *add = "insert into trace (cwd, arg_lens, arg_lens_sz, argv) values (@cwd, @arg_lens, @arg_lens_sz, @argv);";
     if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
@@ -221,14 +221,14 @@ fail:
 
 int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp) {
     sqlite3_stmt *s;
-    char *add = "insert into input (fk_operation, filename, timestamp) values "
-        "(@fk_operation, @filename, @timestamp);";
+    char *add = "insert into input (fk_trace, filename, timestamp) values "
+        "(@fk_trace, @filename, @timestamp);";
     if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
     int result = -1;
 
-    if (bind_int(s, "@fk_operation", id) != SQLITE_OK ||
+    if (bind_int(s, "@fk_trace", id) != SQLITE_OK ||
             bind_text(s, "@filename", filename) != SQLITE_OK ||
             bind_time_t(s, "@timestamp", timestamp) != SQLITE_OK)
         goto fail;
@@ -247,15 +247,15 @@ fail:
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
         mode_t mode, const char *contents) {
     sqlite3_stmt *s;
-    char *add = "insert into output (fk_operation, filename, timestamp, mode, "
-        "contents) values (@fk_operation, @filename, @timestamp, "
+    char *add = "insert into output (fk_trace, filename, timestamp, mode, "
+        "contents) values (@fk_trace, @filename, @timestamp, "
         "@mode, @contents);";
     if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
     int result = -1;
 
-    if (bind_int(s, "@fk_operation", id) != SQLITE_OK ||
+    if (bind_int(s, "@fk_trace", id) != SQLITE_OK ||
             bind_text(s, "@filename", filename) != SQLITE_OK ||
             bind_time_t(s, "@timestamp", timestamp) != SQLITE_OK ||
             bind_mode_t(s, "@mode", mode) != SQLITE_OK ||
@@ -278,11 +278,11 @@ int db_for_inputs(db_t *db, int id,
     sqlite3_stmt *s = NULL;
 
     char *getinputs = "select filename, timestamp from input where "
-        "fk_operation = @fk_operation;";
+        "fk_trace = @fk_trace;";
     if (prepare(db, &s, getinputs) != SQLITE_OK)
         goto fail;
 
-    if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
+    if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
         goto fail;
 
     while (true) {
@@ -322,11 +322,11 @@ int db_for_outputs(db_t *db, int id,
     sqlite3_stmt *s = NULL;
 
     char *getoutputs = "select filename, timestamp, mode, contents "
-        "from output where fk_operation = @fk_operation;";
+        "from output where fk_trace = @fk_trace;";
     if (prepare(db, &s, getoutputs) != SQLITE_OK)
         goto fail;
 
-    if (bind_int(s, "@fk_operation", id) != SQLITE_OK)
+    if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
         goto fail;
 
     while (true) {
