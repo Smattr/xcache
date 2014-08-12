@@ -15,6 +15,7 @@ set (PROJ_NAME "\"xcache\"")
 
 set (LIBSOURCES cache.c collection/list.c db.c depset.c collection/dict.c fingerprint.c log.c ptrace-wrapper.c collection/set.c tee.c trace.c util/abspath.c util/cp.c util/du.c util/filehash.c util/fileiter.c util/get.c util/mkdirp.c util/reduce.c)
 set (EXESOURCES main.c translate-syscall.c)
+set (GETENVSOURCES hook-getenv.c)
 set (TESTSOURCES test.c)
 
 # Handle building for different architectures.
@@ -80,6 +81,10 @@ target_link_libraries (xcache libxcache)
 
 add_executable (xcache-tests ${TESTSOURCES} ${LIBSOURCES})
 set_target_properties (xcache-tests PROPERTIES COMPILE_DEFINITIONS "XCACHE_TEST=1")
+
+add_library (libhookgetenv.so SHARED ${GETENVSOURCES})
+set_target_properties (libhookgetenv.so PROPERTIES PREFIX "")
+set_target_properties (libhookgetenv.so PROPERTIES SUFFIX "")
 
 find_library (
   GLIB NAMES glib-2.0
