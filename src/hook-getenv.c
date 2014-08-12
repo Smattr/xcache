@@ -13,8 +13,13 @@
 #define _GNU_SOURCE
 #include <assert.h>
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifndef XCACHE_FILENO
+    #error XCACHE_FILENO not defined
+#endif
 
 static char *(*real_getenv)(const char *name);
 static FILE *out;
@@ -26,15 +31,12 @@ static void init(void) {
     real_getenv = dlsym(RTLD_NEXT, "getenv");
     assert(real_getenv != NULL);
 
-    /* Find the file descriptor Xcache is expecting us to communicate on. */
-    char *pipe = real_getenv("XCACHE_PIPE");
-    if (pipe == NULL)
-        /* Not found. Running outside of Xcache? */
+    if (fcntl(XCACHE_FILENO, F_GETFD) == -1)
+        /* A return pipe back to Xcache doesn't seem to exist. Oh well. */
         return;
-    int fd = atoi(pipe);
-    if (fd > 0)
-        /* Found it. */
-        out = fdopen(fd, "w");
+
+    out = fdopen(XCACHE_FILENO, "w");
+    assert(out != NULL);
 }
 
 /* Write the given (possibly NULL) string to the Xcache pipe. Note that we must
