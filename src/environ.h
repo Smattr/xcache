@@ -1,6 +1,9 @@
 #ifndef _XCACHE_ENVIRON_
 #define _XCACHE_ENVIRON_
 
-const char **env_new(const char **extra);
+/* Copy our existing environment and extend it to LD_PRELOAD the given library.
+ * Returns NULL on failure.
+ */
+char **env_ld_preload(const char *lib);
 
 #endif

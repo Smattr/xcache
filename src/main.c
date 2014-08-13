@@ -20,6 +20,8 @@ static bool dryrun = false;
 
 static const char *cache_dir = NULL;
 
+static bool hook_getenv = true;
+
 static void usage(const char *prog) {
     fprintf(stderr, "Usage:\n"
         "  %s [options] command args...\n"
@@ -29,6 +31,8 @@ static void usage(const char *prog) {
         "  -c <dir>           Locate cache in <dir>.\n"
         "  --dry-run\n"
         "  -n                 Simulate only; do not perform any actions.\n"
+        "  --no-getenv\n"
+        "  -e                 Do not hook getenv.\n"
         "  --help\n"
         "  -?                 Print this help information and exit.\n"
         "  --log <file>\n"
@@ -66,6 +70,9 @@ static int parse_arguments(int argc, const char **argv) {
         } else if (!strcmp(argv[index], "--dry-run") ||
                    !strcmp(argv[index], "-n")) {
             dryrun = true;
+        } else if (!strcmp(argv[index], "--no-getenv") ||
+                   !strcmp(argv[index], "-e")) {
+            hook_getenv = false;
         } else if ((!strcmp(argv[index], "--log") ||
                     !strcmp(argv[index], "-l")) &&
                    index < argc - 1) {
@@ -142,7 +149,7 @@ int main(int argc, const char **argv) {
         return -1;
     }
 
-    tracee_t *target = trace(&argv[index]);
+    tracee_t *target = trace(&argv[index], hook_getenv ? argv[0] : NULL);
     if (target == NULL) {
         ERROR("Failed to start and trace target %s\n", argv[index]);
         return -1;

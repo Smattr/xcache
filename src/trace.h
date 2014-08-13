@@ -14,7 +14,7 @@ typedef struct {
     long result;
 } syscall_t;
 
-tracee_t *trace(const char **argv);
+tracee_t *trace(const char **argv, const char *tracer);
 
 syscall_t *next_syscall(tracee_t *tracee);
 int acknowledge_syscall(syscall_t *syscall);

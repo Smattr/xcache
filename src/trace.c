@@ -1,14 +1,18 @@
+#define _GNU_SOURCE
 #include "arch_syscall.h"
 #include <assert.h>
 #include "collection/list.h"
+#include "environ.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <linux/limits.h>
 #include "log.h"
 #include <pthread.h>
 #include "ptrace-wrapper.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ptrace.h>
@@ -47,7 +51,24 @@ static int proc_cmp(void *proc, void *pid) {
     return p->pid != (pid_t)(unsigned long)pid;
 }
 
-tracee_t *trace(const char **argv) {
+/* Find the accompanying getenv hook library. We assume it lives in the same
+ * directory as the xcache binary.
+ */
+static char *locate_hooklib(const char *exe) {
+    char *resolved = malloc(sizeof(char) * (PATH_MAX + 1));
+    if (resolved == NULL)
+        return NULL;
+
+    if (realpath(exe, resolved) == NULL)
+        return NULL;
+
+    char *root = dirname(resolved);
+    free(resolved);
+
+    return aprintf("%s/libhookgetenv.so", root);
+}
+
+tracee_t *trace(const char **argv, const char *tracer) {
     tracee_t *t = calloc(1, sizeof(*t));
     if (t == NULL)
         return NULL;
@@ -74,10 +95,26 @@ tracee_t *trace(const char **argv) {
                     dup2(stderr2, STDERR_FILENO) == -1)
                 exit(-1);
 
+            /* Copy and extend our environment to LD_PRELOAD a helper library
+             * into the target. The idea behind this is to setup a channel
+             * between xcache and the tracee for communicating extra
+             * information beyond syscalls. Note that if any of this fails, we
+             * just ignore it and continue without the extra library. This
+             * functionality is not critical.
+             */
+            char **env = NULL;
+            if (tracer != NULL) {
+                char *lib = locate_hooklib(tracer);
+                if (lib != NULL) {
+                    env = env_ld_preload(lib);
+                    free(lib);
+                }
+            }
+
             long r = pt_traceme();
             if (r != 0)
                 exit(-1);
-            execvp(argv[0], (char**)argv);
+            execvpe(argv[0], (char**)argv, env);
 
             /* Exec failed. */
             exit(-1);
