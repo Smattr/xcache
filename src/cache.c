@@ -1,4 +1,3 @@
-#define _GNU_SOURCE /* for asprintf */
 #include <assert.h>
 #include "cache.h"
 #include "collection/dict.h"
@@ -44,9 +43,8 @@ cache_t *cache_open(const char *path) {
     if (c == NULL)
         return NULL;
 
-    char *db_path;
-    int err = asprintf(&db_path, "%s/" DB, path);
-    if (err == -1) {
+    char *db_path = aprintf("%s/" DB, path);
+    if (db_path == NULL) {
         free(c);
         return NULL;
     }
@@ -55,8 +53,8 @@ cache_t *cache_open(const char *path) {
         return NULL;
     }
 
-    err = asprintf(&c->root, "%s" DATA, path);
-    if (err == -1) {
+    c->root = aprintf("%s" DATA, path);
+    if (c->root == NULL) {
         db_close(&c->db);
         free(c);
         return NULL;
@@ -91,9 +89,8 @@ static char *cache_save(cache_t *c, const char *filename) {
     if (h == NULL)
         return NULL;
 
-    char *cpath;
-    int err = asprintf(&cpath, "%s/%s", c->root, h);
-    if (err == -1) {
+    char *cpath = aprintf("%s/%s", c->root, h);
+    if (cpath == NULL) {
         free(h);
         return NULL;
     }
@@ -254,9 +251,8 @@ int cache_dump(cache_t *cache, int id) {
             last_slash[0] = '/';
         }
 
-        char *cached_copy;
-        int err = asprintf(&cached_copy, "%s/%s", cache->root, contents);
-        if (err == -1) {
+        char *cached_copy = aprintf("%s/%s", cache->root, contents);
+        if (cached_copy == NULL) {
             ERROR("Out of memory while dumping cache entry %s\n", filename);
             return -1;
         }

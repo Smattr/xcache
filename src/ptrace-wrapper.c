@@ -1,4 +1,3 @@
-#define _GNU_SOURCE /* for asprintf */
 #include <assert.h>
 #include <linux/limits.h>
 #include "log.h"
@@ -46,9 +45,8 @@ char *pt_peekstring(pid_t pid, off_t reg) {
      * to do this through the /proc file system.
      */
 
-    char *filename;
-    int err = asprintf(&filename, "/proc/%d/mem", pid);
-    if (err == -1)
+    char *filename = aprintf("/proc/%d/mem", pid);
+    if (filename == NULL)
         return NULL;
     FILE *f = fopen(filename, "r");
     if (f == NULL) {

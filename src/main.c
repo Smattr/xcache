@@ -1,4 +1,3 @@
-#define _GNU_SOURCE /* for asprintf */
 #include <assert.h>
 #include "cache.h"
 #include "config.h"
@@ -49,11 +48,7 @@ static char *default_cache_dir(void) {
     char *home = getenv("HOME");
     if (home == NULL)
         return NULL;
-    char *d;
-    int err = asprintf(&d, "%s/.xcache", home);
-    if (err == -1)
-        return NULL;
-    return d;
+    return aprintf("%s/.xcache", home);
 }
 
 /* Parse command-line arguments. Unfortunately getopt has some undesirable

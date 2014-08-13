@@ -1,12 +1,16 @@
 #ifndef _XCACHE_UTIL_H_
 #define _XCACHE_UTIL_H_
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 char *abspath(char *relpath);
+
+/* A version of sprintf that does allocation internally for convenience. */
+char *aprintf(const char *fmt, ...);
 
 /* Return the hash of the contents of a file. The caller should not rely on any
  * property of the hash except it being deterministic and printable. This
