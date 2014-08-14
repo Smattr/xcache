@@ -86,11 +86,12 @@ add_library (libhookgetenv.so SHARED ${GETENVSOURCES})
 set_target_properties (libhookgetenv.so PROPERTIES PREFIX "")
 set_target_properties (libhookgetenv.so PROPERTIES SUFFIX "")
 
-# File descriptor (in target's descriptor space) on which Xcache and the target
-# can communicate out-of-band extra information. Currently only used for
-# environment variable access.
-set_target_properties (xcache PROPERTIES COMPILE_DEFINITIONS "XCACHE_FILENO=3")
-set_target_properties (libhookgetenv.so PROPERTIES COMPILE_DEFINITIONS "XCACHE_FILENO=3")
+# Environment variable through which xcache will communicate with libhookgetenv
+# injected into the target's address space.
+set_target_properties (xcache
+    PROPERTIES COMPILE_DEFINITIONS "XCACHE_PIPE=\"XCACHE_PIPE\"")
+set_target_properties (libhookgetenv.so
+    PROPERTIES COMPILE_DEFINITIONS "XCACHE_PIPE=\"XCACHE_PIPE\"")
 
 find_library (
   GLIB NAMES glib-2.0

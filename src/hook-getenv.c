@@ -18,12 +18,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifndef XCACHE_FILENO
-    #error XCACHE_FILENO not defined
-#endif
-
 static char *(*real_getenv)(const char *name);
-static int out;
+static int out = -1;
 
 static void init(void) {
     assert(real_getenv == NULL);
@@ -32,9 +28,23 @@ static void init(void) {
     real_getenv = dlsym(RTLD_NEXT, "getenv");
     assert(real_getenv != NULL);
 
-    if (fcntl(XCACHE_FILENO, F_GETFD) != -1)
-        /* The return pipe is valid. */
-        out = XCACHE_FILENO;
+    char *xcache_pipe = getenv(XCACHE_PIPE);
+    if (xcache_pipe == NULL)
+        /* No return pipe available. */
+        return;
+
+    char *end;
+    int fd = strtol(xcache_pipe, &end, 10);
+    if (*end != '\0')
+        /* The string wasn't entirely an integer. */
+        return;
+
+    if (fcntl(fd, F_GETFD) == -1)
+        /* The return pipe is not valid. */
+        return;
+
+    /* We received a valid return pipe. */
+    out = fd;
 }
 
 /* Hooked version of getenv. We lookup environment variables, as expected, but
@@ -46,7 +56,7 @@ char *getenv(const char *name) {
         init();
     assert(real_getenv != NULL);
     char *v = real_getenv(name);
-    if (out != 0) {
+    if (out != -1) {
         write_string(out, name);
         write_string(out, v);
     }
