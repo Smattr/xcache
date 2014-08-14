@@ -1,6 +1,6 @@
-/* The implementation below is based on basic, established RPC mechanisms.
- * Strings are serialised with their length (including trailing \0) preceding
- * them. Their are a couple of main advantages to this approach:
+/* The implementation below is based on basic, established RPC schemes. Strings
+ * are serialised with their length (including trailing \0) preceding them.
+ * There are a couple of main advantages to this approach:
  *  1. We can encode the NULL pointer as length 0; and
  *  2. We can determine how much memory is required for a string before reading
  *     it.
