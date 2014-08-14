@@ -12,6 +12,7 @@
 
 #define _GNU_SOURCE
 #include <assert.h>
+#include "comm-protocol.h"
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -22,7 +23,7 @@
 #endif
 
 static char *(*real_getenv)(const char *name);
-static FILE *out;
+static int out;
 
 static void init(void) {
     assert(real_getenv == NULL);
@@ -31,25 +32,9 @@ static void init(void) {
     real_getenv = dlsym(RTLD_NEXT, "getenv");
     assert(real_getenv != NULL);
 
-    if (fcntl(XCACHE_FILENO, F_GETFD) == -1)
-        /* A return pipe back to Xcache doesn't seem to exist. Oh well. */
-        return;
-
-    out = fdopen(XCACHE_FILENO, "w");
-    assert(out != NULL);
-}
-
-/* Write the given (possibly NULL) string to the Xcache pipe. Note that we must
- * follow the protocol Xcache is expecting for conveying string data.
- */
-static void output(const char *data) {
-    if (out == NULL)
-        /* We don't have a pipe to communicate with. */
-        return;
-    fputc(data == NULL ? 0 : 1, out);
-    if (data != NULL)
-        fputs(data, out);
-    fputc(0, out);
+    if (fcntl(XCACHE_FILENO, F_GETFD) != -1)
+        /* The return pipe is valid. */
+        out = XCACHE_FILENO;
 }
 
 /* Hooked version of getenv. We lookup environment variables, as expected, but
@@ -60,8 +45,10 @@ char *getenv(const char *name) {
     if (real_getenv == NULL)
         init();
     assert(real_getenv != NULL);
-    output(name);
     char *v = real_getenv(name);
-    output(v);
+    if (out != 0) {
+        write_string(out, name);
+        write_string(out, v);
+    }
     return v;
 }
