@@ -102,7 +102,7 @@ tracee_t *trace(const char **argv, const char *tracer) {
              * just ignore it and continue without the extra library. This
              * functionality is not critical.
              */
-            char **env = NULL;
+            char **env = environ;
             if (tracer != NULL) {
                 char *lib = locate_hooklib(tracer);
                 if (lib != NULL) {
