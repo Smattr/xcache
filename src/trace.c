@@ -383,9 +383,10 @@ int complete(tracee_t *tracee) {
         }
         list_foreach(&tracee->children, dealloc, NULL);
         list_destroy(&tracee->children);
-        tracee->root.state = TERMINATED;
         unblock(&tracee->root);
+        pt_detach(tracee->root.pid);
         tracee->exit_status = finish(tracee->root.pid);
+        tracee->root.state = TERMINATED;
     }
     assert(tracee->outfile == NULL);
     tracee->outfile = tee_close(tracee->out);
