@@ -240,6 +240,10 @@ int main(int argc, const char **argv) {
                 ADD_AS(input, 1);
                 break;
 
+            case SYS_chmod:
+                ADD_AS(output, 1);
+                break;
+
             case SYS_creat:
                 ADD_AS(output, 1);
                 break;
@@ -285,7 +289,6 @@ int main(int argc, const char **argv) {
             case SYS__sysctl:
             case SYS_acct:
             case SYS_chdir:
-            case SYS_chmod:
             case SYS_chown:
             case SYS_chroot:
             case SYS_fchdir:
