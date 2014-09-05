@@ -100,6 +100,13 @@ static int parse_arguments(int argc, const char **argv) {
     return index;
 }
 
+
+/* Sanity checks on open flags because checking for O_RDONLY is awkward. */
+typedef char FILE_FLAGS_AS_EXPECTED[
+    O_RDONLY == 00 && O_WRONLY == 01 && O_RDWR == 02 ? 1 : -1];
+/* See usage of this below. */
+static const int FLAG_MASK = O_RDONLY | O_WRONLY | O_RDWR;
+
 int main(int argc, const char **argv) {
     int index = parse_arguments(argc, argv);
 
@@ -205,6 +212,19 @@ int main(int argc, const char **argv) {
                     ADD_AS(input, 1);
                     break;
 
+                case SYS_open:;
+                    /* In the case where a file is being opened RW, we need to
+                     * do our measurement beforehand in case the user is using
+                     * a flag like O_CREAT that makes measurement ambiguous
+                     * when done afterwards. To simplify things, we handle RO
+                     * open here as well.
+                     */
+                    int flags = (int)syscall_getarg(s, 2);
+                    int mode = flags & FLAG_MASK;
+                    if (mode == O_RDONLY || mode == O_RDWR)
+                        ADD_AS(input, 1);
+                    break;
+
                 case SYS_rename:
                     ADD_AS(input, 1);
                     break;
@@ -248,35 +268,16 @@ int main(int argc, const char **argv) {
                 ADD_AS(output, 1);
                 break;
 
-            case SYS_open: {
+            case SYS_open:;
+                /* Note that we are only handling the 'write' aspects of an
+                 * open call here, because the 'read' aspects were handled on
+                 * syscall entry.
+                 */
                 int flags = (int)syscall_getarg(s, 2);
-                char *fname = syscall_getstring(s, 1);
-                int r = 0;
-                if (fname == NULL) {
-                    DEBUG("Failed to retrieve string argument 1 from " \
-                        "syscall open (%ld)\n", (long)SYS_open);
-                    goto bailout;
-                }
-                char *absname = abspath(fname);
-                if (absname == NULL) {
-                    DEBUG("Failed to resolve \"%s\"\n", fname);
-                    goto bailout;
-                }
-                if (flags & O_WRONLY)
-                    r |= depset_add_output(deps, absname);
-                else {
-                    r |= depset_add_input(deps, absname);
-                    if (flags & O_RDWR)
-                        r |= depset_add_output(deps, absname);
-                }
-                if (r != 0) {
-                    DEBUG("Failed to add dependency \"%s\"\n", absname);
-                    free(absname);
-                    goto bailout;
-                }
-                free(absname);
+                int mode = flags & FLAG_MASK;
+                if (mode == O_WRONLY || mode == O_RDWR)
+                    ADD_AS(output, 1);
                 break;
-            }
 
             case SYS_readlink:
                 ADD_AS(input, 1);
