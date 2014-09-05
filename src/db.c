@@ -158,18 +158,19 @@ int db_remove_id(db_t *db, int id) {
 
     if (prepare(db, &s, deleteoutput) != SQLITE_OK)
         goto fail;
-    if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
+    if (bind_int(s, "@id", id) != SQLITE_OK)
         goto fail;
     if (sqlite3_step(s) != SQLITE_DONE)
         goto fail;
     sqlite3_finalize(s);
     s = NULL;
 
+
     char *deleteinput = "delete from input where fk_trace = @id;";
 
     if (prepare(db, &s, deleteinput) != SQLITE_OK)
         goto fail;
-    if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
+    if (bind_int(s, "@id", id) != SQLITE_OK)
         goto fail;
     if (sqlite3_step(s) != SQLITE_DONE)
         goto fail;
