@@ -25,6 +25,11 @@ int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp);
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
     mode_t mode, const char *contents);
 
+/* Remove a trace entry from the database. Note that this removes child
+ * metadata, but does not remove associated cached data itself.
+ */
+int db_remove_id(db_t *db, int id);
+
 int db_for_inputs(db_t *db, int id,
     int (*cb)(const char *filename, time_t timestamp));
 int db_for_outputs(db_t *db, int id,
