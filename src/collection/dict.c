@@ -22,6 +22,10 @@ int dict_add(dict_t *d, const char *key) {
     return 0;
 }
 
+bool dict_contains(dict_t *d, const char *key) {
+    return (bool)g_hash_table_contains(d->table, (gconstpointer)key);
+}
+
 int dict_iter(dict_t *d, dict_iter_t *i) {
     g_hash_table_iter_init(i, d->table);
     return 0;

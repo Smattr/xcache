@@ -1,6 +1,7 @@
 #ifndef _XCACHE_DICT_H_
 #define _XCACHE_DICT_H_
 
+#include <stdbool.h>
 #include <glib.h>
 
 typedef struct {
@@ -10,6 +11,10 @@ typedef struct {
 
 int dict(dict_t *d, void *(*get_value)(const char *key));
 int dict_add(dict_t *d, const char *key);
+
+/* Whether a dictionary already contains an entry for the given key. */
+bool dict_contains(dict_t *d, const char *key);
+
 void dict_destroy(dict_t *d);
 
 typedef GHashTableIter dict_iter_t;
