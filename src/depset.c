@@ -42,6 +42,11 @@ int depset_add_input(depset_t *d, char *filename) {
          * something we effectively already know. No need to track this.
          */
         return 0;
+    if (dict_contains(&d->inputs, filename))
+        /* Avoid adding an input if we have already tracked it or we will end
+         * up re-measuring it and overwriting the original stat data.
+         */
+        return 0;
     return dict_add(&d->inputs, filename);
 }
 
