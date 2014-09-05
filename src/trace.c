@@ -364,8 +364,13 @@ static int finish(pid_t pid) {
 }
 
 void unblock(proc_t *proc) {
-    if (proc->state == SYSENTER || proc->state == SYSEXIT)
+    if (proc->state == SYSENTER) {
         pt_continue(proc->pid);
+        proc->state = IN_KERNEL;
+    } else if (proc->state == SYSEXIT) {
+        pt_continue(proc->pid);
+        proc->state = IN_USER;
+    }
 }
 
 int complete(tracee_t *tracee) {
