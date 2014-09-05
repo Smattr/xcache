@@ -114,12 +114,17 @@ int cache_write(cache_t *cache, int argc, const char **argv,
     }
 
     int id = get_id(cache, fp);
-    if (id < 0) {
-        /* This entry was not found in the cache. */
-        /* Write the entry to the dep table. */
-        if (db_insert_id(&cache->db, &id, fp) != 0)
+    if (id != -1) {
+        /* There was an existing entry for this trace that we need to first
+         * remove.
+         */
+        if (db_remove_id(&cache->db, id) != 0) {
+            DEBUG("Failed to remove existing cache entry\n");
             goto fail;
+        }
     }
+    if (db_insert_id(&cache->db, &id, fp) != 0)
+        goto fail;
     fingerprint_destroy(fp);
     fp = NULL;
 
