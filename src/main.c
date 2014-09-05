@@ -343,6 +343,7 @@ bailout:;
                *errfile = get_stderr(target);
 
     if (success && ret == 0) {
+        DEBUG("Adding cache entry\n");
         if (cache_write(cache, argc - index, &argv[index], deps, outfile, errfile) != 0)
             /* This failure is non-critical in a sense. */
             DEBUG("Failed to write entry to cache\n");
