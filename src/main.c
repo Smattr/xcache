@@ -221,8 +221,39 @@ int main(int argc, const char **argv) {
                      */
                     int flags = (int)syscall_getarg(s, 2);
                     int mode = flags & FLAG_MASK;
-                    if (mode == O_RDONLY || mode == O_RDWR)
-                        ADD_AS(input, 1);
+
+                    /* If we're opening this file write-only, we don't need to
+                     * do any measurement before opening as this file is purely
+                     * an output.
+                     */
+                    if (mode == O_WRONLY)
+                        break;
+
+                    /* If we're opening this file read-write, there are some
+                     * extra conditions that may lead us to bail out.
+                     */
+                    if (mode == O_RDWR) {
+
+                        /* If a file is opened with O_CREAT and O_EXCL, the
+                         * open fails if the file exists. In other words, even
+                         * if we are opening this file O_RDWR, we are treating
+                         * it as only an output.
+                         */
+                        if ((flags & O_CREAT) && (flags & O_EXCL))
+                            break;
+
+                        /* If a file is opened with O_TRUNC, we're ignoring its
+                         * current contents and hence treating it purely as an
+                         * output. O_TRUNC actually has no effect if the file is
+                         * a device or a fifo, but regardless the caller is
+                         * clearly not expecting to depend on the existing
+                         * contents.
+                         */
+                        if (flags & O_TRUNC)
+                            break;
+
+                    }
+                    ADD_AS(input, 1);
                     break;
 
                 case SYS_rename:
