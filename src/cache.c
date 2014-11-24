@@ -142,23 +142,21 @@ int cache_write(cache_t *cache, int argc, const char **argv,
     }
 
     /* Write the outputs. */
-    set_iter_t si;
-    if (depset_iter_outputs(depset, &si) != 0)
-        goto fail;
-    while (set_iter_next(&si, (const char**)&key)) {
+    int save_output(const char *filename) {
         struct stat st;
-        if (stat(key, &st) != 0)
-            continue;
+        if (stat(filename, &st) != 0)
+            return 0;
 
-        char *h = cache_save(cache, key);
+        char *h = cache_save(cache, filename);
         if (h == NULL)
-            goto fail;
+            return -1;
 
-        int r = db_insert_output(&cache->db, id, key, st.st_mtime, st.st_mode, h);
+        int r = db_insert_output(&cache->db, id, filename, st.st_mtime, st.st_mode, h);
         free(h);
-        if (r != 0)
-            goto fail;
+        return r;
     }
+    if (depset_foreach_output(depset, save_output) != 0)
+        goto fail;
 
     if (outfile != NULL) {
         char *h = cache_save(cache, outfile);

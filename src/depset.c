@@ -72,8 +72,8 @@ int depset_add_output(depset_t *d, char *filename) {
     return set_add(&d->outputs, filename);
 }
 
-int depset_iter_outputs(depset_t *d, set_iter_t *i) {
-    return set_iter(&d->outputs, i);
+int depset_foreach_output(depset_t *d, int (*f)(const char *value)) {
+    return set_foreach(&d->outputs, f);
 }
 
 void depset_destroy(depset_t *d) {

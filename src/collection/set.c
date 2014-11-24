@@ -27,11 +27,15 @@ void set_destroy(set_t *s) {
     g_hash_table_remove_all(s->table);
 }
 
-int set_iter(set_t *s, set_iter_t *i) {
-    g_hash_table_iter_init(i, s->table);
+int set_foreach(set_t *s, int (*f)(const char *value)) {
+    const char *value;
+    void *dummy;
+    GHashTableIter iter;
+    g_hash_table_iter_init(&iter, s->table);
+    while (g_hash_table_iter_next(&iter, (gpointer)&value, &dummy)) {
+        int ret = f(value);
+        if (ret != 0)
+            return ret;
+    }
     return 0;
-}
-
-int set_iter_next(set_iter_t *i, const char **item) {
-    return (int)g_hash_table_iter_next(i, (void**)item, NULL);
 }
