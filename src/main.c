@@ -1,6 +1,5 @@
 #include <assert.h>
 #include "cache.h"
-#include "config.h"
 #include "depset.h"
 #include <fcntl.h>
 #include "log.h"
@@ -87,7 +86,7 @@ static int parse_arguments(int argc, const char **argv) {
                    !strcmp(argv[index], "-v")) {
             verbosity++;
         } else if (!strcmp(argv[index], "--version")) {
-            printf("%s %d.%02d\n", PROJ_NAME, VERSION_MAJOR, VERSION_MINOR);
+            printf("xcache %d.%02d\n", VERSION_MAJOR, VERSION_MINOR);
             exit(0);
         } else if (!strcmp(argv[index], "--help") ||
                    !strcmp(argv[index], "-?")) {
