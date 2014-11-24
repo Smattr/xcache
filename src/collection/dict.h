@@ -45,9 +45,6 @@ bool dict_contains(dict_t *d, const char *key);
 
 void dict_destroy(dict_t *d);
 
-typedef GHashTableIter dict_iter_t;
-
-int dict_iter(dict_t *d, dict_iter_t *i);
-int dict_iter_next(dict_iter_t *i, char **key, void **value);
+int dict_foreach(dict_t *d, int (*f)(const char *key, void *value));
 
 #endif

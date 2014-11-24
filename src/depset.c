@@ -64,15 +64,18 @@ int depset_add_input(depset_t *d, char *filename) {
     return dict_add(&d->inputs, filename, NULL);
 }
 
-int depset_iter_inputs(depset_t *d, dict_iter_t *i) {
-    return dict_iter(&d->inputs, i);
+int depset_foreach_input(depset_t *d, int (*f)(const char *filename, time_t mtime)) {
+    int wrapper(const char *filename, void *value) {
+        return f(filename, (time_t)value);
+    }
+    return dict_foreach(&d->inputs, wrapper);
 }
 
 int depset_add_output(depset_t *d, char *filename) {
     return set_add(&d->outputs, filename);
 }
 
-int depset_foreach_output(depset_t *d, int (*f)(const char *value)) {
+int depset_foreach_output(depset_t *d, int (*f)(const char *filename)) {
     return set_foreach(&d->outputs, f);
 }
 

@@ -35,13 +35,17 @@ bool dict_contains(dict_t *d, const char *key) {
     return (bool)g_hash_table_contains(d->table, (gconstpointer)key);
 }
 
-int dict_iter(dict_t *d, dict_iter_t *i) {
-    g_hash_table_iter_init(i, d->table);
+int dict_foreach(dict_t *d, int (*f)(const char *key, void *value)) {
+    const char *key;
+    void *value;
+    GHashTableIter iter;
+    g_hash_table_iter_init(&iter, d->table);
+    while (g_hash_table_iter_next(&iter, (gpointer)&key, &value)) {
+        int ret = f(key, value);
+        if (ret != 0)
+            return ret;
+    }
     return 0;
-}
-
-int dict_iter_next(dict_iter_t *i, char **key, void **value) {
-    return g_hash_table_iter_next(i, (gpointer)key, (gpointer)value);
 }
 
 void dict_destroy(dict_t *d) {

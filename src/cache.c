@@ -131,15 +131,11 @@ int cache_write(cache_t *cache, int argc, const char **argv,
     assert(id >= 0);
 
     /* Write the inputs. */
-    dict_iter_t di;
-    if (depset_iter_inputs(depset, &di) != 0)
-        goto fail;
-    char *key;
-    time_t value;
-    while (dict_iter_next(&di, &key, (void**)&value)) {
-        if (db_insert_input(&cache->db, id, key, value) != 0)
-            goto fail;
+    int save_input(const char *filename, time_t mtime) {
+        return db_insert_input(&cache->db, id, filename, mtime);
     }
+    if (depset_foreach_input(depset, save_input) != 0)
+        goto fail;
 
     /* Write the outputs. */
     int save_output(const char *filename) {
