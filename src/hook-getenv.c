@@ -1,6 +1,6 @@
 /* A library for hooking getenv and conveying any accesses to Xcache. Note that
- * this file is *NOT* compiled into xcache; it is compiled to a separate
- & library.
+ * this file is *NOT* compiled into xcache; it is compiled into a separate
+ * library.
  *
  * The expected use case of this is that Xcache is trying to trace a target and
  * wants to, in addition to observing the target's syscalls, observe the
