@@ -13,13 +13,22 @@ int dict(dict_t *d, void *(*value)(const char *key)) {
     return 0;
 }
 
-int dict_add(dict_t *d, const char *key) {
+int dict_add(dict_t *d, const char *key, void *value) {
     char *k = strdup(key);
     if (k == NULL)
         return -1;
-    void *value = d->value(key);
+    if (value == NULL)
+        value = d->value(key);
     g_hash_table_insert(d->table, (gpointer)k, (gpointer)value);
     return 0;
+}
+
+void *dict_lookup(dict_t *d, const char *key) {
+    return (void*)g_hash_table_lookup(d->table, (gconstpointer)key);
+}
+
+bool dict_remove(dict_t *d, const char *key) {
+    return (bool)g_hash_table_remove(d->table, (gconstpointer)key);
 }
 
 bool dict_contains(dict_t *d, const char *key) {

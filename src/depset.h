@@ -12,4 +12,5 @@ int depset_iter_inputs(depset_t *d, dict_iter_t *i);
 int depset_add_output(depset_t *d, char *filename);
 int depset_iter_outputs(depset_t *d, set_iter_t *i);
 void depset_destroy(depset_t *d);
+
 #endif
