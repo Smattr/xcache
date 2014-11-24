@@ -50,7 +50,7 @@ int depset_add_input(depset_t *d, char *filename) {
 
     time_t mtime = (time_t)dict_lookup(&d->ambiguous, filename);
     if (mtime != UNSET) {
-        bool removed = dict_remove(&d->ambiguous, filename);
+        bool removed __attribute__((unused)) = dict_remove(&d->ambiguous, filename);
         assert(removed);
         assert(!dict_contains(&d->inputs, filename));
         return dict_add(&d->inputs, filename, (void*)mtime);

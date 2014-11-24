@@ -138,7 +138,10 @@ tee_t *tee_create(int *output) {
 
 char *tee_close(tee_t *t) {
     char c = (char)0; /* <-- irrelevant */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
     write(t->sigfd, &c, 1);
+#pragma GCC diagnostic pop
     close(t->sigfd);
     char *ret;
     int r = pthread_join(t->thread, (void**)&ret);

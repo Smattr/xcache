@@ -96,7 +96,7 @@ void pt_detach(pid_t pid) {
         waitpid(pid, &status, 0);
         if (WIFSTOPPED(status)) {
             if (WSTOPSIG(status) == SIGSTOP) {
-                long r = ptrace(PTRACE_DETACH, pid, NULL, SIGCONT);
+                long r __attribute__((unused)) = ptrace(PTRACE_DETACH, pid, NULL, SIGCONT);
                 assert(r == 0);
                 break;
             } else {
