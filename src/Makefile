@@ -47,7 +47,7 @@ CFLAGS  += ${CFLAGS_GLIB}
 LDFLAGS += ${LDFLAGS_GLIB}
 
 # Other dependencies.
-LDFLAGS += -lpthread -ldl -lsqlite3 -lssl -lcrypto
+LDFLAGS += -lpthread -ldl -lsqlite3 -lssl -lcrypto -lcunit
 
 .PHONY: default
 default: ${OUTPUTS}
