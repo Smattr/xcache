@@ -2,7 +2,6 @@
 #include "arch_syscall.h"
 #include <assert.h>
 #include "collection/list.h"
-#include "environ.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
@@ -95,28 +94,30 @@ tracee_t *trace(const char **argv, const char *tracer) {
                     dup2(stderr2, STDERR_FILENO) == -1)
                 exit(-1);
 
-            /* Copy and extend our environment to LD_PRELOAD a helper library
-             * into the target. The idea behind this is to setup a channel
-             * between xcache and the tracee for communicating extra
-             * information beyond syscalls. Note that if any of this fails, we
-             * just ignore it and continue without the extra library. This
-             * functionality is not critical.
+            /* Extend our environment to LD_PRELOAD a helper library into the
+             * target. The idea behind this is to setup a channel between xcache
+             * and the tracee for communicating extra information beyond
+             * syscalls. Note that if any of this fails, we just ignore it and
+             * continue without the extra library. This functionality is not
+             * critical.
              */
-            char **env = NULL;
             if (tracer != NULL) {
                 char *lib = locate_hooklib(tracer);
                 if (lib != NULL) {
-                    env = env_ld_preload(lib);
-                    free(lib);
+                    char *ld_preload = getenv("LD_PRELOAD");
+                    if (ld_preload == NULL) {
+                        ld_preload = lib;
+                    } else {
+                        ld_preload = aprintf("%s %s", ld_preload, lib);
+                    }
+                    (void)setenv("LD_PRELOAD", ld_preload, 1);
                 }
             }
-            if (env == NULL)
-                env = environ;
 
             long r = pt_traceme();
             if (r != 0)
                 exit(-1);
-            execvpe(argv[0], (char**)argv, env);
+            execvp(argv[0], (char**)argv);
 
             /* Exec failed. */
             exit(-1);
