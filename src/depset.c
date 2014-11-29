@@ -18,7 +18,6 @@ static void *stamp(const char *key) {
 
 struct depset {
     dict_t inputs;
-    dict_t ambiguous;
     set_t outputs;
 };
 
@@ -28,14 +27,11 @@ depset_t *depset_new(void) {
         goto fail1;
     if (dict(&o->inputs, stamp) != 0)
         goto fail2;
-    if (dict(&o->ambiguous, stamp) != 0)
-        goto fail3;
     if (set(&o->outputs) != 0)
-        goto fail4;
+        goto fail3;
     return o;
 
-fail4: set_destroy(&o->outputs);
-fail3: dict_destroy(&o->ambiguous);
+fail3: set_destroy(&o->outputs);
 fail2: dict_destroy(&o->inputs);
 fail1: free(o);
     return NULL;
@@ -47,14 +43,6 @@ int depset_add_input(depset_t *d, char *filename) {
          * something we effectively already know. No need to track this.
          */
         return 0;
-
-    time_t mtime = (time_t)dict_lookup(&d->ambiguous, filename);
-    if (mtime != UNSET) {
-        bool removed __attribute__((unused)) = dict_remove(&d->ambiguous, filename);
-        assert(removed);
-        assert(!dict_contains(&d->inputs, filename));
-        return dict_add(&d->inputs, filename, (void*)mtime);
-    }
 
     if (dict_contains(&d->inputs, filename))
         /* Avoid adding an input if we have already tracked it or we will end
