@@ -1,6 +1,5 @@
 #include <assert.h>
 #include "collection/dict.h"
-#include "collection/set.h"
 #include "constants.h"
 #include "depset.h"
 #include <sys/stat.h>

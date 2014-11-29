@@ -2,7 +2,6 @@
 #define _XCACHE_DEPSET_H_
 
 #include "collection/dict.h"
-#include "collection/set.h"
 #include <time.h>
 
 typedef enum {
