@@ -81,10 +81,23 @@ xcache-tests: $(foreach v,${SOURCES_TEST} ${SOURCES_LIB},$(patsubst %.c,%-testin
 	@echo " [CC] $(notdir $@)"
 	${Q}${CC} ${CFLAGS} -DXCACHE_TEST=1 -c -o $@ $<
 
+-include $(SOURCES_LIB:%.c=%.d)
+-include $(SOURCES_EXE:%.c=%.d)
+-include $(SOURCES_LIBGETENV:%.c=%.d)
+-include $(SOURCES_TEST:%.c=%.d)
+
+test.d: test.c
+	@echo " [GEN] $(notdir $@)"
+	${Q}${CC} -M -MD ${CFLAGS} -DXCACHE_TEST=1 $< >$@
+
+%.d: %.c
+	@echo " [GEN] $(notdir $@)"
+	${Q}${CC} -M -MD ${CFLAGS} $< >$@
+
 .PHONY: clean
 clean:
-	@echo " [CLEAN] ${OUTPUTS} *.o"
-	${Q}rm -rf ${OUTPUTS} *.o collection/*.o util/*.o
+	@echo " [CLEAN] ${OUTPUTS} *.o *.d"
+	${Q}rm -rf ${OUTPUTS} *.o collection/*.o util/*.o *.d collection/*.d util/*.d
 
 # Disable built in rules. WTF have they done for me lately?
 .SUFFIXES:
