@@ -5,14 +5,20 @@
 #include "collection/set.h"
 #include <time.h>
 
+typedef enum {
+    XC_INPUT,
+    XC_OUTPUT,
+    XC_BOTH,
+    XC_AMBIGUOUS,
+} filetype_t;
+
 typedef struct depset depset_t;
 
 depset_t *depset_new(void);
-int depset_add_input(depset_t *d, char *filename);
-int depset_add_output(depset_t *d, char *filename);
+
+int depset_add(depset_t *d, char *filename, filetype_t type);
 void depset_destroy(depset_t *d);
 
-int depset_foreach_input(depset_t *d, int (*f)(const char *filename, time_t mtime));
-int depset_foreach_output(depset_t *d, int (*f)(const char *filename));
+int depset_foreach(depset_t *d, int (*f)(const char *filename, filetype_t type, time_t mtime));
 
 #endif

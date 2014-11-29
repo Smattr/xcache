@@ -130,28 +130,29 @@ int cache_write(cache_t *cache, int argc, const char **argv,
 
     assert(id >= 0);
 
-    /* Write the inputs. */
-    int save_input(const char *filename, time_t mtime) {
-        return db_insert_input(&cache->db, id, filename, mtime);
+    /* Write the inputs and outputs. */
+    int save_file(const char *filename, filetype_t type, time_t mtime) {
+        if (type == XC_INPUT || type == XC_BOTH)
+            if (db_insert_input(&cache->db, id, filename, mtime) != 0)
+                return -1;
+
+        if (type == XC_OUTPUT || type == XC_BOTH) {
+            struct stat st;
+            if (stat(filename, &st) != 0)
+                return 0;
+
+            char *h = cache_save(cache, filename);
+            if (h == NULL)
+                return -1;
+
+            int r = db_insert_output(&cache->db, id, filename, st.st_mtime, st.st_mode, h);
+            free(h);
+            return r;
+        }
+
+        return 0;
     }
-    if (depset_foreach_input(depset, save_input) != 0)
-        goto fail;
-
-    /* Write the outputs. */
-    int save_output(const char *filename) {
-        struct stat st;
-        if (stat(filename, &st) != 0)
-            return 0;
-
-        char *h = cache_save(cache, filename);
-        if (h == NULL)
-            return -1;
-
-        int r = db_insert_output(&cache->db, id, filename, st.st_mtime, st.st_mode, h);
-        free(h);
-        return r;
-    }
-    if (depset_foreach_output(depset, save_output) != 0)
+    if (depset_foreach(depset, save_file) != 0)
         goto fail;
 
     if (outfile != NULL) {

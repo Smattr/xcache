@@ -7,9 +7,8 @@
 #include <string.h>
 #include "../util.h"
 
-int dict(dict_t *d, void *(*value)(const char *key)) {
-    d->table = g_hash_table_new_full(g_str_hash, g_str_equal, free, NULL);
-    d->value = value;
+int dict(dict_t *d) {
+    d->table = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
     return 0;
 }
 
@@ -17,8 +16,6 @@ int dict_add(dict_t *d, const char *key, void *value) {
     char *k = strdup(key);
     if (k == NULL)
         return -1;
-    if (value == NULL)
-        value = d->value(key);
     g_hash_table_insert(d->table, (gpointer)k, (gpointer)value);
     return 0;
 }

@@ -8,67 +8,63 @@
 #include <time.h>
 #include <unistd.h>
 
-static void *stamp(const char *key) {
-    struct stat buf;
-    int r = stat(key, &buf);
-    if (r == 0)
-        return (void*)buf.st_mtime;
-    return (void*)MISSING;
-}
-
 struct depset {
-    dict_t inputs;
-    set_t outputs;
+    dict_t files;
 };
 
 depset_t *depset_new(void) {
     depset_t *o = malloc(sizeof(*o));
     if (o == NULL)
-        goto fail1;
-    if (dict(&o->inputs, stamp) != 0)
-        goto fail2;
-    if (set(&o->outputs) != 0)
-        goto fail3;
-    return o;
+        return NULL;
 
-fail3: set_destroy(&o->outputs);
-fail2: dict_destroy(&o->inputs);
-fail1: free(o);
-    return NULL;
-}
-
-int depset_add_input(depset_t *d, char *filename) {
-    if (set_contains(&d->outputs, filename))
-        /* This is already marked as an output; i.e. we are reading back in
-         * something we effectively already know. No need to track this.
-         */
-        return 0;
-
-    if (dict_contains(&d->inputs, filename))
-        /* Avoid adding an input if we have already tracked it or we will end
-         * up re-measuring it and overwriting the original stat data.
-         */
-        return 0;
-    return dict_add(&d->inputs, filename, NULL);
-}
-
-int depset_foreach_input(depset_t *d, int (*f)(const char *filename, time_t mtime)) {
-    int wrapper(const char *filename, void *value) {
-        return f(filename, (time_t)value);
+    if (dict(&o->files) != 0) {
+        free(o);
+        return NULL;
     }
-    return dict_foreach(&d->inputs, wrapper);
+
+    return o;
 }
 
-int depset_add_output(depset_t *d, char *filename) {
-    return set_add(&d->outputs, filename);
+typedef struct {
+    filetype_t type;
+    time_t mtime;
+} entry_t;
+
+int depset_add(depset_t *d, char *filename, filetype_t type) {
+    assert(type == XC_INPUT || type == XC_OUTPUT);
+    entry_t *e = dict_lookup(&d->files, filename);
+    if (e == NULL) {
+        /* We've never seen this item before. */
+        e = malloc(sizeof(*e));
+        if (e == NULL)
+            return -1;
+        e->type = type;
+        if (type == XC_INPUT) {
+            /* We need to measure this file now. */
+            struct stat buf;
+            int r = stat(filename, &buf);
+            e->mtime = r == 0 ? buf.st_mtime : MISSING;
+        }
+        if (dict_add(&d->files, filename, e) != 0) {
+            free(e);
+            return -1;
+        }
+    } else if (e->type == XC_INPUT && type == XC_OUTPUT) {
+        /* Writing to something we previously read from. */
+        e->type = XC_BOTH;
+    }
+    return 0;
 }
 
-int depset_foreach_output(depset_t *d, int (*f)(const char *filename)) {
-    return set_foreach(&d->outputs, f);
+int depset_foreach(depset_t *d, int (*f)(const char *filename, filetype_t type, time_t mtime)) {
+    int wrapper(const char *filename, void *value) {
+        entry_t *e = value;
+        return f(filename, e->type, e->mtime);
+    }
+    return dict_foreach(&d->files, wrapper);
 }
 
 void depset_destroy(depset_t *d) {
-    dict_destroy(&d->inputs);
-    set_destroy(&d->outputs);
+    dict_destroy(&d->files);
     free(d);
 }

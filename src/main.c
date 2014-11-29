@@ -186,7 +186,7 @@ int main(int argc, const char **argv) {
             DEBUG("Failed to resolve path \"%s\"\n", _f); \
             goto bailout; \
         } \
-        int _r = depset_add_##category(deps, _fabs); \
+        int _r = depset_add(deps, _fabs, XC_##category); \
         if (_r != 0) { \
             DEBUG("Failed to add " #category " \"%s\"\n", _fabs); \
             free(_fabs); \
@@ -208,7 +208,7 @@ int main(int argc, const char **argv) {
                  * on kernel exit.
                  */
                 case SYS_execve:
-                    ADD_AS(input, 1);
+                    ADD_AS(INPUT, 1);
                     break;
 
                 case SYS_open:;
@@ -252,19 +252,19 @@ int main(int argc, const char **argv) {
                             break;
 
                     }
-                    ADD_AS(input, 1);
+                    ADD_AS(INPUT, 1);
                     break;
 
                 case SYS_rename:
-                    ADD_AS(input, 1);
+                    ADD_AS(INPUT, 1);
                     break;
 
                 case SYS_unlink:
-                    ADD_AS(input, 1);
+                    ADD_AS(INPUT, 1);
                     break;
 
                 case SYS_rmdir:
-                    ADD_AS(input, 1);
+                    ADD_AS(INPUT, 1);
                     break;
 
                 case SYS_renameat:
@@ -287,15 +287,15 @@ int main(int argc, const char **argv) {
         switch (s->call) {
 
             case SYS_access:
-                ADD_AS(input, 1);
+                ADD_AS(INPUT, 1);
                 break;
 
             case SYS_chmod:
-                ADD_AS(output, 1);
+                ADD_AS(OUTPUT, 1);
                 break;
 
             case SYS_creat:
-                ADD_AS(output, 1);
+                ADD_AS(OUTPUT, 1);
                 break;
 
             case SYS_open:;
@@ -306,15 +306,15 @@ int main(int argc, const char **argv) {
                 int flags = (int)syscall_getarg(s, 2);
                 int mode = flags & FLAG_MASK;
                 if (mode == O_WRONLY || mode == O_RDWR)
-                    ADD_AS(output, 1);
+                    ADD_AS(OUTPUT, 1);
                 break;
 
             case SYS_readlink:
-                ADD_AS(input, 1);
+                ADD_AS(INPUT, 1);
                 break;
 
             case SYS_stat:
-                ADD_AS(input, 1);
+                ADD_AS(INPUT, 1);
                 break;
 
             case SYS__sysctl:

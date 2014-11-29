@@ -6,17 +6,15 @@
 
 typedef struct {
     GHashTable *table;
-    void *(*value)(const char *key);
 } dict_t;
 
-int dict(dict_t *d, void *(*get_value)(const char *key));
+int dict(dict_t *d);
 
 /* Add a new entry to the dictionary. Replaces any existing entry.
  *
  * d - Dictionary to operate on.
  * key - Key for the entry.
- * value - Value for the entry. If you pass NULL, a value will be obtained from
- *   the value function of the dictionary itself.
+ * value - Value for the entry.
  *
  * Returns 0 on success, non-zero on failure.
  */
