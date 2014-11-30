@@ -3,7 +3,7 @@
 #include <sys/select.h>
 #include <unistd.h>
 
-int spipe_ready(spipe_t *sp) {
+ssize_t spipe_read(spipe_t *sp, void *buf, size_t count) {
     /* Construct the read FD mask. */
     fd_set fs;
     FD_ZERO(&fs);
@@ -13,20 +13,12 @@ int spipe_ready(spipe_t *sp) {
 
     int selected = select(nfds, &fs, NULL, NULL, NULL);
     if (selected == -1)
-        return selected;
+        return -1;
 
     if (FD_ISSET(sp->sig, &fs))
-        return 1;
+        return 0;
 
     assert(FD_ISSET(sp->in, &fs));
-    return 0;
-}
-
-ssize_t spipe_read(spipe_t *sp, void *buf, size_t count) {
-    int ready = spipe_ready(sp);
-    if (ready != 1)
-        return ready;
-
     return read(sp->in, buf, count);
 }
 
