@@ -58,15 +58,15 @@ static dict_t *hook(mux_t *m) {
             free(key);
             goto error;
         }
-        if (dict_contains(d, key))
+        if (dict_contains(d, key)) {
+            free(key);
             free(value);
-        else {
+        } else {
             if (dict_add(d, key, value) != 0) {
                 free(key);
                 free(value);
                 goto error;
             }
-            free(key);
         }
     }
 

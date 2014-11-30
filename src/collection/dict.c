@@ -13,10 +13,7 @@ int dict(dict_t *d) {
 }
 
 int dict_add(dict_t *d, const char *key, void *value) {
-    char *k = strdup(key);
-    if (k == NULL)
-        return -1;
-    g_hash_table_insert(d->table, (gpointer)k, (gpointer)value);
+    g_hash_table_insert(d->table, (gpointer)key, (gpointer)value);
     return 0;
 }
 

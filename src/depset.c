@@ -2,6 +2,7 @@
 #include "collection/dict.h"
 #include "constants.h"
 #include "depset.h"
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -44,7 +45,13 @@ int depset_add(depset_t *d, char *filename, filetype_t type) {
             int r = stat(filename, &buf);
             e->mtime = r == 0 ? buf.st_mtime : MISSING;
         }
-        if (dict_add(&d->files, filename, e) != 0) {
+        char *name = strdup(filename);
+        if (name == NULL) {
+            free(e);
+            return -1;
+        }
+        if (dict_add(&d->files, name, e) != 0) {
+            free(name);
             free(e);
             return -1;
         }
