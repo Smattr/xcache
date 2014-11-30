@@ -21,7 +21,7 @@ CFLAGS  += -std=gnu1x -W -Wall -Wextra -fPIC -DXCACHE_PIPE=\"XCACHE_PIPE\" \
 # Source files.
 SOURCES_LIB = cache.c collection/list.c comm-protocol.c db.c depset.c \
     collection/dict.c fingerprint.c log.c ptrace-wrapper.c \
-    spipe.c tee.c trace.c util/abspath.c util/aprintf.c util/cp.c \
+    tee.c trace.c util/abspath.c util/aprintf.c util/cp.c \
     util/du.c util/filehash.c util/fileiter.c util/get.c util/mkdirp.c \
     util/reduce.c
 SOURCES_EXE = main.c translate-syscall.c
