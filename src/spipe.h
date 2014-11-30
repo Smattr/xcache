@@ -12,6 +12,15 @@ typedef struct {
     int out;
 } spipe_t;
 
+/* Blocking test as to whether the pipe is ready to read from.
+ *
+ * sp - Pipe to check.
+ *
+ * Returns 1 if the pipe is ready to read from, 0 if the pipe has been
+ * signalled, -1 on error.
+ */
+int spipe_ready(spipe_t *sp);
+
 /* Read from the pipe.
  *
  * sp - The pipe to read from.
