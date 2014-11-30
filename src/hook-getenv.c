@@ -28,7 +28,7 @@ static void init(void) {
     real_getenv = dlsym(RTLD_NEXT, "getenv");
     assert(real_getenv != NULL);
 
-    char *xcache_pipe = getenv(XCACHE_PIPE);
+    char *xcache_pipe = real_getenv(XCACHE_PIPE);
     if (xcache_pipe == NULL)
         /* No return pipe available. */
         return;
