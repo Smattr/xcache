@@ -81,10 +81,12 @@ xcache-tests: $(foreach v,${SOURCES_TEST} ${SOURCES_LIB},$(patsubst %.c,%-testin
 	@echo " [CC] $(notdir $@)"
 	${Q}${CC} ${CFLAGS} -DXCACHE_TEST=1 -c -o $@ $<
 
+ifneq (${MAKECMDGOALS},clean)
 -include $(SOURCES_LIB:%.c=%.d)
 -include $(SOURCES_EXE:%.c=%.d)
 -include $(SOURCES_LIBGETENV:%.c=%.d)
 -include $(SOURCES_TEST:%.c=%.d)
+endif
 
 test.d: test.c
 	@echo " [GEN] $(notdir $@)"
