@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include "spipe.h"
 #include <stdlib.h>
 #include <string.h>
 #include <sys/select.h>
@@ -8,12 +9,6 @@
 #include <sys/types.h>
 #include "tee.h"
 #include <unistd.h>
-
-typedef struct {
-    int sig;
-    int in;
-    int out;
-} spipe_t;
 
 static char *tee(spipe_t *pipe) {
     char *name = strdup("/tmp/tmp.XXXXXX");
@@ -29,42 +24,20 @@ static char *tee(spipe_t *pipe) {
         return NULL;
     }
 
-    /* Construct the read FD mask. */
-    fd_set set0;
-    FD_ZERO(&set0);
-    FD_SET(pipe->sig, &set0);
-    FD_SET(pipe->in, &set0);
-    const int nfds = (pipe->in > pipe->sig ? pipe->in : pipe->sig) + 1;
-
     do {
-        /* What actually *is* an fd_set? Ah, screw it... */
-        fd_set set;
-        memcpy(&set, &set0, sizeof(set0));
-
-        /* We need to do this via select, rather than just a plain old read
-         * in order to allow our parent to signal us via another FD. If we just
-         * read the input FD we remain blocked even when our parent closes this
-         * FD.
-         */
-        int selected = select(nfds, &set, NULL, NULL, NULL);
-        if (selected == -1)
-            goto error;
-
-        if (FD_ISSET(pipe->sig, &set))
-            break;
-
-        assert(FD_ISSET(pipe->in, &set));
         const size_t sz = 1024; /* bytes */
         char buf[sz];
-        ssize_t len = read(pipe->in, buf, sz);
+        ssize_t len = spipe_read(pipe, buf, sz);
         if (len == -1)
             goto error;
+        else if (len == 0)
+            break;
 
         assert((size_t)len <= sz);
         ssize_t written = write(f, buf, len);
         if (written < len)
             goto error;
-        written = write(pipe->out, buf, len);
+        written = spipe_write(pipe, buf, len);
         if (written < len)
             goto error;
     } while (1);
