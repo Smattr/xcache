@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/file.h>
 
 static char *(*real_getenv)(const char *name);
 static int out = -1;
@@ -56,10 +57,11 @@ char *getenv(const char *name) {
         init();
     assert(real_getenv != NULL);
     char *v = real_getenv(name);
-    if (out != -1) {
+    if (out != -1 && flock(out, LOCK_EX) == 0) {
         write_string(out, "getenv");
         write_string(out, name);
         write_string(out, v);
+        flock(out, LOCK_UN);
     }
     return v;
 }
