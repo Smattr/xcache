@@ -57,6 +57,7 @@ char *getenv(const char *name) {
     assert(real_getenv != NULL);
     char *v = real_getenv(name);
     if (out != -1) {
+        write_string(out, "getenv");
         write_string(out, name);
         write_string(out, v);
     }
