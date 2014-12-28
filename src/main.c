@@ -314,7 +314,7 @@ int main(int argc, const char **argv) {
                 break;
 
             case SYS_stat:
-                ADD_AS(INPUT, 1);
+                ADD_AS(AMBIGUOUS, 1);
                 break;
 
             case SYS__sysctl:
