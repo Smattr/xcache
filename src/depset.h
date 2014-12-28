@@ -20,4 +20,9 @@ void depset_destroy(depset_t *d);
 
 int depset_foreach(depset_t *d, int (*f)(const char *filename, filetype_t type, time_t mtime));
 
+/* Prepare a dependency set to be serialised to disk. No further elements should
+ * be added to the set after this. Returns 0 on success.
+ */
+int depset_finalise(depset_t *d);
+
 #endif
