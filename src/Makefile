@@ -28,6 +28,8 @@ SOURCES_EXE = main.c translate-syscall.c
 SOURCES_LIBGETENV = comm-protocol.c hook-getenv.c
 SOURCES_TEST = test.c
 
+PWD := $(shell pwd)
+
 # Hangle building for different architectures.
 HOST_ARCH = $(shell uname -m)
 ARCH ?= ${HOST_ARCH}
