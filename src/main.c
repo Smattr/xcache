@@ -3,6 +3,7 @@
 #include "depset.h"
 #include <fcntl.h>
 #include "log.h"
+#include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +21,16 @@ static bool dryrun = false;
 static const char *cache_dir = NULL;
 
 static bool hook_getenv = true;
+
+/* Paths to never consider as inputs. This is to avoid tracking things that are
+ * not conceptually files, but rather Linux APIs. Entries to this array should
+ * be regular expressions.
+ */
+static char *exclude[] = {
+    "^/dev/",
+    "^/proc/",
+};
+#define exclude_sz (sizeof(exclude) / sizeof(exclude[0]))
 
 static void usage(const char *prog) {
     fprintf(stderr, "Usage:\n"
@@ -149,6 +160,14 @@ int main(int argc, const char **argv) {
      * for this execution. We need to actually run the program itself.
      */
 
+    regex_t exclude_regexs[exclude_sz];
+    for (unsigned int i = 0; i < exclude_sz; i++) {
+        if (regcomp(&exclude_regexs[i], exclude[i], 0) != 0) {
+            ERROR("Failed to parse exclude regex %d\n", i);
+            return -1;
+        }
+    }
+
     depset_t *deps = depset_new();
     if (deps == NULL) {
         ERROR("Failed to create dependency set\n");
@@ -186,11 +205,20 @@ int main(int argc, const char **argv) {
             DEBUG("Failed to resolve path \"%s\"\n", _f); \
             goto bailout; \
         } \
-        int _r = depset_add(deps, _fabs, XC_##category); \
-        if (_r != 0) { \
-            DEBUG("Failed to add " #category " \"%s\"\n", _fabs); \
-            free(_fabs); \
-            goto bailout; \
+        bool _excluded = false; \
+        for (unsigned int _i = 0; _i < exclude_sz; _i++) { \
+            if (regexec(&exclude_regexs[_i], _fabs, 0, NULL, 0) == 0) { \
+                _excluded = true; \
+                break; \
+            } \
+        } \
+        if (!_excluded) { \
+            int _r = depset_add(deps, _fabs, XC_##category); \
+            if (_r != 0) { \
+                DEBUG("Failed to add " #category " \"%s\"\n", _fabs); \
+                free(_fabs); \
+                goto bailout; \
+            } \
         } \
         free(_fabs); \
     } while (0)
