@@ -117,6 +117,53 @@ typedef char FILE_FLAGS_AS_EXPECTED[
 /* See usage of this below. */
 static const int FLAG_MASK = O_RDONLY | O_WRONLY | O_RDWR;
 
+/* Add an item to a dependency set. */
+static int add(depset_t *d, syscall_t *syscall, int argno, filetype_t type,
+        regex_t exclude_regexs[]) {
+    char *filename = syscall_getstring(syscall, argno);
+    if (filename == NULL) {
+        if (syscall->call == SYS_execve) {
+            /* A successful execve results in two entry SIGTRAPs, the
+             * second one with an argument of NULL. Presumably the second
+             * trap is an artefact of the program loader.
+             */
+            return 0;
+        }
+        DEBUG("Failed to retrieve string argument %d from syscall %s (%ld)\n",
+            argno, translate_syscall(syscall->call), syscall->call);
+        return -1;
+    }
+
+    char *absolute = abspath(filename);
+    if (absolute == NULL) {
+        DEBUG("Failed to resolve path \"%s\"\n", filename);
+        return -1;
+    }
+
+    bool excluded = false;
+    for (unsigned int i = 0; i < exclude_sz; i++) {
+        if (regexec(&exclude_regexs[i], absolute, 0, NULL, 0) == 0) {
+            excluded = true;
+            break;
+        }
+    }
+
+    if (!excluded) {
+        if (depset_add(d, absolute, type) != 0) {
+            DEBUG("Failed to add %s \"%s\"\n",
+                type == XC_INPUT ? "input" :
+                type == XC_OUTPUT ? "output" :
+                type == XC_AMBIGUOUS ? "ambiguous" : "unknown",
+                absolute);
+            free(absolute);
+            return -1;
+        }
+    }
+    free(absolute);
+
+    return 0;
+}
+
 int main(int argc, const char **argv) {
     int index = parse_arguments(argc, argv);
 
@@ -185,44 +232,6 @@ int main(int argc, const char **argv) {
     syscall_t *s;
     while ((s = next_syscall(target)) != NULL) {
 
-#define ADD_AS(category, argno) \
-    do { \
-        char *_f = syscall_getstring(s, (argno)); \
-        if (_f == NULL) { \
-            if (s->call == SYS_execve) { \
-                /* A successful execve results in two entry SIGTRAPs, the
-                 * second one with an argument of NULL. Presumably the second
-                 * trap is an artefact of the program loader.
-                 */ \
-                break; \
-            } \
-            DEBUG("Failed to retrieve string argument %d from syscall %s " \
-                "(%ld)\n", (argno), translate_syscall(s->call), s->call); \
-            goto bailout; \
-        } \
-        char *_fabs = abspath(_f); \
-        if (_fabs == NULL) { \
-            DEBUG("Failed to resolve path \"%s\"\n", _f); \
-            goto bailout; \
-        } \
-        bool _excluded = false; \
-        for (unsigned int _i = 0; _i < exclude_sz; _i++) { \
-            if (regexec(&exclude_regexs[_i], _fabs, 0, NULL, 0) == 0) { \
-                _excluded = true; \
-                break; \
-            } \
-        } \
-        if (!_excluded) { \
-            int _r = depset_add(deps, _fabs, XC_##category); \
-            if (_r != 0) { \
-                DEBUG("Failed to add " #category " \"%s\"\n", _fabs); \
-                free(_fabs); \
-                goto bailout; \
-            } \
-        } \
-        free(_fabs); \
-    } while (0)
-
         /* Any syscall we receive may be the kernel entry or exit. Handle entry
          * separately first because there are relatively few syscalls where
          * entry is relevant for us. The relevant ones are essentially ones
@@ -236,7 +245,8 @@ int main(int argc, const char **argv) {
                  * on kernel exit.
                  */
                 case SYS_execve:
-                    ADD_AS(INPUT, 1);
+                    if (add(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                        goto bailout;
                     break;
 
                 case SYS_open:;
@@ -280,19 +290,23 @@ int main(int argc, const char **argv) {
                             break;
 
                     }
-                    ADD_AS(INPUT, 1);
+                    if (add(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                        goto bailout;
                     break;
 
                 case SYS_rename:
-                    ADD_AS(INPUT, 1);
+                    if (add(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                        goto bailout;
                     break;
 
                 case SYS_unlink:
-                    ADD_AS(INPUT, 1);
+                    if (add(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                        goto bailout;
                     break;
 
                 case SYS_rmdir:
-                    ADD_AS(INPUT, 1);
+                    if (add(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                        goto bailout;
                     break;
 
                 case SYS_renameat:
@@ -315,15 +329,18 @@ int main(int argc, const char **argv) {
         switch (s->call) {
 
             case SYS_access:
-                ADD_AS(INPUT, 1);
+                if (add(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                    goto bailout;
                 break;
 
             case SYS_chmod:
-                ADD_AS(OUTPUT, 1);
+                if (add(deps, s, 1, XC_OUTPUT, exclude_regexs) != 0)
+                    goto bailout;
                 break;
 
             case SYS_creat:
-                ADD_AS(OUTPUT, 1);
+                if (add(deps, s, 1, XC_OUTPUT, exclude_regexs) != 0)
+                    goto bailout;
                 break;
 
             case SYS_open:;
@@ -334,15 +351,18 @@ int main(int argc, const char **argv) {
                 int flags = (int)syscall_getarg(s, 2);
                 int mode = flags & FLAG_MASK;
                 if (mode == O_WRONLY || mode == O_RDWR)
-                    ADD_AS(OUTPUT, 1);
+                    if (add(deps, s, 1, XC_OUTPUT, exclude_regexs) != 0)
+                        goto bailout;
                 break;
 
             case SYS_readlink:
-                ADD_AS(INPUT, 1);
+                if (add(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                    goto bailout;
                 break;
 
             case SYS_stat:
-                ADD_AS(AMBIGUOUS, 1);
+                if (add(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                    goto bailout;
                 break;
 
             case SYS__sysctl:
@@ -384,8 +404,6 @@ int main(int argc, const char **argv) {
                     translate_syscall(s->call), s->call);
         }
         acknowledge_syscall(s);
-
-#undef ADD_AS
 
     }
 
