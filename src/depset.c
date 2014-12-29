@@ -53,7 +53,7 @@ int depset_add(depset_t *d, char *filename, filetype_t type) {
         if (e == NULL)
             return -1;
         e->type = type;
-        if (type == XC_INPUT) {
+        if (type == XC_INPUT || type == XC_AMBIGUOUS) {
             /* We need to measure this file now. */
             struct stat buf;
             int r = stat(filename, &buf);
