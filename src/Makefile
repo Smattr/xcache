@@ -5,7 +5,8 @@
 VERSION_MAJOR = 0
 VERSION_MINOR = 1
 
-OUTPUTS = xcache libxcache.a libxcache.so libhookgetenv.so xcache-tests
+OUTPUTS = xcache xcache-static libxcache.a libxcache.so libhookgetenv.so \
+  xcache-tests
 
 ifneq (${V},)
   Q :=
@@ -58,6 +59,11 @@ xcache: libxcache.so $(foreach v,${SOURCES_EXE},$(patsubst %.c,%.o,${v}))
 	@echo " [LD] $(notdir $@)"
 	${Q}${CC} -o $@ $(foreach v,${SOURCES_EXE},$(patsubst %.c,%.o,${v})) \
       ${LDFLAGS} -L. -lxcache
+
+xcache-static: $(foreach v,${SOURCES_EXE},$(patsubst %.c,%.o,${v})) \
+      $(foreach v,${SOURCES_LIB},$(patsubst %.c,%.o,${v}))
+	@echo " [LD] $(notdir $@)"
+	${Q}${CC} -o $@ $^ ${LDFLAGS}
 
 libxcache.a: $(foreach v,${SOURCES_LIB},$(patsubst %.c,%.o,${v}))
 	@echo " [AR] $(notdir $@)"
