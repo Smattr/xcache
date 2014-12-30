@@ -47,7 +47,7 @@ struct tracee {
     char *outfile, *errfile;
 
     hook_t *hook;
-    dict_t *env_lookups;
+    dict_t *env;
 };
 
 static int proc_cmp(void *proc, void *pid) {
@@ -90,13 +90,21 @@ tracee_t *trace(const char **argv, const char *tracer) {
     if (t->err == NULL)
         goto fail;
 
+    t->env = malloc(sizeof(*t->env));
+    if (t->env == NULL)
+        goto fail;
+    if (dict(t->env) != 0) {
+        free(t->env);
+        goto fail;
+    }
+
     /* Create a communication channel that will be used by the tracee to notify
      * us (the tracer) of relevant events.
      */
     int hook_pipe[2];
     if (pipe(hook_pipe) != 0)
         goto fail;
-    t->hook = hook_create(hook_pipe[0]);
+    t->hook = hook_create(hook_pipe[0], t->env);
     if (t->hook == NULL)
         goto fail;
 
@@ -185,6 +193,10 @@ tracee_t *trace(const char **argv, const char *tracer) {
     return t;
 
 fail:
+    if (t->env != NULL) {
+        dict_destroy(t->env);
+        free(t->env);
+    }
     if (t->err != NULL) {
         char *p = tee_close(t->err);
         if (p != NULL)
@@ -428,7 +440,7 @@ int complete(tracee_t *tracee) {
     tracee->outfile = tee_close(tracee->out);
     assert(tracee->errfile == NULL);
     tracee->errfile = tee_close(tracee->err);
-    tracee->env_lookups = hook_close(tracee->hook);
+    hook_close(tracee->hook);
     tracee->root.state = FINALISED;
     return tracee->exit_status;
 }
@@ -448,8 +460,10 @@ int delete(tracee_t *tracee) {
         free(tracee->errfile);
     if (tracee->outfile != NULL)
         free(tracee->outfile);
-    if (tracee->env_lookups != NULL)
-        dict_destroy(tracee->env_lookups);
+    if (tracee->env != NULL) {
+        dict_destroy(tracee->env);
+        free(tracee->env);
+    }
     list_destroy(&tracee->children);
     free(tracee);
     return 0;

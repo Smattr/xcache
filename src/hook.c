@@ -12,96 +12,88 @@
 typedef struct {
     int sig;
     int in;
-} mux_t;
+    dict_t *env;
+} hook_arg_t;
 
-static dict_t *hook(mux_t *m) {
-    dict_t *d = calloc(1, sizeof(*d));
-    if (d == NULL)
-        goto error;
-    if (dict(d) != 0)
-        goto error;
-
+static void hook(hook_arg_t *args) {
     while (true) {
         fd_set fs;
         FD_ZERO(&fs);
-        FD_SET(m->sig, &fs);
-        FD_SET(m->in, &fs);
-        const int nfds = (m->in > m->sig ? m->in : m->sig) + 1;
+        FD_SET(args->sig, &fs);
+        FD_SET(args->in, &fs);
+        const int nfds = (args->in > args->sig ? args->in : args->sig) + 1;
 
         int selected = select(nfds, &fs, NULL, NULL, NULL);
-        if (selected == -1)
-            goto error;
-
-        if (FD_ISSET(m->sig, &fs)) {
-            free(m);
-            return d;
+        if (selected == -1) {
+            free(args);
+            return;
         }
 
-        assert(FD_ISSET(m->in, &fs));
+        if (FD_ISSET(args->sig, &fs)) {
+            free(args);
+            return;
+        }
 
-        message_t *message = read_message(m->in);
-        if (message == NULL)
-            goto error;
+        assert(FD_ISSET(args->in, &fs));
+
+        message_t *message = read_message(args->in);
+        if (message == NULL) {
+            free(args);
+            return;
+        }
         if (message->tag != MSG_GETENV) {
             /* Received a call we don't handle. */
             free(message);
-            goto error;
+            free(args);
+            return;
         }
 
         /* FIXME: cope with NULL key or value below */
 
-        if (dict_contains(d, message->key)) {
+        if (dict_contains(args->env, message->key)) {
             free(message->key);
             free(message->value);
         } else {
-            if (dict_add(d, message->key, message->value) != 0) {
+            if (dict_add(args->env, message->key, message->value) != 0) {
                 free(message->key);
                 free(message->value);
                 free(message);
-                goto error;
+                free(args);
+                return;
             }
         }
         free(message);
     }
 
     assert(!"unreachable");
-    return NULL;
-
-error:
-    if (d != NULL) {
-        if (d->table != NULL)
-            dict_destroy(d);
-        free(d);
-    }
-    free(m);
-    return NULL;
 }
 
-hook_t *hook_create(int input) {
+hook_t *hook_create(int input, dict_t *env) {
     hook_t *h = malloc(sizeof(*h));
     if (h == NULL)
         return NULL;
 
-    mux_t *m = malloc(sizeof(*m));
-    if (m == NULL) {
+    hook_arg_t *args = malloc(sizeof(*args));
+    if (args == NULL) {
         free(h);
         return NULL;
     }
-    m->in = input;
+    args->in = input;
+    args->env = env;
 
     int p[2];
     if (pipe(p) != 0) {
-        free(m);
+        free(args);
         free(h);
         return NULL;
     }
-    m->sig = p[0];
+    args->sig = p[0];
     h->sigfd = p[1];
 
-    if (pthread_create(&h->thread, NULL, (void*(*)(void*))hook, m) != 0) {
+    if (pthread_create(&h->thread, NULL, (void*(*)(void*))hook, args) != 0) {
         close(p[0]);
         close(p[1]);
-        free(m);
+        free(args);
         free(h);
         return NULL;
     }
@@ -109,15 +101,14 @@ hook_t *hook_create(int input) {
     return h;
 }
 
-dict_t *hook_close(hook_t *h) {
+int hook_close(hook_t *h) {
     char c = (char)0; /* <-- irrelevant */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-result"
     write(h->sigfd, &c, 1);
 #pragma GCC diagnostic pop
     close(h->sigfd);
-    dict_t *ret;
-    int r = pthread_join(h->thread, (void**)&ret);
+    int r = pthread_join(h->thread, NULL);
     free(h);
-    return r == 0 ? ret : NULL;
+    return r;
 }

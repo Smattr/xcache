@@ -8,8 +8,8 @@ typedef struct {
     int sigfd;
 } hook_t;
 
-hook_t *hook_create(int input);
+hook_t *hook_create(int input, dict_t *env);
 
-dict_t *hook_close(hook_t *h);
+int hook_close(hook_t *h);
 
 #endif
