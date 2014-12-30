@@ -1,9 +1,8 @@
-/* The implementation below is based on basic, established RPC schemes. Strings
- * are serialised with their length (including trailing \0) preceding them.
+/* The implementation below is based on basic, established RPC schemes. Data is
+ * serialised with its length preceding it.
  * There are a couple of main advantages to this approach:
  *  1. We can encode the NULL pointer as length 0; and
- *  2. We can determine how much memory is required for a string before reading
- *     it.
+ *  2. We can determine how much memory is required for data before reading it.
  */
 
 #include <assert.h>
