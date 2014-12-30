@@ -8,7 +8,8 @@
 
 /* Type of a message. */
 typedef enum {
-    MSG_GETENV, /* Call to getenv() */
+    MSG_GETENV,      /* Call to getenv() */
+    MSG_EXEC_ERROR,  /* Error calling execvp() */
 } message_tag_t;
 
 /* A message content. */
@@ -18,6 +19,9 @@ typedef struct {
         struct /* MSG_GETENV */ {
             char *key;
             char *value;
+        };
+        struct /* MSG_EXEC_ERROR */ {
+            int errnumber;
         };
     };
 } message_t;

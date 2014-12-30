@@ -4,9 +4,11 @@
 #include "collection/list.h"
 #include <errno.h>
 #include <fcntl.h>
+#include "hook.h"
 #include <libgen.h>
 #include <linux/limits.h>
 #include "log.h"
+#include "message-protocol.h"
 #include <pthread.h>
 #include "ptrace-wrapper.h"
 #include <stdbool.h>
@@ -43,6 +45,9 @@ struct tracee {
 
     tee_t *out, *err;
     char *outfile, *errfile;
+
+    hook_t *hook;
+    dict_t *env_lookups;
 };
 
 static int proc_cmp(void *proc, void *pid) {
@@ -85,6 +90,16 @@ tracee_t *trace(const char **argv, const char *tracer) {
     if (t->err == NULL)
         goto fail;
 
+    /* Create a communication channel that will be used by the tracee to notify
+     * us (the tracer) of relevant events.
+     */
+    int hook_pipe[2];
+    if (pipe(hook_pipe) != 0)
+        goto fail;
+    t->hook = hook_create(hook_pipe[0]);
+    if (t->hook == NULL)
+        goto fail;
+
     t->root.pid = fork();
     switch (t->root.pid) {
 
@@ -93,6 +108,9 @@ tracee_t *trace(const char **argv, const char *tracer) {
             if (dup2(stdout2, STDOUT_FILENO) == -1 ||
                     dup2(stderr2, STDERR_FILENO) == -1)
                 exit(-1);
+
+            /* We only need the write end of the communication channel. */
+            close(hook_pipe[0]);
 
             /* Extend our environment to LD_PRELOAD a helper library into the
              * target. The idea behind this is to setup a channel between xcache
@@ -111,6 +129,15 @@ tracee_t *trace(const char **argv, const char *tracer) {
                         ld_preload = aprintf("%s %s", ld_preload, lib);
                     }
                     (void)setenv("LD_PRELOAD", ld_preload, 1);
+
+                    /* Make sure libhookgetenv can find the pipe back to the
+                     * tracer.
+                     */
+                    char *xcache_pipe = aprintf("%d", hook_pipe[1]);
+                    if (xcache_pipe != NULL) {
+                        (void)setenv(XCACHE_PIPE, xcache_pipe, 1);
+                        free(xcache_pipe);
+                    }
                 }
             }
 
@@ -119,7 +146,13 @@ tracee_t *trace(const char **argv, const char *tracer) {
                 exit(-1);
             execvp(argv[0], (char**)argv);
 
-            /* Exec failed. */
+            /* Exec failed. Try to tell the tracer. */
+            message_t failure = {
+                .tag = MSG_EXEC_ERROR,
+                .errnumber = errno,
+            };
+            (void)write_message(hook_pipe[1], &failure);
+
             exit(-1);
         } case -1: {
             /* Fork failed. */
@@ -395,6 +428,7 @@ int complete(tracee_t *tracee) {
     tracee->outfile = tee_close(tracee->out);
     assert(tracee->errfile == NULL);
     tracee->errfile = tee_close(tracee->err);
+    tracee->env_lookups = hook_close(tracee->hook);
     tracee->root.state = FINALISED;
     return tracee->exit_status;
 }
@@ -414,6 +448,8 @@ int delete(tracee_t *tracee) {
         free(tracee->errfile);
     if (tracee->outfile != NULL)
         free(tracee->outfile);
+    if (tracee->env_lookups != NULL)
+        dict_destroy(tracee->env_lookups);
     list_destroy(&tracee->children);
     free(tracee);
     return 0;
