@@ -40,21 +40,26 @@ static dict_t *hook(mux_t *m) {
         assert(FD_ISSET(m->in, &fs));
 
         char *call;
-        if (read_string(m->in, &call) != 0)
+        ssize_t len = read_data(m->in, (unsigned char**)&call);
+        if (len < 0)
             goto error;
-        if (strcmp(call, "getenv") != 0) {
+        if (call == NULL || strcmp(call, "getenv") != 0) {
             /* Received a call we don't handle. */
             free(call);
             goto error;
         }
         free(call);
 
+        /* FIXME: cope with NULL key or value below */
+
         char *key;
-        if (read_string(m->in, &key) != 0)
+        len = read_data(m->in, (unsigned char**)&key);
+        if (len < 0)
             goto error;
 
         char *value;
-        if (read_string(m->in, &value) != 0) {
+        len = read_data(m->in, (unsigned char**)&value);
+        if (len < 0) {
             free(key);
             goto error;
         }

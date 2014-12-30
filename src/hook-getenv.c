@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/file.h>
 
 static char *(*real_getenv)(const char *name);
@@ -46,6 +47,11 @@ static void init(void) {
 
     /* We received a valid return pipe. */
     out = fd;
+}
+
+static void write_string(int fd, const char *s) {
+    (void)write_data(fd, (const unsigned char*)s,
+        s == NULL ? 0 : strlen(s) + 1);
 }
 
 /* Hooked version of getenv. We lookup environment variables, as expected, but

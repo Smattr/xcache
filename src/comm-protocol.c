@@ -11,56 +11,46 @@
 #include <string.h>
 #include <unistd.h>
 
-int read_string(int fd, char **data) {
+ssize_t read_data(int fd, unsigned char **data) {
     assert(data != NULL);
 
     size_t len;
     ssize_t sz = read(fd, &len, sizeof(len));
     if (sz == 0)
-        return 1;
+        return -2;
     if (sz != sizeof(len))
         return -1;
 
     if (len == 0) {
-        /* NULL marker. */
         *data = NULL;
         return 0;
     }
 
-    *data = malloc(sizeof(char) * len);
+    *data = malloc(sizeof(*data[0]) * len);
     if (*data == NULL)
         return -1;
 
-    sz = read(fd, *data, len - 1);
-    if (sz < 0 || (size_t)sz != len - 1) {
+    sz = read(fd, *data, len);
+    if (sz < 0 || (size_t)sz != len) {
         free(*data);
         return -1;
     }
 
-    (*data)[len - 1] = '\0';
-    return 0;
+    return len;
 }
 
-int write_string(int fd, const char *data) {
-    if (data == NULL) {
-        /* Send a size of 0 as a NULL marker. */
-        size_t marker = 0;
-        ssize_t sz = write(fd, &marker, sizeof(marker));
-        if (sz != sizeof(marker))
-            return -1;
-        return 0;
-    }
-
-    /* Send the size of the string, including \0. */
-    size_t len = (int)strlen(data) + 1;
+int write_data(int fd, const unsigned char *data, size_t len) {
+    /* Send the size of the data. */
     ssize_t sz = write(fd, &len, sizeof(len));
     if (sz != sizeof(len))
         return -1;
 
     /* Send the data itself. */
-    sz = write(fd, data, len - 1);
-    if (sz < 0 || (size_t)sz != len - 1)
-        return -1;
+    if (len > 0) {
+        sz = write(fd, data, len);
+        if (sz < 0 || (size_t)sz != len)
+            return -1;
+    }
 
     return 0;
 }
