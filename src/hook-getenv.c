@@ -12,12 +12,11 @@
 
 #define _GNU_SOURCE
 #include <assert.h>
-#include "comm-protocol.h"
+#include "message-protocol.h"
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/file.h>
 
 static char *(*real_getenv)(const char *name);
@@ -49,11 +48,6 @@ static void init(void) {
     out = fd;
 }
 
-static void write_string(int fd, const char *s) {
-    (void)write_data(fd, (const unsigned char*)s,
-        s == NULL ? 0 : strlen(s) + 1);
-}
-
 /* Hooked version of getenv. We lookup environment variables, as expected, but
  * we also pass any accessed environment variables to Xcache, that we are
  * expecting to be tracing us.
@@ -64,9 +58,18 @@ char *getenv(const char *name) {
     assert(real_getenv != NULL);
     char *v = real_getenv(name);
     if (out != -1 && flock(out, LOCK_EX) == 0) {
-        write_string(out, "getenv");
-        write_string(out, name);
-        write_string(out, v);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+        /* For some reason, GCC doesn't seem to notice that we *are*
+         * initialising 'value' here.
+         */
+        message_t message = {
+            .tag = MSG_GETENV,
+            .key = (char*)name,
+            .value = v,
+        };
+#pragma GCC diagnostic pop
+        write_message(out, &message);
         flock(out, LOCK_UN);
     }
     return v;

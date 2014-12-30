@@ -1,5 +1,5 @@
 #include <assert.h>
-#include "comm-protocol.h"
+#include "message-protocol.h"
 #include "collection/dict.h"
 #include "hook.h"
 #include <pthread.h>
@@ -39,40 +39,29 @@ static dict_t *hook(mux_t *m) {
 
         assert(FD_ISSET(m->in, &fs));
 
-        char *call;
-        ssize_t len = read_data(m->in, (unsigned char**)&call);
-        if (len < 0)
+        message_t *message = read_message(m->in);
+        if (message == NULL)
             goto error;
-        if (call == NULL || strcmp(call, "getenv") != 0) {
+        if (message->tag != MSG_GETENV) {
             /* Received a call we don't handle. */
-            free(call);
+            free(message);
             goto error;
         }
-        free(call);
 
         /* FIXME: cope with NULL key or value below */
 
-        char *key;
-        len = read_data(m->in, (unsigned char**)&key);
-        if (len < 0)
-            goto error;
-
-        char *value;
-        len = read_data(m->in, (unsigned char**)&value);
-        if (len < 0) {
-            free(key);
-            goto error;
-        }
-        if (dict_contains(d, key)) {
-            free(key);
-            free(value);
+        if (dict_contains(d, message->key)) {
+            free(message->key);
+            free(message->value);
         } else {
-            if (dict_add(d, key, value) != 0) {
-                free(key);
-                free(value);
+            if (dict_add(d, message->key, message->value) != 0) {
+                free(message->key);
+                free(message->value);
+                free(message);
                 goto error;
             }
         }
+        free(message);
     }
 
     assert(!"unreachable");
