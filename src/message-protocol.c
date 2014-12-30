@@ -19,6 +19,25 @@ static int read_getenv(int fd, message_t *message) {
     return 0;
 }
 
+/* Read a MSG_EXEC_ERROR message. */
+static int read_exec_error(int fd, message_t *message) {
+    assert(message != NULL);
+
+    message->tag = MSG_EXEC_ERROR;
+
+    unsigned char *data;
+    ssize_t len = read_data(fd, &data);
+    if (len != sizeof(message->errnumber)) {
+        if (len > 0)
+            free(data);
+        return -1;
+    }
+    memcpy(&message->errnumber, data, sizeof(message->errnumber));
+    free(data);
+
+    return 0;
+}
+
 message_t *read_message(int fd) {
     /* Read the message tag. */
     unsigned char *data;
@@ -34,6 +53,13 @@ message_t *read_message(int fd) {
     switch (*tag) {
         case MSG_GETENV:
             if (read_getenv(fd, message) != 0) {
+                free(message);
+                return NULL;
+            }
+            break;
+
+        case MSG_EXEC_ERROR:
+            if (read_exec_error(fd, message) != 0) {
                 free(message);
                 return NULL;
             }
@@ -63,6 +89,17 @@ static int write_getenv(int fd, message_t *message) {
     return 0;
 }
 
+/* Write a MSG_EXEC_ERROR message. */
+static int write_exec_error(int fd, message_t *message) {
+    assert(message->tag == MSG_EXEC_ERROR);
+
+    if (write_data(fd, (unsigned char*)&message->errnumber,
+            sizeof(message->errnumber)) != 0)
+        return -1;
+
+    return 0;
+}
+
 int write_message(int fd, message_t *message) {
     if (write_data(fd, (unsigned char*)&message->tag, sizeof(message->tag)) < 0)
         return -1;
@@ -70,6 +107,9 @@ int write_message(int fd, message_t *message) {
     switch (message->tag) {
         case MSG_GETENV:
             return write_getenv(fd, message);
+
+        case MSG_EXEC_ERROR:
+            return write_exec_error(fd, message);
 
         default:
             return -1;
