@@ -23,6 +23,46 @@ static bool ready(int fd) {
     return false;
 }
 
+/* Drain an input file descriptor and replicate its contents into two output
+ * descriptors.
+ */
+ssize_t tee(int in, int out1, int out2) {
+    assert(in >= 0);
+    assert(out1 >= 0);
+    assert(out2 >= 0);
+
+    /* This function is only expected to be called on descriptors that are
+     * ready to be read from.
+     */
+    assert(ready(in));
+
+    ssize_t total = 0;
+    ssize_t len;
+    char buffer[1024];
+    do {
+        len = read(in, buffer, sizeof(buffer));
+        assert(len <= sizeof(buffer));
+
+        if (len == -1)
+            break;
+
+        /* We ignore the number of bytes written because there's not much we can
+         * do about it.
+         */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+        (void)write(out1, buffer, len);
+        (void)write(out2, buffer, len);
+#pragma GCC diagnostic pop
+
+        total += len;
+        
+        /* Loop to make sure we completely drain the input. */
+    } while (len == sizeof(buffer) && ready(in));
+
+    return total;
+}
+
 /* Monitor (and log) all the relevant file descriptor operations performed by a
  * tracee. This currently covers:
  *  - stdout logging (ala tee)
@@ -32,8 +72,6 @@ static bool ready(int fd) {
  * command to clean up and exit.
  */
 static void hook(target_t *target) {
-    char buffer[1024];
-
     while (true) {
         /* Setup a mask of all the file descriptors we need to monitor. */
         fd_set fs;
@@ -63,47 +101,14 @@ static void hook(target_t *target) {
         if (FD_ISSET(target->stdout_pipe[0], &fs)) {
             assert(ready(target->stdout_pipe[0]) &&
                 "stdout not ready after claiming to be; someone else reading it?");
-            do {
-                ssize_t len = read(target->stdout_pipe[0], buffer, sizeof(buffer));
-                if (len == -1) {
-                    /* Failed to read from an FD that claimed to be ready... */
-                    return;
-                }
-                assert(len <= sizeof(buffer));
-                assert(target->outfd >= 0 &&
-                    "trace initialisation did not setup temporary stdout file");
-                /* We ignore the number of bytes written because there's not
-                 * much we can do about it.
-                 */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
-                (void)write(target->outfd, buffer, len);
-                (void)write(STDOUT_FILENO, buffer, len);
-#pragma GCC diagnostic pop
-                /* Loop to make sure we completely drain stdout. */
-            } while (ready(target->stdout_pipe[0]));
+            (void)tee(target->stdout_pipe[0], target->outfd, STDOUT_FILENO);
         }
 
         /* As above for stderr. */
         if (FD_ISSET(target->stderr_pipe[0], &fs)) {
             assert(ready(target->stderr_pipe[0]) &&
                 "stderr not ready after claiming to be; someone else reading it?");
-            do {
-                ssize_t len = read(target->stderr_pipe[0], buffer, sizeof(buffer));
-                if (len == -1) {
-                    /* Failed to read from an FD that claimed to be ready... */
-                    return;
-                }
-                assert(len <= sizeof(buffer));
-                assert(target->errfd >= 0 &&
-                    "trace initialisation did not setup temporary stderr file");
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
-                (void)write(target->errfd, buffer, len);
-                (void)write(STDERR_FILENO, buffer, len);
-#pragma GCC diagnostic pop
-                /* Loop to make sure we completely drain stderr. */
-            } while (ready(target->stderr_pipe[0]));
+            (void)tee(target->stderr_pipe[0], target->errfd, STDERR_FILENO);
         }
 
         /* Handle any messages we received from the tracee. */
@@ -175,6 +180,5 @@ int hook_close(target_t *target) {
     write(target->sig_pipe[1], &c, 1);
 #pragma GCC diagnostic pop
     close(target->sig_pipe[1]);
-    int r = pthread_join(target->hook, NULL);
-    return r;
+    return pthread_join(target->hook, NULL);
 }
