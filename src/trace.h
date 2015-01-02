@@ -1,11 +1,41 @@
 #ifndef _XCACHE_TRACE_H_
 #define _XCACHE_TRACE_H_
 
+#include "collection/list.h"
+#include <pthread.h>
 #include <stdbool.h>
 #include <unistd.h>
 
-typedef struct tracee tracee_t;
-typedef struct proc proc_t;
+typedef struct {
+    pid_t pid;
+    enum {
+        IN_USER,
+        SYSENTER,
+        IN_KERNEL,
+        SYSEXIT,
+        TERMINATED,
+        FINALISED,
+    } state;
+} proc_t;
+
+typedef struct {
+    unsigned char exit_status;
+    proc_t root;
+
+    list_t children;
+
+    char *outfile, *errfile;
+    int outfd, errfd;
+
+    int stdout_pipe[2];
+    int stderr_pipe[2];
+    int msg_pipe[2];
+    int sig_pipe[2];
+
+    pthread_t hook;
+    dict_t env;
+
+} target_t;
 
 typedef struct {
     proc_t *proc;
@@ -14,19 +44,19 @@ typedef struct {
     long result;
 } syscall_t;
 
-tracee_t *trace(const char **argv, const char *tracer);
+int trace(target_t *t, const char **argv, const char *tracer);
 
-syscall_t *next_syscall(tracee_t *tracee);
+syscall_t *next_syscall(target_t *tracee);
 int acknowledge_syscall(syscall_t *syscall);
 
-int delete(tracee_t *tracee);
+int delete(target_t *tracee);
 
-int complete(tracee_t *tracee);
+int complete(target_t *tracee);
 
 char *syscall_getstring(syscall_t *syscall, int arg);
 long syscall_getarg(syscall_t *syscall, int arg);
 
-const char *get_stdout(tracee_t *tracee);
-const char *get_stderr(tracee_t *tracee);
+const char *get_stdout(target_t *tracee);
+const char *get_stderr(target_t *tracee);
 
 #endif

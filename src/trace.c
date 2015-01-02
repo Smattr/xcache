@@ -20,35 +20,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "tee.h"
 #include "trace.h"
 #include <unistd.h>
 #include "util.h"
-
-struct proc {
-    pid_t pid;
-    enum {
-        IN_USER,
-        SYSENTER,
-        IN_KERNEL,
-        SYSEXIT,
-        TERMINATED,
-        FINALISED,
-    } state;
-};
-
-struct tracee {
-    unsigned char exit_status;
-    proc_t root;
-
-    list_t children;
-
-    tee_t *out, *err;
-    char *outfile, *errfile;
-
-    hook_t *hook;
-    dict_t *env;
-};
 
 static int proc_cmp(void *proc, void *pid) {
     proc_t *p = (proc_t*)proc;
@@ -72,53 +46,57 @@ static char *locate_hooklib(const char *exe) {
     return aprintf("%s/libhookgetenv.so", root);
 }
 
-tracee_t *trace(const char **argv, const char *tracer) {
-    tracee_t *t = calloc(1, sizeof(*t));
-    if (t == NULL)
-        return NULL;
-
+int trace(target_t *t, const char **argv, const char *tracer) {
     if (list(&t->children, proc_cmp) != 0)
-        goto fail;
+        goto fail1;
 
-    int stdout2 = STDOUT_FILENO;
-    t->out = tee_create(&stdout2);
-    if (t->out == NULL)
-        goto fail;
+    if (pipe(t->stdout_pipe) != 0)
+        goto fail2;
 
-    int stderr2 = STDERR_FILENO;
-    t->err = tee_create(&stderr2);
-    if (t->err == NULL)
-        goto fail;
+    t->outfile = strdup("/tmp/tmp.XXXXXX");
+    if (t->outfile == NULL)
+        goto fail3;
+    t->outfd = mkstemp(t->outfile);
+    if (t->outfd == -1)
+        goto fail4;
 
-    t->env = malloc(sizeof(*t->env));
-    if (t->env == NULL)
-        goto fail;
-    if (dict(t->env) != 0) {
-        free(t->env);
-        goto fail;
-    }
+    if (pipe(t->stderr_pipe) != 0)
+        goto fail5;
 
-    /* Create a communication channel that will be used by the tracee to notify
-     * us (the tracer) of relevant events.
-     */
-    int hook_pipe[2];
-    if (pipe(hook_pipe) != 0)
-        goto fail;
-    t->hook = hook_create(hook_pipe[0], t->env);
-    if (t->hook == NULL)
-        goto fail;
+    t->errfile = strdup("/tmp/tmp.XXXXXX");
+    if (t->errfile == NULL)
+        goto fail6;
+    t->errfd = mkstemp(t->errfile);
+    if (t->errfd == -1)
+        goto fail7;
+
+    if (pipe(t->msg_pipe) != 0)
+        goto fail8;
+
+    if (pipe(t->sig_pipe) != 0)
+        goto fail9;
+
+    if (dict(&t->env) != 0)
+        goto failA;
+
+    if (hook_create(t) != 0)
+        goto failB;
 
     t->root.pid = fork();
     switch (t->root.pid) {
 
         case 0: {
             /* We are the child. */
-            if (dup2(stdout2, STDOUT_FILENO) == -1 ||
-                    dup2(stderr2, STDERR_FILENO) == -1)
+            if (dup2(t->stdout_pipe[1], STDOUT_FILENO) == -1 ||
+                    dup2(t->stderr_pipe[1], STDERR_FILENO) == -1)
                 exit(-1);
 
-            /* We only need the write end of the communication channel. */
-            close(hook_pipe[0]);
+            /* Close the file descriptors we don't need. */
+            close(t->stdout_pipe[0]);
+            close(t->stderr_pipe[0]);
+            close(t->msg_pipe[0]);
+            close(t->sig_pipe[0]);
+            close(t->sig_pipe[1]);
 
             /* Extend our environment to LD_PRELOAD a helper library into the
              * target. The idea behind this is to setup a channel between xcache
@@ -141,7 +119,7 @@ tracee_t *trace(const char **argv, const char *tracer) {
                     /* Make sure libhookgetenv can find the pipe back to the
                      * tracer.
                      */
-                    char *xcache_pipe = aprintf("%d", hook_pipe[1]);
+                    char *xcache_pipe = aprintf("%d", t->msg_pipe[1]);
                     if (xcache_pipe != NULL) {
                         (void)setenv(XCACHE_PIPE, xcache_pipe, 1);
                         free(xcache_pipe);
@@ -159,13 +137,13 @@ tracee_t *trace(const char **argv, const char *tracer) {
                 .tag = MSG_EXEC_ERROR,
                 .errnumber = errno,
             };
-            (void)write_message(hook_pipe[1], &failure);
+            (void)write_message(t->msg_pipe[1], &failure);
 
             exit(-1);
         } case -1: {
             /* Fork failed. */
             DEBUG("failed initial fork (%d)\n", errno);
-            goto fail;
+            goto failC;
         }
     }
 
@@ -175,42 +153,39 @@ tracee_t *trace(const char **argv, const char *tracer) {
     if (WIFEXITED(status)) {
         /* Either ptrace or exec failed in the child. */
         DEBUG("tracee exited immediately\n");
-        goto fail;
+        goto failC;
     }
 
     long r = pt_tracechildren(t->root.pid);
     if (r != 0) {
         DEBUG("failed to set tracing to catch forks (%d)\n", errno);
-        goto fail;
+        goto failC;
     }
 
     r = pt_runtosyscall(t->root.pid);
     if (r != 0) {
         DEBUG("failed first resume of tracee (%d)\n", errno);
-        goto fail;
+        goto failC;
     }
     t->root.state = IN_USER;
-    return t;
+    return 0;
 
-fail:
-    if (t->env != NULL) {
-        dict_destroy(t->env);
-        free(t->env);
-    }
-    if (t->err != NULL) {
-        char *p = tee_close(t->err);
-        if (p != NULL)
-            unlink(p);
-        free(p);
-    }
-    if (t->out != NULL) {
-        char *p = tee_close(t->out);
-        if (p != NULL)
-            unlink(p);
-        free(p);
-    }
-    free(t);
-    return NULL;
+failC: (void)hook_close(t);
+failB: dict_destroy(&t->env);
+failA: close(t->sig_pipe[0]);
+       close(t->sig_pipe[1]);
+fail9: close(t->msg_pipe[0]);
+       close(t->msg_pipe[1]);
+fail8: close(t->errfd);
+fail7: free(t->errfile);
+fail6: close(t->stderr_pipe[0]);
+       close(t->stderr_pipe[1]);
+fail5: close(t->outfd);
+fail4: free(t->outfile);
+fail3: close(t->stdout_pipe[0]);
+       close(t->stdout_pipe[1]);
+fail2: list_destroy(&t->children);
+fail1: return -1;
 }
 
 #define OFFSET(reg) \
@@ -278,7 +253,7 @@ long syscall_getarg(syscall_t *syscall, int arg) {
     return pt_peekreg(syscall->proc->pid, offset);
 }
 
-syscall_t *next_syscall(tracee_t *tracee) {
+syscall_t *next_syscall(target_t *tracee) {
     assert(tracee != NULL);
     if (tracee->root.state != IN_USER && tracee->root.state != IN_KERNEL) {
         DEBUG("attempt to retrieve a syscall from a stopped process\n");
@@ -421,7 +396,7 @@ void unblock(proc_t *proc) {
     }
 }
 
-int complete(tracee_t *tracee) {
+int complete(target_t *tracee) {
     if (tracee->root.state != TERMINATED) {
         void dealloc(void *data, void *_ __attribute__((unused))) {
             proc_t *p = data;
@@ -437,34 +412,40 @@ int complete(tracee_t *tracee) {
         tracee->root.state = TERMINATED;
     }
     assert(tracee->outfile == NULL);
-    tracee->outfile = tee_close(tracee->out);
-    assert(tracee->errfile == NULL);
-    tracee->errfile = tee_close(tracee->err);
-    hook_close(tracee->hook);
+    (void)hook_close(tracee);
+    /* Now that we've closed the hook thread and the tracee has exited, we no
+     * longer need any of the monitoring pipes.
+     */
+    close(tracee->outfd);
+    close(tracee->errfd);
+    close(tracee->stdout_pipe[0]);
+    close(tracee->stdout_pipe[1]);
+    close(tracee->stderr_pipe[0]);
+    close(tracee->stderr_pipe[1]);
+    close(tracee->msg_pipe[0]);
+    close(tracee->msg_pipe[1]);
+    close(tracee->sig_pipe[0]);
+    close(tracee->sig_pipe[1]);
     tracee->root.state = FINALISED;
     return tracee->exit_status;
 }
 
-const char *get_stdout(tracee_t *tracee) {
+const char *get_stdout(target_t *tracee) {
     assert(tracee->root.state == FINALISED);
     return tracee->outfile;
 }
 
-const char *get_stderr(tracee_t *tracee) {
+const char *get_stderr(target_t *tracee) {
     assert(tracee->root.state == FINALISED);
     return tracee->errfile;
 }
 
-int delete(tracee_t *tracee) {
+int delete(target_t *tracee) {
     if (tracee->errfile != NULL)
         free(tracee->errfile);
     if (tracee->outfile != NULL)
         free(tracee->outfile);
-    if (tracee->env != NULL) {
-        dict_destroy(tracee->env);
-        free(tracee->env);
-    }
+    dict_destroy(&tracee->env);
     list_destroy(&tracee->children);
-    free(tracee);
     return 0;
 }

@@ -221,8 +221,8 @@ int main(int argc, const char **argv) {
         return -1;
     }
 
-    tracee_t *target = trace(&argv[index], hook_getenv ? argv[0] : NULL);
-    if (target == NULL) {
+    target_t target;
+    if (trace(&target, &argv[index], hook_getenv ? argv[0] : NULL) != 0) {
         ERROR("Failed to start and trace target %s\n", argv[index]);
         return -1;
     }
@@ -230,7 +230,7 @@ int main(int argc, const char **argv) {
     bool success = false;
 
     syscall_t *s;
-    while ((s = next_syscall(target)) != NULL) {
+    while ((s = next_syscall(&target)) != NULL) {
 
         /* Any syscall we receive may be the kernel entry or exit. Handle entry
          * separately first because there are relatively few syscalls where
@@ -414,10 +414,10 @@ int main(int argc, const char **argv) {
     success = true;
 
 bailout:;
-    int ret = complete(target);
+    int ret = complete(&target);
 
-    const char *outfile = get_stdout(target),
-               *errfile = get_stderr(target);
+    const char *outfile = get_stdout(&target),
+               *errfile = get_stderr(&target);
 
     if (success && ret == 0) {
         DEBUG("Adding cache entry\n");
@@ -432,6 +432,6 @@ bailout:;
         unlink(errfile);
 
     cache_close(cache);
-    delete(target);
+    delete(&target);
     return ret;
 }

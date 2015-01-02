@@ -2,6 +2,7 @@
 #include "message-protocol.h"
 #include "collection/dict.h"
 #include "hook.h"
+#include <poll.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -9,106 +10,171 @@
 #include <sys/select.h>
 #include <unistd.h>
 
-typedef struct {
-    int sig;
-    int in;
-    dict_t *env;
-} hook_arg_t;
+/* Non-blocking check of whether a file descriptor is ready to read from. */
+static bool ready(int fd) {
+    struct pollfd fds[] = {
+        {
+            .fd = fd,
+            .events = POLLIN,
+        },
+    };
+    if (poll(fds, 1, 0) > 1)
+        return true;
+    return false;
+}
 
-static void hook(hook_arg_t *args) {
+/* Monitor (and log) all the relevant file descriptor operations performed by a
+ * tracee. This currently covers:
+ *  - stdout logging (ala tee)
+ *  - stderr logging similarly
+ *  - processing messages from the message pipe (predominantly getenv calls)
+ * This function also listens for bytes on the signal pipe and takes this as a
+ * command to clean up and exit.
+ */
+static void hook(target_t *target) {
+    char buffer[1024];
+
     while (true) {
+        /* Setup a mask of all the file descriptors we need to monitor. */
         fd_set fs;
         FD_ZERO(&fs);
-        FD_SET(args->sig, &fs);
-        FD_SET(args->in, &fs);
-        const int nfds = (args->in > args->sig ? args->in : args->sig) + 1;
+        FD_SET(target->stdout_pipe[0], &fs);
+        int nfds = target->stdout_pipe[0];
+        FD_SET(target->stderr_pipe[0], &fs);
+        if (target->stderr_pipe[0] > nfds)
+            nfds = target->stderr_pipe[0];
+        FD_SET(target->msg_pipe[0], &fs);
+        if (target->msg_pipe[0] > nfds)
+            nfds = target->msg_pipe[0];
+        FD_SET(target->sig_pipe[0], &fs);
+        if (target->sig_pipe[0] > nfds)
+            nfds = target->sig_pipe[0];
+        nfds++;
 
         int selected = select(nfds, &fs, NULL, NULL, NULL);
         if (selected == -1) {
-            free(args);
+            /* Select failed. */
             return;
         }
 
-        if (FD_ISSET(args->sig, &fs)) {
-            free(args);
-            return;
+        /* Log stdout data to our temporary file and replicate it on the actual
+         * stdout.
+         */
+        if (FD_ISSET(target->stdout_pipe[0], &fs)) {
+            assert(ready(target->stdout_pipe[0]) &&
+                "stdout not ready after claiming to be; someone else reading it?");
+            do {
+                ssize_t len = read(target->stdout_pipe[0], buffer, sizeof(buffer));
+                if (len == -1) {
+                    /* Failed to read from an FD that claimed to be ready... */
+                    return;
+                }
+                assert(len <= sizeof(buffer));
+                assert(target->outfd >= 0 &&
+                    "trace initialisation did not setup temporary stdout file");
+                /* We ignore the number of bytes written because there's not
+                 * much we can do about it.
+                 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+                (void)write(target->outfd, buffer, len);
+                (void)write(STDOUT_FILENO, buffer, len);
+#pragma GCC diagnostic pop
+                /* Loop to make sure we completely drain stdout. */
+            } while (ready(target->stdout_pipe[0]));
         }
 
-        assert(FD_ISSET(args->in, &fs));
-
-        message_t *message = read_message(args->in);
-        if (message == NULL) {
-            free(args);
-            return;
+        /* As above for stderr. */
+        if (FD_ISSET(target->stderr_pipe[0], &fs)) {
+            assert(ready(target->stderr_pipe[0]) &&
+                "stderr not ready after claiming to be; someone else reading it?");
+            do {
+                ssize_t len = read(target->stderr_pipe[0], buffer, sizeof(buffer));
+                if (len == -1) {
+                    /* Failed to read from an FD that claimed to be ready... */
+                    return;
+                }
+                assert(len <= sizeof(buffer));
+                assert(target->errfd >= 0 &&
+                    "trace initialisation did not setup temporary stderr file");
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+                (void)write(target->errfd, buffer, len);
+                (void)write(STDERR_FILENO, buffer, len);
+#pragma GCC diagnostic pop
+                /* Loop to make sure we completely drain stderr. */
+            } while (ready(target->stderr_pipe[0]));
         }
-        if (message->tag != MSG_GETENV) {
-            /* Received a call we don't handle. */
-            free(message);
-            free(args);
-            return;
-        }
 
-        /* FIXME: cope with NULL key or value below */
+        /* Handle any messages we received from the tracee. */
+        if (FD_ISSET(target->msg_pipe[0], &fs)) {
+            assert(ready(target->msg_pipe[0]) &&
+                "message pipe not ready after claiming to be; someone else reading it?");
+            do {
+                message_t *message = read_message(target->msg_pipe[0]);
+                if (message == NULL) {
+                    /* Failed to read a message. OOM? */
+                    return;
+                }
+                if (message->tag != MSG_GETENV) {
+                    /* Received a call we don't handle. */
+                    free(message);
+                    return;
+                }
 
-        if (dict_contains(args->env, message->key)) {
-            free(message->key);
-            free(message->value);
-        } else {
-            if (dict_add(args->env, message->key, message->value) != 0) {
-                free(message->key);
-                free(message->value);
+                /* FIXME: cope with NULL key or value below */
+
+                if (dict_contains(&target->env, message->key)) {
+                    free(message->key);
+                    free(message->value);
+                } else {
+                    if (dict_add(&target->env, message->key, message->value) != 0) {
+                        free(message->key);
+                        free(message->value);
+                        free(message);
+                        return;
+                    }
+                }
                 free(message);
-                free(args);
-                return;
-            }
+            } while (ready(target->msg_pipe[0]));
         }
-        free(message);
+
+        /* Check whether the main thread has notified us to exit. */
+        if (FD_ISSET(target->sig_pipe[0], &fs)) {
+            /* We don't actually care about the byte that's in the signal pipe,
+             * but weird kernel buffer settings could mean the main thread is
+             * actually blocked on its write to the pipe.
+             */
+            char ignored;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+            (void)read(target->sig_pipe[0], &ignored, 1);
+#pragma GCC diagnostic pop
+
+            /* XXX: I don't *think* an fd flush is required here, but should
+             * double check this.
+             */
+
+            /* Clean exit. */
+            return;
+        }
+
     }
 
     assert(!"unreachable");
 }
 
-hook_t *hook_create(int input, dict_t *env) {
-    hook_t *h = malloc(sizeof(*h));
-    if (h == NULL)
-        return NULL;
-
-    hook_arg_t *args = malloc(sizeof(*args));
-    if (args == NULL) {
-        free(h);
-        return NULL;
-    }
-    args->in = input;
-    args->env = env;
-
-    int p[2];
-    if (pipe(p) != 0) {
-        free(args);
-        free(h);
-        return NULL;
-    }
-    args->sig = p[0];
-    h->sigfd = p[1];
-
-    if (pthread_create(&h->thread, NULL, (void*(*)(void*))hook, args) != 0) {
-        close(p[0]);
-        close(p[1]);
-        free(args);
-        free(h);
-        return NULL;
-    }
-
-    return h;
+int hook_create(target_t *target) {
+    return pthread_create(&target->hook, NULL, (void*(*)(void*))hook, target);
 }
 
-int hook_close(hook_t *h) {
+int hook_close(target_t *target) {
     char c = (char)0; /* <-- irrelevant */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-result"
-    write(h->sigfd, &c, 1);
+    write(target->sig_pipe[1], &c, 1);
 #pragma GCC diagnostic pop
-    close(h->sigfd);
-    int r = pthread_join(h->thread, NULL);
-    free(h);
+    close(target->sig_pipe[1]);
+    int r = pthread_join(target->hook, NULL);
     return r;
 }
