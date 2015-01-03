@@ -18,6 +18,6 @@ int main(int argc, char **argv) {
 EOT
 
 # We should fail to cache it the first time around.
-xcache --cache-dir ${CACHE} --no-getenv -v -v -v gcc main.c 2>&1 | grep "Failed to locate cache entry"
+xcache --cache-dir ${CACHE} -v -v -v gcc main.c 2>&1 | grep "Failed to locate cache entry"
 
-xcache --cache-dir ${CACHE} --no-getenv -v -v -v gcc main.c 2>&1 | grep "Found matching cache entry"
+xcache --cache-dir ${CACHE} -v -v -v gcc main.c 2>&1 | grep "Found matching cache entry"
