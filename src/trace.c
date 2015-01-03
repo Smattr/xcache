@@ -43,7 +43,7 @@ static char *locate_hooklib(const char *exe) {
     char *root = dirname(resolved);
     free(resolved);
 
-    return aprintf("%s/libhookgetenv.so", root);
+    return aprintf("%s/libhook.so", root);
 }
 
 int trace(target_t *t, const char **argv, const char *tracer) {
@@ -116,7 +116,7 @@ int trace(target_t *t, const char **argv, const char *tracer) {
                     }
                     (void)setenv("LD_PRELOAD", ld_preload, 1);
 
-                    /* Make sure libhookgetenv can find the pipe back to the
+                    /* Make sure libhook can find the pipe back to the
                      * tracer.
                      */
                     char *xcache_pipe = aprintf("%d", t->msg_pipe[1]);

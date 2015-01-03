@@ -5,8 +5,7 @@
 VERSION_MAJOR = 0
 VERSION_MINOR = 1
 
-OUTPUTS = xcache xcache-static libxcache.a libxcache.so libhookgetenv.so \
-  xcache-tests
+OUTPUTS = xcache xcache-static libxcache.a libxcache.so libhook.so xcache-tests
 
 ifneq (${V},)
   Q :=
@@ -26,7 +25,7 @@ SOURCES_LIB = cache.c collection/list.c comm-protocol.c db.c depset.c \
     util/du.c util/filehash.c util/fileiter.c util/get.c util/mkdirp.c \
     util/reduce.c message-protocol.c
 SOURCES_EXE = main.c translate-syscall.c
-SOURCES_LIBGETENV = comm-protocol.c getenv.c message-protocol.c
+SOURCES_LIBHOOK = comm-protocol.c getenv.c message-protocol.c
 SOURCES_TEST = test.c
 
 PWD := $(shell pwd)
@@ -73,7 +72,7 @@ libxcache.so: $(foreach v,${SOURCES_LIB},$(patsubst %.c,%.o,${v}))
 	@echo " [LD] $(notdir $@)"
 	${Q}${CC} -shared -o $@ $^ ${LDFLAGS}
 
-libhookgetenv.so: $(foreach v,${SOURCES_LIBGETENV},$(patsubst %.c,%.o,${v}))
+libhook.so: $(foreach v,${SOURCES_LIBHOOK},$(patsubst %.c,%.o,${v}))
 	@echo " [LD] $(notdir $@)"
 	${Q}${CC} -shared -o $@ $^
 
@@ -92,7 +91,7 @@ xcache-tests: $(foreach v,${SOURCES_TEST} ${SOURCES_LIB},$(patsubst %.c,%-testin
 ifneq (${MAKECMDGOALS},clean)
 -include $(SOURCES_LIB:%.c=%.d)
 -include $(SOURCES_EXE:%.c=%.d)
--include $(SOURCES_LIBGETENV:%.c=%.d)
+-include $(SOURCES_LIBHOOK:%.c=%.d)
 -include $(SOURCES_TEST:%.c=%.d)
 endif
 

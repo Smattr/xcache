@@ -67,7 +67,7 @@ typedef struct {
      */
     int stdout_pipe[2]; /* Written by the tracee, read by the hook. */
     int stderr_pipe[2]; /* Written by the tracee, read by the hook. */
-    int msg_pipe[2];    /* Written by libhookgetenv, read by the hook. */
+    int msg_pipe[2];    /* Written by libhook, read by the hook. */
     int sig_pipe[2];    /* Written by the xcache main thread, read by the hook. */
 
     /* Subordinate thread to read from various pipes written by the tracee. We
@@ -78,7 +78,7 @@ typedef struct {
     pthread_t hook;
 
     /* Environment variables read by the tracee. This is populated by the hook,
-     * based on messages it receives through 'msg_pipe' from libhookgetenv
+     * based on messages it receives through 'msg_pipe' from libhook
      * injected into the tracee.
      */
     dict_t env;
@@ -115,9 +115,9 @@ typedef struct {
  *  argv - The process to trace. This needs to conform to the usual standard of
  *    being a NULL-terminated array of arguments.
  *  tracer - The path to the xcache binary itself. This should be used by the
- *    called to indicate whether they want libhookgetenv injected into the
+ *    called to indicate whether they want libhook injected into the
  *    target. If you pass a NULL pointer it will not be injected. The reason
- *    for not injecting libhookgetenv is typically that the target does not
+ *    for not injecting libhook is typically that the target does not
  *    link against libdl, which makes library hooking a bit difficult.
  * Returns 0 on success.
  */
