@@ -26,7 +26,7 @@ SOURCES_LIB = cache.c collection/list.c comm-protocol.c db.c depset.c \
     util/du.c util/filehash.c util/fileiter.c util/get.c util/mkdirp.c \
     util/reduce.c message-protocol.c
 SOURCES_EXE = main.c translate-syscall.c
-SOURCES_LIBGETENV = comm-protocol.c hook-getenv.c message-protocol.c
+SOURCES_LIBGETENV = comm-protocol.c getenv.c message-protocol.c
 SOURCES_TEST = test.c
 
 PWD := $(shell pwd)
