@@ -12,40 +12,65 @@
 
 #define _GNU_SOURCE
 #include <assert.h>
-#include "message-protocol.h"
-#include <dlfcn.h>
 #include <fcntl.h>
+#include "message-protocol.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/file.h>
+#include <unistd.h>
 
-static char *(*real_getenv)(const char *name);
-static int out = -1;
+static char *internal_getenv(const char *name) {
+    if (name == NULL) {
+        /* I don't think it is legal to pass NULL to getenv, but let's allow it
+         * anyway.
+         */
+        return NULL;
+    }
 
-static void init(void) {
-    assert(real_getenv == NULL);
+    size_t len = strlen(name);
 
-    /* Locate the libc getenv. */
-    real_getenv = dlsym(RTLD_NEXT, "getenv");
-    assert(real_getenv != NULL);
+    for (char **p = environ; *p != NULL; p++) {
+        if (strncmp(name, *p, len) == 0 && strlen(*p) >= len + 1
+                && (*p)[len] == '=')
+            return *p + len + 1;
+    }
 
-    char *xcache_pipe = real_getenv(XCACHE_PIPE);
-    if (xcache_pipe == NULL)
-        /* No return pipe available. */
-        return;
+    /* Didn't find the given variable. */
+    return NULL;
+}
 
-    char *end;
-    int fd = strtol(xcache_pipe, &end, 10);
-    if (*end != '\0')
-        /* The string wasn't entirely an integer. */
-        return;
+static int out_pipe(void) {
+    static bool initialised = false;
+    static int out_fd = -1;
 
-    if (fcntl(fd, F_GETFD) == -1)
-        /* The return pipe is not valid. */
-        return;
+    if (!initialised) {
+        initialised = true;
 
-    /* We received a valid return pipe. */
-    out = fd;
+        char *xcache_pipe = internal_getenv(XCACHE_PIPE);
+        if (xcache_pipe == NULL) {
+            /* No return pipe available. */
+            return -1;
+        }
+
+        char *end;
+        int fd = strtol(xcache_pipe, &end, 10);
+        if (*end != '\0') {
+            /* The string wasn't entirely an integer. */
+            return -1;
+        }
+
+        if (fcntl(fd, F_GETFD) == -1) {
+            /* The return pipe is not valid. */
+            return -1;
+        }
+
+        /* We received a valid return pipe. */
+        out_fd = fd;
+    }
+
+    return out_fd;
 }
 
 /* Hooked version of getenv. We lookup environment variables, as expected, but
@@ -53,11 +78,19 @@ static void init(void) {
  * expecting to be tracing us.
  */
 char *getenv(const char *name) {
-    if (real_getenv == NULL)
-        init();
-    assert(real_getenv != NULL);
-    char *v = real_getenv(name);
-    if (out != -1 && flock(out, LOCK_EX) == 0) {
+    char *v = internal_getenv(name);
+
+    if (name == NULL)
+        return v;
+
+    int out_fd = out_pipe();
+
+    /* Lock the message pipe back to xcache in case our host is multithreaded
+     * and we end up with two threads in this function concurrently. This
+     * actually should not happen because it is undefined to call getenv in a
+     * multithreaded program.
+     */
+    if (out_fd != -1 && flock(out_fd, LOCK_EX) == 0) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         /* For some reason, GCC doesn't seem to notice that we *are*
@@ -69,8 +102,9 @@ char *getenv(const char *name) {
             .value = v,
         };
 #pragma GCC diagnostic pop
-        write_message(out, &message);
-        flock(out, LOCK_UN);
+        write_message(out_fd, &message);
+        flock(out_fd, LOCK_UN);
     }
+
     return v;
 }
