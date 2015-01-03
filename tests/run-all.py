@@ -4,13 +4,24 @@
 
 import copy, os, subprocess, sys
 
+def run(cmd, **kwargs):
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        **kwargs)
+    stdout, stderr = p.communicate()
+    if p.returncode != 0:
+        print stdout
+        print >>sys.stderr, stderr
+    return p.returncode
+
 def main(argv):
     me = os.path.abspath(__file__)
 
-    print >>sys.stderr, 'Building all targets...'
+    print >>sys.stderr, 'Building all targets...',
     src = os.path.abspath(os.path.join(os.path.dirname(me), '../src'))
-    ret = subprocess.call(['make'], cwd=src)
-    if ret != 0:
+    ret = run(['make'], cwd=src)
+    if ret == 0:
+        print >>sys.stderr, 'Passed'
+    else:
         print >>sys.stderr, 'Failed'
         return ret
 
@@ -21,9 +32,11 @@ def main(argv):
     for t in os.listdir(os.path.dirname(me)):
         test = os.path.abspath(os.path.join(os.path.dirname(me), t))
         if os.path.isfile(test) and os.access(test, os.X_OK) and test != me:
-            print >>sys.stderr, 'Running %s...' % test
-            ret = subprocess.call([test], env=env)
-            if ret != 0:
+            print >>sys.stderr, 'Running %s...' % test,
+            ret = run([test], env=env)
+            if ret == 0:
+                print >>sys.stderr, 'Passed'
+            else:
                 print >>sys.stderr, 'Failed'
                 return ret
 
