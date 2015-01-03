@@ -361,7 +361,7 @@ int main(int argc, const char **argv) {
                 break;
 
             case SYS_stat:
-                if (add(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                if (add(deps, s, 1, XC_AMBIGUOUS, exclude_regexs) != 0)
                     goto bailout;
                 break;
 
