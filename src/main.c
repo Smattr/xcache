@@ -22,6 +22,8 @@ static const char *cache_dir = NULL;
 
 static bool hook_getenv = true;
 
+static bool directories = false;
+
 /* Paths to never consider as inputs. This is to avoid tracking things that are
  * not conceptually files, but rather Linux APIs. Entries to this array should
  * be regular expressions.
@@ -39,8 +41,12 @@ static void usage(const char *prog) {
         "Options:\n"
         "  --cache-dir <dir>\n"
         "  -c <dir>           Locate cache in <dir>.\n"
+        "  --directories\n"
+        "  -d                 Track directories as well as files.\n"
         "  --dry-run\n"
         "  -n                 Simulate only; do not perform any actions.\n"
+        "  --no-directories\n"
+        "  -D                 Do not track directories; only files.\n"
         "  --no-getenv\n"
         "  -e                 Do not hook getenv.\n"
         "  --help\n"
@@ -77,9 +83,15 @@ static int parse_arguments(int argc, const char **argv) {
              !strcmp(argv[index], "-c")) &&
             index < argc - 1) {
             cache_dir = argv[++index];
+        } else if (!strcmp(argv[index], "--directories") ||
+                   !strcmp(argv[index], "-d")) {
+            directories = true;
         } else if (!strcmp(argv[index], "--dry-run") ||
                    !strcmp(argv[index], "-n")) {
             dryrun = true;
+        } else if (!strcmp(argv[index], "--no-directories") ||
+                   !strcmp(argv[index], "-D")) {
+            directories = false;
         } else if (!strcmp(argv[index], "--no-getenv") ||
                    !strcmp(argv[index], "-e")) {
             hook_getenv = false;
@@ -138,6 +150,17 @@ static int add(depset_t *d, syscall_t *syscall, int argno, filetype_t type,
     if (absolute == NULL) {
         DEBUG("Failed to resolve path \"%s\"\n", filename);
         return -1;
+    }
+
+    if (!directories) {
+        struct stat st;
+        /* Return without adding the file if this is a directory and we're not
+         * tracking directories.
+         */
+        if (stat(absolute, &st) == 0 && (st.st_mode & S_IFDIR)) {
+            IDEBUG("Skipping directory %s\n", absolute);
+            return 0;
+        }
     }
 
     bool excluded = false;
