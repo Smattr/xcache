@@ -33,17 +33,16 @@ static int proc_cmp(void *proc, void *pid) {
  * directory as the xcache binary.
  */
 static char *locate_hooklib(const char *exe) {
-    char *resolved = malloc(sizeof(char) * (PATH_MAX + 1));
+    char *resolved = realpath(exe, NULL);
     if (resolved == NULL)
         return NULL;
 
-    if (realpath(exe, resolved) == NULL)
-        return NULL;
-
     char *root = dirname(resolved);
+
+    char *libhook = aprintf("%s/libhook.so", root);
     free(resolved);
 
-    return aprintf("%s/libhook.so", root);
+    return libhook;
 }
 
 int trace(target_t *t, const char **argv, const char *tracer) {
@@ -115,6 +114,9 @@ int trace(target_t *t, const char **argv, const char *tracer) {
                         ld_preload = aprintf("%s %s", ld_preload, lib);
                     }
                     (void)setenv("LD_PRELOAD", ld_preload, 1);
+                    if (ld_preload != lib)
+                        free(ld_preload);
+                    free(lib);
 
                     /* Make sure libhook can find the pipe back to the
                      * tracer.
