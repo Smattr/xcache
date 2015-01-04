@@ -104,7 +104,8 @@ static char *cache_save(cache_t *c, const char *filename) {
 }
 
 int cache_write(cache_t *cache, int argc, const char **argv,
-        depset_t *depset, const char *outfile, const char *errfile) {
+        depset_t *depset, dict_t *env, const char *outfile,
+        const char *errfile) {
     fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
     if (fp == NULL)
         return -1;
@@ -153,6 +154,12 @@ int cache_write(cache_t *cache, int argc, const char **argv,
         return 0;
     }
     if (depset_foreach(depset, save_file) != 0)
+        goto fail;
+
+    int save_env(const char *name, const char *value) {
+        return db_insert_env(&cache->db, id, name, value);
+    }
+    if (dict_foreach(env, (int(*)(const char*, void*))save_env) != 0)
         goto fail;
 
     if (outfile != NULL) {

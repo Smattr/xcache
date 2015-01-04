@@ -40,7 +40,12 @@ int db_open(db_t *db, const char *path) {
         "    filename text not null,"
         "    timestamp integer not null,"
         "    mode integer not null,"
-        "    contents text not null);";
+        "    contents text not null);"
+        
+        "create table if not exists env ("
+        "    fk_trace integer references trace(id),"
+        "    name text not null,"
+        "    value text);";
     if (exec(db, query) != 0) {
         db_close(db);
         return -1;
@@ -63,7 +68,8 @@ int db_clear(db_t *db) {
     return exec(db,
         "delete from input;"
         "delete from output;"
-        "delete from trace;");
+        "delete from trace;"
+        "delete from env;");
 }
 
 int db_close(db_t *db) {
@@ -177,6 +183,17 @@ int db_remove_id(db_t *db, int id) {
     sqlite3_finalize(s);
     s = NULL;
 
+    char *deleteenv = "delete from env where fk_trace = @id;";
+
+    if (prepare(db, &s, deleteenv) != SQLITE_OK)
+        goto fail;
+    if (bind_int(s, "@id", id) != SQLITE_OK)
+        goto fail;
+    if (sqlite3_step(s) != SQLITE_DONE)
+        goto fail;
+    sqlite3_finalize(s);
+    s = NULL;
+
     char *deletetrace = "delete from trace where id = @id;";
     if (prepare(db, &s, deletetrace) != SQLITE_OK)
         goto fail;
@@ -274,6 +291,31 @@ fail:
     return result;
 }
 
+int db_insert_env(db_t *db, int id, const char *name, const char *value) {
+    sqlite3_stmt *s;
+    char *add = "insert into env (fk_trace, name, value) values (@fk_trace, "
+        "@name, @value);";
+    if (prepare(db, &s, add) != SQLITE_OK)
+        return -1;
+
+    int result = -1;
+
+    if (bind_int(s, "@fk_trace", id) != SQLITE_OK ||
+            bind_text(s, "@name", name) != SQLITE_OK ||
+            bind_text(s, "@value", value) != SQLITE_OK)
+        goto fail;
+
+    if (sqlite3_step(s) != SQLITE_DONE)
+        goto fail;
+
+    result = 0;
+
+fail:
+    sqlite3_finalize(s);
+
+    return result;
+}
+
 int db_for_inputs(db_t *db, int id,
         int (*cb)(const char *filename, time_t timestamp)) {
     sqlite3_stmt *s = NULL;
@@ -344,6 +386,48 @@ int db_for_outputs(db_t *db, int id,
                 mode_t mode = column_mode_t(s, 2);
                 const char *contents = column_text(s, 3);
                 int r = cb(filename, timestamp, mode, contents);
+                if (r != 0) {
+                    sqlite3_finalize(s);
+                    return r;
+                }
+                break;
+
+            default:
+                goto fail;
+        }
+    }
+
+    assert(!"unreachable");
+
+fail:
+    if (s != NULL)
+        sqlite3_finalize(s);
+    return -1;
+}
+
+int db_for_env(db_t *db, int id,
+        int (*cb)(const char *name, const char *value)) {
+    sqlite3_stmt *s = NULL;
+
+    char *getenv = "select name, value from env where fk_trace = @fk_trace;";
+    if (prepare(db, &s, getenv) != SQLITE_OK)
+        goto fail;
+
+    if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
+        goto fail;
+
+    while (true) {
+        switch (sqlite3_step(s)) {
+            case SQLITE_DONE:
+                sqlite3_finalize(s);
+                return 0;
+
+            case SQLITE_ROW:
+                assert(sqlite3_column_count(s) == 2);
+                const char *name = column_text(s, 0);
+                assert(name != NULL);
+                const char *value = column_text(s, 1);
+                int r = cb(name, value);
                 if (r != 0) {
                     sqlite3_finalize(s);
                     return r;

@@ -2,6 +2,7 @@
 #define _XCACHE_CACHE_H_
 
 #include "depset.h"
+#include "collection/dict.h"
 #include <stdlib.h>
 
 typedef struct cache cache_t;
@@ -21,6 +22,6 @@ int cache_dump(cache_t *cache, int id);
 int cache_close(cache_t *cache);
 
 int cache_write(cache_t *cache, int argc, const char **argv, depset_t *depset,
-    const char *outfile, const char *errfile);
+    dict_t *env, const char *outfile, const char *errfile);
 
 #endif
