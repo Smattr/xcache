@@ -235,6 +235,15 @@ int cache_locate(cache_t *cache, int argc, const char **argv) {
     if (db_for_inputs(&cache->db, id, f) != 0)
         return -1;
 
+    int env_check(const char *name, const char *value) {
+        assert(name != NULL);
+        char *local_value = getenv(name);
+        return !((local_value == NULL && value == NULL) ||
+            !strcmp(local_value, value));
+    }
+    if (db_for_env(&cache->db, id, env_check) != 0)
+        return -1;
+
     /* We found it with matching inputs. */
     return id;
 }
