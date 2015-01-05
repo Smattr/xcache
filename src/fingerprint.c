@@ -8,7 +8,7 @@ fingerprint_t *fingerprint(unsigned int argc, const char **argv) {
     if (f == NULL)
         goto fail;
 
-    f->cwd = strdup(getcwd(NULL, 0));
+    f->cwd = getcwd(NULL, 0);
     if (f->cwd == NULL)
         goto fail;
 
@@ -47,6 +47,8 @@ fail:
 
 void fingerprint_destroy(fingerprint_t *fp) {
     if (fp != NULL) {
+        if (fp->argv != NULL)
+            free(fp->argv);
         if (fp->arg_lens != NULL)
             free(fp->arg_lens);
         if (fp->cwd != NULL)
