@@ -49,9 +49,11 @@ cache_t *cache_open(const char *path) {
         return NULL;
     }
     if (db_open(&c->db, db_path) != 0) {
+        free(db_path);
         free(c);
         return NULL;
     }
+    free(db_path);
 
     c->root = aprintf("%s" DATA, path);
     if (c->root == NULL) {
