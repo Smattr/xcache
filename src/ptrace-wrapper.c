@@ -51,14 +51,18 @@ char *pt_peekstring(pid_t pid, off_t reg) {
     FILE *f = fopen(filename, "r");
     if (f == NULL) {
         DEBUG("failed to open %s to read string\n", filename);
+        free(filename);
         return NULL;
     }
 
     if (fseek(f, (off_t)addr, SEEK_SET) != 0) {
         DEBUG("failed to seek %s\n", filename);
         fclose(f);
+        free(filename);
         return NULL;
     }
+
+    free(filename);
 
     char *s = malloc(PATH_MAX + 1);
     if (s == NULL) {
