@@ -298,6 +298,7 @@ int cache_close(cache_t *cache) {
     assert(cache != NULL);
     if (db_close(&cache->db) != 0)
         return -1;
+    free(cache->root);
     free(cache);
     return 0;
 }
