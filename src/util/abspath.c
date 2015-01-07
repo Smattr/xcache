@@ -50,11 +50,9 @@ STATIC char *append(char *dest, char *src) {
         } else {
             size_t alen = strlen(a);
             if (len + 1 + alen > sz) {
-                char *tmp = realloc(dest, len + alen + 2);
-                if (tmp == NULL) {
-                    free(dest);
+                char *tmp = ralloc(dest, len + alen + 2);
+                if (tmp == NULL)
                     return NULL;
-                }
                 dest = tmp;
                 sz = len + alen + 1;
             }

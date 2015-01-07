@@ -72,4 +72,9 @@ file_iter_t *file_iter(const char *path);
 void file_iter_destroy(file_iter_t *fi);
 char *file_iter_next(file_iter_t *fi);
 
+/* Convenience wrapper around realloc that frees the first argument if
+ * allocation fails.
+ */
+void *ralloc(void *ptr, size_t size);
+
 #endif

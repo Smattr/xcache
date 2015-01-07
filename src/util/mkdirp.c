@@ -23,11 +23,9 @@ int mkdirp(const char *path) {
         char *cwd = getcwd(NULL, 0);
         if (cwd == NULL)
             return -1;
-        abspath = realloc(cwd, strlen(cwd) + 1 + strlen(path) + 1);
-        if (abspath == NULL) {
-            free(cwd);
+        abspath = ralloc(cwd, strlen(cwd) + 1 + strlen(path) + 1);
+        if (abspath == NULL)
             return -1;
-        }
         strcat(abspath, "/");
         strcat(abspath, path);
     }
