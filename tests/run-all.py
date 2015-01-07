@@ -22,8 +22,11 @@ def main(argv):
     if ret == 0:
         print >>sys.stderr, 'Passed'
     else:
+        # If this fails it's critical; bail out
         print >>sys.stderr, 'Failed'
         return ret
+
+    failed = False
 
     print >>sys.stderr, 'Running unit tests...',
     ret = run([os.path.join(src, 'xcache-tests')])
@@ -31,7 +34,7 @@ def main(argv):
         print >>sys.stderr, 'Passed'
     else:
         print >>sys.stderr, 'Failed'
-        return ret
+        failed = True
 
     env = copy.deepcopy(os.environ)
     env['PATH'] = '%s:%s' % (env.get('PATH', ''), src)
@@ -46,8 +49,10 @@ def main(argv):
                 print >>sys.stderr, 'Passed'
             else:
                 print >>sys.stderr, 'Failed'
-                return ret
+                failed = True
 
+    if failed:
+        return -1
     return 0
 
 if __name__ == '__main__':
