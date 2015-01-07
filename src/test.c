@@ -107,11 +107,18 @@ int main(void) {
 
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_ErrorCode err = CU_basic_run_tests();
+
+    unsigned int failed = CU_get_number_of_tests_failed();
+
     CU_cleanup_registry();
 
-    if (err == CUE_SUCCESS) {
-        printf("All tests succeeded\n");
-        return 0;
+    if (err != CUE_SUCCESS) {
+        /* This case seems to never be triggered as CU_basic_run_tests always
+         * returns success. Bug in CUnit documentation?
+         */
+        fprintf(stderr, "Test suite failure (%d)\n", err);
+        return err;
     }
-    return err;
+
+    return failed;
 }
