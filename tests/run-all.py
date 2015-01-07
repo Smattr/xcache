@@ -25,6 +25,14 @@ def main(argv):
         print >>sys.stderr, 'Failed'
         return ret
 
+    print >>sys.stderr, 'Running unit tests...',
+    ret = run([os.path.join(src, 'xcache-tests')])
+    if ret == 0:
+        print >>sys.stderr, 'Passed'
+    else:
+        print >>sys.stderr, 'Failed'
+        return ret
+
     env = copy.deepcopy(os.environ)
     env['PATH'] = '%s:%s' % (env.get('PATH', ''), src)
     env['LD_LIBRARY_PATH'] = src
