@@ -149,8 +149,10 @@ static int add(depset_t *d, syscall_t *syscall, int argno, filetype_t type,
     char *absolute = abspath(filename);
     if (absolute == NULL) {
         DEBUG("Failed to resolve path \"%s\"\n", filename);
+        free(filename);
         return -1;
     }
+    free(filename);
 
     if (!directories) {
         struct stat st;
