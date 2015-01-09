@@ -457,6 +457,8 @@ bailout:
             DEBUG("Failed to write entry to cache\n");
     }
 
+    depset_destroy(deps);
+
     if (outfile != NULL)
         unlink(outfile);
     if (errfile != NULL)
