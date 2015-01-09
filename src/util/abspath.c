@@ -50,10 +50,9 @@ STATIC char *append(char *dest, char *src) {
         } else {
             size_t alen = strlen(a);
             if (len + 1 + alen > sz) {
-                char *tmp = ralloc(dest, len + alen + 2);
-                if (tmp == NULL)
+                dest = ralloc(dest, len + alen + 2);
+                if (dest == NULL)
                     return NULL;
-                dest = tmp;
                 sz = len + alen + 1;
             }
             sprintf(dest + len, "/%s", a);
