@@ -159,6 +159,7 @@ static int add(depset_t *d, syscall_t *syscall, int argno, filetype_t type,
          */
         if (stat(absolute, &st) == 0 && (st.st_mode & S_IFDIR)) {
             IDEBUG("Skipping directory %s\n", absolute);
+            free(absolute);
             return 0;
         }
     }
