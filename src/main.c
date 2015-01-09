@@ -439,7 +439,11 @@ int main(int argc, const char **argv) {
      */
     success = true;
 
-bailout:;
+bailout:
+    /* We no longer need the regexs. */
+    for (unsigned int i = 0; i < exclude_sz; i++)
+        regfree(&exclude_regexs[i]);
+
     int ret = complete(&target);
 
     const char *outfile = get_stdout(&target),
