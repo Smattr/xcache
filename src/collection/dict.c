@@ -43,5 +43,5 @@ int dict_foreach(dict_t *d, int (*f)(const char *key, void *value)) {
 }
 
 void dict_destroy(dict_t *d) {
-    g_hash_table_remove_all(d->table);
+    g_hash_table_destroy(d->table);
 }
