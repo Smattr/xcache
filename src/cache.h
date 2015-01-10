@@ -3,11 +3,12 @@
 
 #include "depset.h"
 #include "collection/dict.h"
+#include <stdbool.h>
 #include <stdlib.h>
 
 typedef struct cache cache_t;
 
-cache_t *cache_open(const char *path);
+cache_t *cache_open(const char *path, bool statistics);
 
 int cache_clear(cache_t *cache);
 

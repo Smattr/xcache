@@ -26,6 +26,18 @@ int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
     mode_t mode, const char *contents);
 int db_insert_env(db_t *db, int id, const char *name, const char *value);
 
+/* Types of events that may be present in the 'statistics' table of the
+ * database.
+ */
+typedef enum {
+    EV_CREATED = 0,   /* Trace record was created */
+    EV_ACCESSED = 1,  /* Trace record was read */
+    EV_USED = 2,      /* Trace record was used to replicate a target */
+} db_event_t;
+
+/* Log an event in the 'statistics' table. */
+int db_insert_event(db_t *db, int id, db_event_t event);
+
 /* Remove a trace entry from the database. Note that this removes child
  * metadata, but does not remove associated cached data itself.
  */

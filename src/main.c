@@ -24,6 +24,8 @@ static bool hook_getenv = true;
 
 static bool directories = false;
 
+static bool statistics = true;
+
 /* Paths to never consider as inputs. This is to avoid tracking things that are
  * not conceptually files, but rather Linux APIs. Entries to this array should
  * be regular expressions.
@@ -53,8 +55,10 @@ static void usage(const char *prog) {
         "  -?                 Print this help information and exit.\n"
         "  --log <file>\n"
         "  -l <file>          Direct any output to <file>. Defaults to stderr.\n"
+        "  --no-statistics    Do not log statistics in cache database.\n"
         "  --quiet\n"
         "  -q                 Show less output.\n"
+        "  --statistics       Log statistics in cache database (default).\n"
         "  --verbose\n"
         "  -v                 Show more output.\n"
         "  --version          Output version information and then exit.\n"
@@ -102,9 +106,13 @@ static int parse_arguments(int argc, const char **argv) {
                 usage(argv[0]);
                 exit(-1);
             }
+        } else if (!strcmp(argv[index], "--no-statistics")) {
+            statistics = false;
         } else if (!strcmp(argv[index], "--quiet") ||
                    !strcmp(argv[index], "-q")) {
             verbosity--;
+        } else if (!strcmp(argv[index], "--statistics")) {
+            statistics = true;
         } else if (!strcmp(argv[index], "--verbose") ||
                    !strcmp(argv[index], "-v")) {
             verbosity++;
@@ -212,7 +220,7 @@ int main(int argc, const char **argv) {
         return -1;
     }
 
-    cache_t *cache = cache_open(cache_dir);
+    cache_t *cache = cache_open(cache_dir, statistics);
     if (cache == NULL) {
         ERROR("Failed to create cache\n");
         return -1;

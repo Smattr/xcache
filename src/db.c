@@ -45,7 +45,12 @@ int db_open(db_t *db, const char *path) {
         "create table if not exists env ("
         "    fk_trace integer references trace(id),"
         "    name text not null,"
-        "    value text);";
+        "    value text);"
+        
+        "create table if not exists statistics ("
+        "    fk_trace integer references trace(id),"
+        "    event integer not null,"
+        "    timestamp integer not null default current_timestamp);";
     if (exec(db, query) != 0) {
         db_close(db);
         return -1;
@@ -69,7 +74,8 @@ int db_clear(db_t *db) {
         "delete from input;"
         "delete from output;"
         "delete from trace;"
-        "delete from env;");
+        "delete from env;"
+        "delete from statistics;");
 }
 
 int db_close(db_t *db) {
@@ -194,6 +200,16 @@ int db_remove_id(db_t *db, int id) {
     sqlite3_finalize(s);
     s = NULL;
 
+    char *deletestatistics = "delete from statistics where fk_trace = @id;";
+    if (prepare(db, &s, deletestatistics) != SQLITE_OK)
+        goto fail;
+    if (bind_int(s, "@id", id) != SQLITE_OK)
+        goto fail;
+    if (sqlite3_step(s) != SQLITE_DONE)
+        goto fail;
+    sqlite3_finalize(s);
+    s = NULL;
+
     char *deletetrace = "delete from trace where id = @id;";
     if (prepare(db, &s, deletetrace) != SQLITE_OK)
         goto fail;
@@ -207,6 +223,30 @@ int db_remove_id(db_t *db, int id) {
 fail:
     if (s != NULL)
         sqlite3_finalize(s);
+
+    return result;
+}
+
+int db_insert_event(db_t *db, int id, db_event_t event) {
+    sqlite3_stmt *s;
+    char *add = "insert into statistics (fk_trace, event) values (@fk_trace, "
+        "@event);";
+    if (prepare(db, &s, add) != SQLITE_OK)
+        return -1;
+
+    int result = -1;
+
+    if (bind_int(s, "@fk_trace", id) != SQLITE_OK ||
+            bind_int(s, "@event", event) != SQLITE_OK)
+        goto fail;
+
+    if (sqlite3_step(s) != SQLITE_DONE)
+        goto fail;
+
+    result = 0;
+
+fail:
+    sqlite3_finalize(s);
 
     return result;
 }

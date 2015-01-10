@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include "log.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,9 +37,12 @@ struct cache {
      * metadata and file data in.
      */
     char *root;
+
+    /* Whether to keep statistics on database operations or not. */
+    bool statistics;
 };
 
-cache_t *cache_open(const char *path) {
+cache_t *cache_open(const char *path, bool statistics) {
     cache_t *c = malloc(sizeof(*c));
     if (c == NULL)
         return NULL;
@@ -67,6 +71,8 @@ cache_t *cache_open(const char *path) {
         free(c);
         return NULL;
     }
+
+    c->statistics = statistics;
 
     return c;
 }
@@ -186,6 +192,11 @@ int cache_write(cache_t *cache, int argc, const char **argv,
             goto fail;
     }
 
+    if (cache->statistics) {
+        if (db_insert_event(&cache->db, id, EV_CREATED) != 0)
+            goto fail;
+    }
+
     if (db_commit(&cache->db) != 0)
         goto fail;
     return 0;
@@ -214,6 +225,11 @@ int cache_locate(cache_t *cache, int argc, const char **argv) {
         return -1;
     }
     fingerprint_destroy(fp);
+
+    if (cache->statistics) {
+        /* Ignore the return value because failure here is non-critical. */
+        (void)db_insert_event(&cache->db, id, EV_ACCESSED);
+    }
 
     int f(const char *filename, time_t timestamp) {
         struct stat st;
@@ -251,6 +267,11 @@ int cache_locate(cache_t *cache, int argc, const char **argv) {
 }
 
 int cache_dump(cache_t *cache, int id) {
+    if (cache->statistics) {
+        /* Ignore the return value as failure is non-critical. */
+        (void)db_insert_event(&cache->db, id, EV_USED);
+    }
+
     int f(const char *filename, time_t timestamp, mode_t mode,
             const char *contents) {
         char *last_slash = strrchr(filename, '/');
