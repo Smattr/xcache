@@ -23,6 +23,11 @@ long pt_peekreg(pid_t pid, off_t reg);
  */
 char *pt_peekstring(pid_t pid, off_t reg);
 
+/* Return the path pointed to by the file descriptor in the given register.
+ * Returns NULL on failure.
+ */
+char *pt_peekfd(pid_t pid, off_t reg);
+
 /* Continue execution of a blocked process. */
 long pt_continue(pid_t pid);
 

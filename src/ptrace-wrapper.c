@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <fcntl.h>
 #include <linux/limits.h>
 #include "log.h"
 #include "ptrace-wrapper.h"
@@ -78,6 +79,24 @@ char *pt_peekstring(pid_t pid, off_t reg) {
     }
 
     return s;
+}
+
+char *pt_peekfd(pid_t pid, off_t reg) {
+    int fd = (int)pt_peekreg(pid, reg);
+
+    if (fd == AT_FDCWD)
+        return getcwd(NULL, 0);
+
+    char *fdlink = aprintf("/proc/%d/fd/%d", pid, fd);
+    if (fdlink == NULL)
+        return NULL;
+
+    char *path = readln(fdlink);
+    if (path == NULL)
+        DEBUG("Failed to resolve link %s\n", fdlink);
+    free(fdlink);
+
+    return path;
 }
 
 long pt_continue(pid_t pid) {
