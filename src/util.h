@@ -77,4 +77,7 @@ char *file_iter_next(file_iter_t *fi);
  */
 void *ralloc(void *ptr, size_t size);
 
+/* An alternative to readlink that NUL-terminates the output buffer. */
+char *readln(const char *path);
+
 #endif
