@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <CUnit/Basic.h>
 #include <CUnit/CUnit.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,6 +77,15 @@ static void test_atom_single_abs_trailing(void) {
     CU_ASSERT_PTR_NULL(a);
 }
 
+static void test_append_basic(void) {
+    char a[PATH_MAX];
+    strcat(a, "/a");
+    char *b = "b";
+    size_t len = append(a, strlen(a), b);
+    CU_ASSERT_EQUAL(len, strlen(a));
+    CU_ASSERT_STRING_EQUAL(a, "/a/b");
+}
+
 int main(void) {
     printf("Starting xcache test suite...\n");
 
@@ -98,7 +108,8 @@ int main(void) {
         (CU_add_test(suite, "atom of single word", test_atom_single) == NULL) ||
         (CU_add_test(suite, "atom of top-level directory", test_atom_single_abs) == NULL) ||
         (CU_add_test(suite, "atom of single word with trailing slash", test_atom_single_trailing) == NULL) ||
-        (CU_add_test(suite, "atom of top-level directory with trailing slash", test_atom_single_abs_trailing) == NULL)) {
+        (CU_add_test(suite, "atom of top-level directory with trailing slash", test_atom_single_abs_trailing) == NULL) ||
+        (CU_add_test(suite, "append(\"/a\", \"b\")", test_append_basic) == NULL)) {
         CU_ErrorCode err = CU_get_error();
         fprintf(stderr, "failed to add tests\n");
         CU_cleanup_registry();
