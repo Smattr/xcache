@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../test.h"
@@ -30,57 +31,68 @@ STATIC const char *atom(char **path) {
     return start;
 }
 
-STATIC char *append(char *dest, char *src) {
+/* Add a path atom to an existing prefix. 'dest' is assumed not to end in / and
+ * have length 'dest_len'. The length of 'dest' is only passed as an argument
+ * to avoid repeatedly calculating it when calling this function in a loop.
+ * 'src' must be a path atom. 'dest' is assumed to point to available memory of
+ * at least PATH_MAX bytes. Returns the resulting size of 'dest' after appending
+ * the atom.
+ */
+STATIC size_t append(char *dest, size_t dest_len, const char *src) {
     assert(dest != NULL);
+    assert(strlen(dest) == dest_len);
+    assert(src != NULL);
+    assert(strcmp(src, "") && "append of invalid atom");
+    assert(strchr(src, '/') == NULL && "invalid append of non-atom");
+
+    if (!strcmp(src, ".")) {
+        /* Nothing need be done. */
+        
+    } else if (!strcmp(src, "..")) {
+        /* Strip a path atom or do nothing if dest == "". */
+        while (dest_len > 0 && dest[dest_len] != '/')
+            dest_len--;
+        dest[dest_len] = '\0';
+
+    } else {
+        assert(dest_len + 2 + strlen(src) <= PATH_MAX);
+        sprintf(dest + dest_len, "/%s", src);
+        dest_len += strlen(src) + 1;
+    }
+
+    return dest_len;
+}
+
+void normpath(char *dest, char *src) {
+    assert(dest != NULL);
+    assert(src != NULL);
 
     size_t len = strlen(dest);
-    size_t sz = len;
 
     const char *a;
-    while ((a = atom(&src)) != NULL) {
-        if (!strcmp(a, ".")) {
-            continue;
-        } else if (!strcmp(a, "..")) {
-            if (!strcmp(dest, ""))
-                continue;
-            len--;
-            while (dest[len] != '/')
-                len--;
-            dest[len] = '\0';
-        } else {
-            size_t alen = strlen(a);
-            if (len + 1 + alen > sz) {
-                dest = ralloc(dest, len + alen + 2);
-                if (dest == NULL)
-                    return NULL;
-                sz = len + alen + 1;
-            }
-            sprintf(dest + len, "/%s", a);
-            len += alen + 1;
-        }
-    }
-    return dest;
+    while ((a = atom(&src)) != NULL)
+        len = append(dest, len, a);
 }
 
 char *abspath(char *relpath) {
     assert(relpath != NULL);
 
-    char *abs = strdup("");
+    char *abs = malloc(sizeof(char) * PATH_MAX);
     if (abs == NULL)
         return NULL;
 
-    if (relpath[0] != '/') {
-        char *cwd = getcwd(NULL, 0);
+    if (relpath[0] == '/') {
+        /* This path is absolute. */
+        abs[0] = '\0';
+    } else {
+        char *cwd = getcwd(abs, PATH_MAX);
         if (cwd == NULL) {
             free(abs);
             return NULL;
         }
-        abs = append(abs, cwd);
-        free(cwd);
-        if (abs == NULL)
-            return NULL;
     }
 
-    abs = append(abs, relpath);
+    normpath(abs, relpath);
+
     return abs;
 }

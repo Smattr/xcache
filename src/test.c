@@ -17,7 +17,7 @@
 
 /* Some functions that are defined elsewhere with the STATIC macro. */
 extern const char *atom(char **path);
-extern char *append(char *dest, char *src);
+extern size_t append(char *dest, size_t dest_len, const char *src);
 
 static void test_atom_nothing(void) {
     char *s = strdup("");

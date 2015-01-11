@@ -7,6 +7,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Join two paths and normalise the result.
+ *
+ * dest - Path prefix. This is assumed to already be normalised and point to at
+ *   least PATH_MAX bytes of available memory.
+ * src - Path suffix.
+ */
+void normpath(char *dest, char *src);
+
+/* Resolve and normalise a path. This does the equivalent of `realpath`, but
+ * does not require the resulting path to exist. Note that it does not resolve
+ * symlinks.
+ *
+ * relpath - A relative or absolute path to normalise.
+ *
+ * Returns an absolute path or NULL on error.
+ */
 char *abspath(char *relpath);
 
 /* A version of sprintf that does allocation internally for convenience. */
