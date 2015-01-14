@@ -3,9 +3,15 @@ syntax: regexp
 # Build files
 \.o$
 ^src/xcache$
+^src/xcache-static$
+^src/xcache-tests$
+^src/libxcache\.a$
+^src/libxcache\.so$
+^src/libhook\.so$
 \.d$
 
 # Editor files
+cscope\.out
 \.swp$
 
 # Compiled Python
