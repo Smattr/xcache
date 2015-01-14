@@ -151,6 +151,9 @@ char *syscall_getstring(syscall_t *syscall, int arg);
 /* Retrieve an integral argument to a syscall. */
 long syscall_getarg(syscall_t *syscall, int arg);
 
+/* Retrieve the path of a file descriptor argument to a syscall. */
+char *syscall_getfd(syscall_t *syscall, int arg);
+
 /* XXX: consider removing these. */
 const char *get_stdout(target_t *tracee);
 const char *get_stderr(target_t *tracee);

@@ -130,13 +130,6 @@ static int parse_arguments(int argc, const char **argv) {
     return index;
 }
 
-
-/* Sanity checks on open flags because checking for O_RDONLY is awkward. */
-typedef char FILE_FLAGS_AS_EXPECTED[
-    O_RDONLY == 00 && O_WRONLY == 01 && O_RDWR == 02 ? 1 : -1];
-/* See usage of this below. */
-static const int FLAG_MASK = O_RDONLY | O_WRONLY | O_RDWR;
-
 /* Add an item to a dependency set. */
 static int add_from_string(depset_t *d, char *path, filetype_t type,
         regex_t exclude_regexs[]) {
@@ -201,6 +194,94 @@ static int add_from_reg(depset_t *d, syscall_t *syscall, int argno, filetype_t t
     int r = add_from_string(d, filename, type, exclude_regexs);
     free(filename);
     return r;
+}
+
+static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
+        int argno, filetype_t type, regex_t exclude_regexs[]) {
+    char *filename = syscall_getstring(syscall, argno);
+    if (filename == NULL) {
+        DEBUG("Failed to retrieve string argument %d from syscall %s (%ld)\n",
+            argno, translate_syscall(syscall->call), syscall->call);
+        return -1;
+    }
+
+    char *fdpath = syscall_getfd(syscall, fdarg);
+    if (fdpath == NULL) {
+        free(filename);
+        DEBUG("Failed to retrieve file descriptor argument %d from syscall %s "
+            "(%ld)\n", fdarg, translate_syscall(syscall->call), syscall->call);
+        return -1;
+    }
+
+    normpath(fdpath, filename);
+    free(filename);
+
+    int r = add_from_string(d, fdpath, type, exclude_regexs);
+    free(fdpath);
+    return r;
+}
+
+/* Sanity checks on open flags because checking for O_RDONLY is awkward. */
+_Static_assert(O_RDONLY == 00 && O_WRONLY == 01 && O_RDWR == 02,
+    "unexpected file open flag values");
+/* See usage of this below. */
+static const int FLAG_MASK = O_RDONLY | O_WRONLY | O_RDWR;
+
+static int flags_to_mode(int flags) {
+    return flags & FLAG_MASK;
+}
+
+/* Determine the type of an input or output we're opening based on the flags
+ * passed. Note that we return XC_NONE unless this is an input because we're
+ * only considering how we want to treat this on syscall entry.
+ */
+static filetype_t classify_open_entry(int flags) {
+    int mode = flags_to_mode(flags);
+
+    /* If we're opening this file write-only, we don't need to
+     * do any measurement before opening as this file is purely
+     * an output.
+     */
+    if (mode == O_WRONLY)
+        return XC_NONE;
+
+    /* If we're opening this file read-write, there are some
+     * extra conditions that may lead us to bail out.
+     */
+    if (mode == O_RDWR) {
+
+        /* If a file is opened with O_CREAT and O_EXCL, the
+         * open fails if the file exists. In other words, even
+         * if we are opening this file O_RDWR, we are treating
+         * it as only an output.
+         */
+        if ((flags & O_CREAT) && (flags & O_EXCL))
+            return XC_NONE;
+
+        /* If a file is opened with O_TRUNC, we're ignoring its
+         * current contents and hence treating it purely as an
+         * output. O_TRUNC actually has no effect if the file is
+         * a device or a fifo, but regardless the caller is
+         * clearly not expecting to depend on the existing
+         * contents.
+         */
+        if (flags & O_TRUNC)
+            return XC_NONE;
+
+    }
+
+    return XC_INPUT;
+}
+
+/* Determine how we want to treat an input or output we're opening on syscall
+ * exit.
+ */
+static filetype_t classify_open_exit(int flags) {
+    int mode = flags_to_mode(flags);
+    if (mode == O_WRONLY || mode == O_RDWR)
+        return XC_OUTPUT;
+
+    return XC_NONE;
 }
 
 int main(int argc, const char **argv) {
@@ -288,7 +369,7 @@ int main(int argc, const char **argv) {
                         goto bailout;
                     break;
 
-                case SYS_open:;
+                case SYS_open: {
                     /* In the case where a file is being opened RW, we need to
                      * do our measurement beforehand in case the user is using
                      * a flag like O_CREAT that makes measurement ambiguous
@@ -296,42 +377,24 @@ int main(int argc, const char **argv) {
                      * open here as well.
                      */
                     int flags = (int)syscall_getarg(s, 2);
-                    int mode = flags & FLAG_MASK;
-
-                    /* If we're opening this file write-only, we don't need to
-                     * do any measurement before opening as this file is purely
-                     * an output.
-                     */
-                    if (mode == O_WRONLY)
-                        break;
-
-                    /* If we're opening this file read-write, there are some
-                     * extra conditions that may lead us to bail out.
-                     */
-                    if (mode == O_RDWR) {
-
-                        /* If a file is opened with O_CREAT and O_EXCL, the
-                         * open fails if the file exists. In other words, even
-                         * if we are opening this file O_RDWR, we are treating
-                         * it as only an output.
-                         */
-                        if ((flags & O_CREAT) && (flags & O_EXCL))
-                            break;
-
-                        /* If a file is opened with O_TRUNC, we're ignoring its
-                         * current contents and hence treating it purely as an
-                         * output. O_TRUNC actually has no effect if the file is
-                         * a device or a fifo, but regardless the caller is
-                         * clearly not expecting to depend on the existing
-                         * contents.
-                         */
-                        if (flags & O_TRUNC)
-                            break;
-
-                    }
-                    if (add_from_reg(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
-                        goto bailout;
+                    filetype_t type = classify_open_entry(flags);
+                    if (type != XC_NONE)
+                        if (add_from_reg(deps, s, 1, type, exclude_regexs) != 0)
+                            goto bailout;
                     break;
+                }
+
+                case SYS_openat: {
+                    /* As for open() but we need to handle prefixing from a file
+                     * descriptor.
+                     */
+                    int flags = (int)syscall_getarg(s, 3);
+                    filetype_t type = classify_open_entry(flags);
+                    if (type != XC_NONE)
+                        if (add_from_fd_and_reg(deps, s, 1, 2, type, exclude_regexs) != 0)
+                            goto bailout;
+                    break;
+                }
 
                 case SYS_rename:
                     if (add_from_reg(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
@@ -382,17 +445,27 @@ int main(int argc, const char **argv) {
                     goto bailout;
                 break;
 
-            case SYS_open:;
+            case SYS_open: {
                 /* Note that we are only handling the 'write' aspects of an
                  * open call here, because the 'read' aspects were handled on
                  * syscall entry.
                  */
                 int flags = (int)syscall_getarg(s, 2);
-                int mode = flags & FLAG_MASK;
-                if (mode == O_WRONLY || mode == O_RDWR)
-                    if (add_from_reg(deps, s, 1, XC_OUTPUT, exclude_regexs) != 0)
+                filetype_t type = classify_open_exit(flags);
+                if (type != XC_NONE)
+                    if (add_from_reg(deps, s, 1, type, exclude_regexs) != 0)
                         goto bailout;
                 break;
+            }
+
+            case SYS_openat: {
+                int flags = (int)syscall_getarg(s, 3);
+                filetype_t type = classify_open_exit(flags);
+                if (type != XC_NONE)
+                    if (add_from_fd_and_reg(deps, s, 1, 2, type, exclude_regexs) != 0)
+                        goto bailout;
+                break;
+            }
 
             case SYS_readlink:
                 if (add_from_reg(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
@@ -417,7 +490,6 @@ int main(int argc, const char **argv) {
             case SYS_mknod:
             case SYS_mknodat:
             case SYS_mount:
-            case SYS_openat:
             case SYS_pivot_root:
             case SYS_readlinkat:
             case SYS_rename:

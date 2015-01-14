@@ -255,6 +255,16 @@ long syscall_getarg(syscall_t *syscall, int arg) {
     return pt_peekreg(syscall->proc->pid, offset);
 }
 
+char *syscall_getfd(syscall_t *syscall, int arg) {
+    assert(arg > 0);
+
+    long offset = register_offset(arg);
+    if (offset == -1)
+        return NULL;
+
+    return pt_peekfd(syscall->proc->pid, offset);
+}
+
 syscall_t *next_syscall(target_t *tracee) {
     assert(tracee != NULL);
     if (tracee->root.state != IN_USER && tracee->root.state != IN_KERNEL) {

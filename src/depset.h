@@ -5,6 +5,7 @@
 #include <time.h>
 
 typedef enum {
+    XC_NONE,
     XC_INPUT,
     XC_OUTPUT,
     XC_BOTH,
