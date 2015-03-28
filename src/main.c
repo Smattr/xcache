@@ -479,6 +479,7 @@ int main(int argc, const char **argv) {
 
             case SYS__sysctl:
             case SYS_acct:
+            case SYS_chdir:
             case SYS_chown:
             case SYS_chroot:
             case SYS_fchdir:
