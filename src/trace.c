@@ -29,11 +29,7 @@ static int proc_cmp(void *proc, void *pid) {
     return p->pid != (pid_t)(unsigned long)pid;
 }
 
-/* Update the recorded current working directory of a process. Returns 0 on
- * success.
- */
-static int proc_update_cwd(proc_t *proc) __attribute__((nonnull));
-static int proc_update_cwd(proc_t *proc) {
+int proc_update_cwd(proc_t *proc) {
     char *cwdlink = aprintf("/proc/%d/cwd", proc->pid);
     if (cwdlink == NULL)
         return -1;

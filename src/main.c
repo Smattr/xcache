@@ -435,6 +435,26 @@ int main(int argc, const char **argv) {
                     goto bailout;
                 break;
 
+            case SYS_chdir:
+                if (s->result != 0) {
+                    /* The target failed to change directory; no action
+                     * required.
+                     */
+                    break;
+                }
+                /* Here, we could read the new working directory of the process
+                 * out of the argument to their syscall, but rather than have
+                 * to deal with complications involving relative paths we just
+                 * do a standard update. If anything, this should be faster as
+                 * we read directly from /proc instead of mmaping.
+                 */
+                if (proc_update_cwd(s->proc) != 0) {
+                    DEBUG("bailing out due to failure to read current working "
+                        "directory\n");
+                    goto bailout;
+                }
+                break;
+
             case SYS_chmod:
                 if (add_from_reg(deps, s, 1, XC_OUTPUT, exclude_regexs) != 0)
                     goto bailout;
@@ -479,7 +499,6 @@ int main(int argc, const char **argv) {
 
             case SYS__sysctl:
             case SYS_acct:
-            case SYS_chdir:
             case SYS_chown:
             case SYS_chroot:
             case SYS_fchdir:

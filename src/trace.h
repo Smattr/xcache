@@ -162,4 +162,9 @@ char *syscall_getfd(syscall_t *syscall, int arg);
 const char *get_stdout(target_t *tracee);
 const char *get_stderr(target_t *tracee);
 
+/* Update the recorded current working directory of a process. Returns 0 on
+ * success.
+ */
+int proc_update_cwd(proc_t *proc) __attribute__((nonnull));
+
 #endif
