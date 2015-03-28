@@ -2,6 +2,7 @@
 #define _XCACHE_TRACE_H_
 
 #include "collection/list.h"
+#include <linux/limits.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <unistd.h>
@@ -28,6 +29,9 @@ typedef struct {
         TERMINATED,  /* Exited */
         FINALISED,   /* Exited and xcache metadata cleaned up */
     } state;
+
+    /* Current working directory of the process. */
+    char cwd[PATH_MAX];
 
 } proc_t;
 

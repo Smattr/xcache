@@ -29,6 +29,22 @@ static int proc_cmp(void *proc, void *pid) {
     return p->pid != (pid_t)(unsigned long)pid;
 }
 
+/* Update the recorded current working directory of a process. Returns 0 on
+ * success.
+ */
+static int proc_update_cwd(proc_t *proc) __attribute__((nonnull));
+static int proc_update_cwd(proc_t *proc) {
+    char *cwdlink = aprintf("/proc/%d/cwd", proc->pid);
+    if (cwdlink == NULL)
+        return -1;
+    ssize_t sz = readlink(cwdlink, proc->cwd, sizeof(proc->cwd));
+    free(cwdlink);
+    if (sz >= (ssize_t)sizeof(proc->cwd))
+        return -1;
+    proc->cwd[sz] = '\0';
+    return 0;
+}
+
 /* Find the accompanying getenv hook library. We assume it lives in the same
  * directory as the xcache binary.
  */
@@ -46,40 +62,63 @@ static char *locate_hooklib(const char *exe) {
 }
 
 int trace(target_t *t, const char **argv, const char *tracer) {
-    if (list(&t->children, proc_cmp) != 0)
-        goto fail1;
+    /* Zero out the struct so we can detect initialised data below. */
+    memset(t, 0, sizeof(*t));
+    bool children_initialised = false,
+         hook_initialised = false,
+         env_initialised = false;
 
-    if (pipe(t->stdout_pipe) != 0)
-        goto fail2;
+    if (list(&t->children, proc_cmp) != 0)
+        goto fail;
+    children_initialised = true;
+
+    if (pipe(t->stdout_pipe) != 0) {
+        t->stdout_pipe[0] = t->stdout_pipe[1] = 0;
+        goto fail;
+    }
 
     t->outfile = strdup("/tmp/tmp.XXXXXX");
     if (t->outfile == NULL)
-        goto fail3;
+        goto fail;
     t->outfd = mkstemp(t->outfile);
     if (t->outfd == -1)
-        goto fail4;
+        goto fail;
 
-    if (pipe(t->stderr_pipe) != 0)
-        goto fail5;
+    if (pipe(t->stderr_pipe) != 0) {
+        t->stderr_pipe[0] = t->stderr_pipe[1] = 0;
+        goto fail;
+    }
 
     t->errfile = strdup("/tmp/tmp.XXXXXX");
     if (t->errfile == NULL)
-        goto fail6;
+        goto fail;
     t->errfd = mkstemp(t->errfile);
     if (t->errfd == -1)
-        goto fail7;
+        goto fail;
 
-    if (pipe(t->msg_pipe) != 0)
-        goto fail8;
+    if (pipe(t->msg_pipe) != 0) {
+        t->msg_pipe[0] = t->msg_pipe[1] = 0;
+        goto fail;
+    }
 
-    if (pipe(t->sig_pipe) != 0)
-        goto fail9;
+    if (pipe(t->sig_pipe) != 0) {
+        t->sig_pipe[0] = t->sig_pipe[1] = 0;
+        goto fail;
+    }
 
     if (dict(&t->env) != 0)
-        goto failA;
+        goto fail;
+    env_initialised = true;
 
     if (hook_create(t) != 0)
-        goto failB;
+        goto fail;
+    hook_initialised = true;
+
+    /* The working directory of the initial (root) process will be the same as
+     * ours.
+     */
+    if (getcwd(t->root.cwd, sizeof(t->root.cwd)) == NULL)
+        goto fail;
 
     t->root.pid = fork();
     switch (t->root.pid) {
@@ -145,7 +184,7 @@ int trace(target_t *t, const char **argv, const char *tracer) {
         } case -1: {
             /* Fork failed. */
             DEBUG("failed initial fork (%d)\n", errno);
-            goto failC;
+            goto fail;
         }
     }
 
@@ -155,39 +194,55 @@ int trace(target_t *t, const char **argv, const char *tracer) {
     if (WIFEXITED(status)) {
         /* Either ptrace or exec failed in the child. */
         DEBUG("tracee exited immediately\n");
-        goto failC;
+        goto fail;
     }
 
     long r = pt_tracechildren(t->root.pid);
     if (r != 0) {
         DEBUG("failed to set tracing to catch forks (%d)\n", errno);
-        goto failC;
+        goto fail;
     }
 
     r = pt_runtosyscall(t->root.pid);
     if (r != 0) {
         DEBUG("failed first resume of tracee (%d)\n", errno);
-        goto failC;
+        goto fail;
     }
     t->root.state = IN_USER;
     return 0;
 
-failC: (void)hook_close(t);
-failB: dict_destroy(&t->env);
-failA: close(t->sig_pipe[0]);
-       close(t->sig_pipe[1]);
-fail9: close(t->msg_pipe[0]);
-       close(t->msg_pipe[1]);
-fail8: close(t->errfd);
-fail7: free(t->errfile);
-fail6: close(t->stderr_pipe[0]);
-       close(t->stderr_pipe[1]);
-fail5: close(t->outfd);
-fail4: free(t->outfile);
-fail3: close(t->stdout_pipe[0]);
-       close(t->stdout_pipe[1]);
-fail2: list_destroy(&t->children);
-fail1: return -1;
+fail:
+    if (hook_initialised)
+        (void)hook_close(t);
+    if (env_initialised)
+        dict_destroy(&t->env);
+    if (t->sig_pipe[0] > 0)
+        close(t->sig_pipe[0]);
+    if (t->sig_pipe[1] > 0)
+        close(t->sig_pipe[1]);
+    if (t->msg_pipe[0] > 0)
+        close(t->msg_pipe[0]);
+    if (t->msg_pipe[1] > 0)
+        close(t->msg_pipe[1]);
+    if (t->errfd > 0)
+        close(t->errfd);
+    if (t->errfile != NULL)
+        free(t->errfile);
+    if (t->stderr_pipe[0] > 0)
+        close(t->stderr_pipe[0]);
+    if (t->stderr_pipe[1] > 0)
+        close(t->stderr_pipe[1]);
+    if (t->outfd > 0)
+        close(t->outfd);
+    if (t->outfile != NULL)
+        free(t->outfile);
+    if (t->stdout_pipe[0] > 0)
+        close(t->stdout_pipe[0]);
+    if (t->stdout_pipe[1] > 0)
+        close(t->stdout_pipe[1]);
+    if (children_initialised)
+        list_destroy(&t->children);
+    return -1;
 }
 
 #define OFFSET(reg) \
@@ -334,6 +389,10 @@ retry:;
             return NULL;
         p->pid = pid;
         p->state = IN_USER;
+        if (proc_update_cwd(p) != 0) {
+            free(p);
+            return NULL;
+        }
         list_add(&tracee->children, p);
         long r = pt_runtosyscall(pid);
         if (r != 0)
