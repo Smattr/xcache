@@ -1,3 +1,5 @@
+/* Various miscellaneous utility functions. None of this is xcache-specific. */
+
 #ifndef _XCACHE_UTIL_H_
 #define _XCACHE_UTIL_H_
 

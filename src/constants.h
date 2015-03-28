@@ -4,9 +4,10 @@
 #include <stdlib.h>
 #include <time.h>
 
+/* Some time_t values that we're going to treat as having special semantics. */
 enum {
-    UNSET = (time_t)NULL,
-    MISSING = (time_t)(-2),
+    UNSET = (time_t)NULL,    /* we don't know the timestamp of this item */
+    MISSING = (time_t)(-2),  /* this file does not exist */
 };
 
 #endif

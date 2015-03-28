@@ -499,6 +499,9 @@ int main(int argc, const char **argv) {
                     goto bailout;
                 break;
 
+            /* XXX: The syscalls that follow are known to be relevant, but are
+             * not yet handled. Implement handlers for these on demand.
+             */
             case SYS__sysctl:
             case SYS_acct:
             case SYS_chown:

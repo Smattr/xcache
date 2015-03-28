@@ -29,6 +29,14 @@ static char *internal_getenv(const char *name) {
         return NULL;
     }
 
+    /* We now need to perform the actual lookup. The standard way of doing this
+     * would be to dynamically locate the real `getenv` with RTLD_NEXT and then
+     * just invoke it. Unfortunately the target we're LD_PRELOADed into may not
+     * link against libdl, which makes the dynamic loader unavailable.
+     * Thankfully it is relatively straightforward to manually re-implement
+     * `getenv` below.
+     */
+
     size_t len = strlen(name);
 
     for (char **p = environ; *p != NULL; p++) {
@@ -93,7 +101,7 @@ char *getenv(const char *name) {
     if (out_fd != -1 && flock(out_fd, LOCK_EX) == 0) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-        /* For some reason, GCC doesn't seem to notice that we *are*
+        /* XXX: For some reason, GCC doesn't seem to notice that we *are*
          * initialising 'value' here.
          */
         message_t message = {

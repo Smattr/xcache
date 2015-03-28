@@ -43,6 +43,12 @@ int proc_update_cwd(proc_t *proc) {
 
 /* Find the accompanying getenv hook library. We assume it lives in the same
  * directory as the xcache binary.
+ *
+ * FIXME: You can't LD_PRELOAD a library from a path containing spaces. There's
+ * not much we can directly do about this, but we could workaround it by
+ * temporarily symlinking libhook.so to a path without spaces. This is probably
+ * not worth it, but we should at least look into giving the user more feedback
+ * about why the hook fails.
  */
 static char *locate_hooklib(const char *exe) {
     char *resolved = realpath(exe, NULL);

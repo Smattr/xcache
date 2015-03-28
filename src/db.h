@@ -1,6 +1,10 @@
 #ifndef _XCACHE_DB_H_
 #define _XCACHE_DB_H_
 
+/* Brief wrapper around SQLite. This functionality exists to make the SQLite
+ * API a little more pleasant and specialise it to xcache.
+ */
+
 #include "fingerprint.h"
 #include <sqlite3.h>
 #include <sys/types.h>

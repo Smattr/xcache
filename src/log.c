@@ -1,3 +1,5 @@
+/* Log functionality. See log.h for further documentation. */
+
 #include "log.h"
 #include <stdio.h>
 #include <stdlib.h>

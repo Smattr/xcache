@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include "../util.h"
 
+/* Turn a blob of hash data into readable hex output. */
 static char *hex(unsigned char *hash) {
     char *h = malloc(MD5_DIGEST_LENGTH * 2 + 1);
     if (h == NULL)
