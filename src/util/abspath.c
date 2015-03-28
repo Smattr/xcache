@@ -74,9 +74,7 @@ void normpath(char *dest, char *src) {
         len = append(dest, len, a);
 }
 
-char *abspath(char *relpath) {
-    assert(relpath != NULL);
-
+char *abspath(const char *cwd, char *relpath) {
     char *abs = malloc(sizeof(char) * PATH_MAX);
     if (abs == NULL)
         return NULL;
@@ -85,11 +83,7 @@ char *abspath(char *relpath) {
         /* This path is absolute. */
         abs[0] = '\0';
     } else {
-        char *cwd = getcwd(abs, PATH_MAX);
-        if (cwd == NULL) {
-            free(abs);
-            return NULL;
-        }
+        strcpy(abs, cwd);
     }
 
     normpath(abs, relpath);

@@ -313,7 +313,7 @@ char *syscall_getfd(syscall_t *syscall, int arg) {
     if (offset == -1)
         return NULL;
 
-    return pt_peekfd(syscall->proc->pid, offset);
+    return pt_peekfd(syscall->proc->pid, syscall->proc->cwd, offset);
 }
 
 syscall_t *next_syscall(target_t *tracee) {

@@ -19,11 +19,12 @@ void normpath(char *dest, char *src);
  * does not require the resulting path to exist. Note that it does not resolve
  * symlinks.
  *
+ * cwd - Root for the relative path to be resolved from.
  * relpath - A relative or absolute path to normalise.
  *
  * Returns an absolute path or NULL on error.
  */
-char *abspath(char *relpath);
+char *abspath(const char *cwd, char *relpath) __attribute__((nonnull));
 
 /* A version of sprintf that does allocation internally for convenience. */
 char *aprintf(const char *fmt, ...);

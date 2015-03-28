@@ -131,9 +131,9 @@ static int parse_arguments(int argc, const char **argv) {
 }
 
 /* Add an item to a dependency set. */
-static int add_from_string(depset_t *d, char *path, filetype_t type,
-        regex_t exclude_regexs[]) {
-    char *absolute = abspath(path);
+static int add_from_string(depset_t *d, const char *cwd, char *path,
+        filetype_t type, regex_t exclude_regexs[]) {
+    char *absolute = abspath(cwd, path);
     if (absolute == NULL) {
         DEBUG("Failed to resolve path \"%s\"\n", path);
         return -1;
@@ -191,7 +191,8 @@ static int add_from_reg(depset_t *d, syscall_t *syscall, int argno, filetype_t t
         return -1;
     }
 
-    int r = add_from_string(d, filename, type, exclude_regexs);
+    int r = add_from_string(d, syscall->proc->cwd, filename, type,
+        exclude_regexs);
     free(filename);
     return r;
 }
@@ -216,7 +217,8 @@ static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
     normpath(fdpath, filename);
     free(filename);
 
-    int r = add_from_string(d, fdpath, type, exclude_regexs);
+    int r = add_from_string(d, syscall->proc->cwd, fdpath, type,
+        exclude_regexs);
     free(fdpath);
     return r;
 }

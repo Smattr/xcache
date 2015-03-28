@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -81,11 +82,11 @@ char *pt_peekstring(pid_t pid, off_t reg) {
     return s;
 }
 
-char *pt_peekfd(pid_t pid, off_t reg) {
+char *pt_peekfd(pid_t pid, const char *cwd, off_t reg) {
     int fd = (int)pt_peekreg(pid, reg);
 
     if (fd == AT_FDCWD)
-        return getcwd(NULL, 0);
+        return strdup(cwd);
 
     char *fdlink = aprintf("/proc/%d/fd/%d", pid, fd);
     if (fdlink == NULL)
