@@ -360,6 +360,9 @@ int main(int argc, const char **argv) {
          * that destroy some resource we need to measure before it disappears.
          */
         if (s->enter) {
+            IDEBUG("trapped entry of %s from pid %u\n",
+                translate_syscall(s->call), s->proc->pid);
+
             switch (s->call) {
 
                 /* We need to handle execve on kernel entry because our
@@ -423,12 +426,17 @@ int main(int argc, const char **argv) {
                     IDEBUG("irrelevant syscall entry %s (%ld)\n",
                         translate_syscall(s->call), s->call);
             }
+            IDEBUG("resuming entry of %s for pid %u\n",
+                translate_syscall(s->call), s->proc->pid);
             acknowledge_syscall(s);
             continue;
         }
 
         /* We should now only be handling syscall exits. */
         assert(!s->enter);
+
+        IDEBUG("trapped exit of %s from pid %u\n", translate_syscall(s->call),
+            s->proc->pid);
 
         switch (s->call) {
 
@@ -538,6 +546,9 @@ int main(int argc, const char **argv) {
                 IDEBUG("irrelevant syscall exit %s (%ld)\n",
                     translate_syscall(s->call), s->call);
         }
+
+        IDEBUG("resuming exit of %s for pid %u\n", translate_syscall(s->call),
+            s->proc->pid);
         acknowledge_syscall(s);
 
     }
