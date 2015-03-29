@@ -396,6 +396,9 @@ retry:;
             return NULL;
         }
         list_add(&tracee->children, p);
+        if (pt_tracechildren(pid) != 0)
+            DEBUG("warning: failed to enable child tracing for forked child "
+                "%d\n", pid);
         long r = pt_runtosyscall(pid);
         if (r != 0)
             DEBUG("warning: failed to continue forked child %d (errno: %d)\n",
