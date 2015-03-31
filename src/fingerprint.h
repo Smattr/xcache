@@ -22,7 +22,7 @@ typedef struct {
 } fingerprint_t;
 
 /* Create a fingerprint for the given invocation. Returns NULL on failure. */
-fingerprint_t *fingerprint(unsigned int argc, const char **argv);
+fingerprint_t *fingerprint(unsigned int argc, char **argv);
 
 /* Deallocate memory associated with a fingerprint. */
 void fingerprint_destroy(fingerprint_t *fp);

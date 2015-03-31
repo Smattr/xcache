@@ -80,7 +80,7 @@ static char *default_cache_dir(void) {
  *
  * Returns the index of the first non-xcache argument.
  */
-static int parse_arguments(int argc, const char **argv) {
+static int parse_arguments(int argc, char **argv) {
     int index;
     for (index = 1; index < argc; index++) {
         if ((!strcmp(argv[index], "--cache-dir") ||
@@ -286,7 +286,7 @@ static filetype_t classify_open_exit(int flags) {
     return XC_NONE;
 }
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv) {
     int index = parse_arguments(argc, argv);
 
     if (argc - index == 0) {

@@ -125,7 +125,7 @@ typedef struct {
  *    link against libdl, which makes library hooking a bit difficult.
  * Returns 0 on success.
  */
-int trace(target_t *t, const char **argv, const char *tracer);
+int trace(target_t *t, char **argv, const char *tracer);
 
 /* Wait for the next syscall from the given target and return it. Note that
  * when this function returns the target will be blocked (SIGTRAP) and you will

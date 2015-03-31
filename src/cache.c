@@ -111,7 +111,7 @@ static char *cache_save(cache_t *c, const char *filename) {
     return h;
 }
 
-int cache_write(cache_t *cache, int argc, const char **argv,
+int cache_write(cache_t *cache, int argc, char **argv,
         depset_t *depset, dict_t *env, const char *outfile,
         const char *errfile) {
     fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
@@ -212,7 +212,7 @@ int cache_clear(cache_t *cache) {
     return db_clear(&cache->db);
 }
 
-int cache_locate(cache_t *cache, int argc, const char **argv) {
+int cache_locate(cache_t *cache, int argc, char **argv) {
     fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
     if (fp == NULL)
         return -1;

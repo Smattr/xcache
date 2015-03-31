@@ -63,7 +63,7 @@ static char *locate_hooklib(const char *exe) {
     return libhook;
 }
 
-int trace(target_t *t, const char **argv, const char *tracer) {
+int trace(target_t *t, char **argv, const char *tracer) {
     /* Zero out the struct so we can detect initialised data below. */
     memset(t, 0, sizeof(*t));
     bool children_initialised = false,

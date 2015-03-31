@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-fingerprint_t *fingerprint(unsigned int argc, const char **argv) {
+fingerprint_t *fingerprint(unsigned int argc, char **argv) {
     fingerprint_t *f = calloc(1, sizeof(*f));
     if (f == NULL)
         goto fail;
