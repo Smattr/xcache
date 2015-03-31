@@ -5,7 +5,8 @@
 VERSION_MAJOR = 0
 VERSION_MINOR = 1
 
-OUTPUTS = xcache xcache-static libxcache.a libxcache.so libhook.so xcache-tests
+OUTPUTS = xcache xcache-static libxcache.a libxcache.so libhook.so \
+  xcache-tests oversee
 
 ifneq (${V},)
   Q :=
@@ -27,6 +28,7 @@ SOURCES_LIB = cache.c collection/list.c comm-protocol.c db.c depset.c \
 SOURCES_EXE = main.c translate-syscall.c
 SOURCES_LIBHOOK = comm-protocol.c getenv.c message-protocol.c
 SOURCES_TEST = test.c
+SOURCES_OVERSEE = oversee.c translate-syscall.c
 
 PWD := $(shell pwd)
 
@@ -80,6 +82,10 @@ xcache-tests: $(foreach v,${SOURCES_TEST} ${SOURCES_LIB},$(patsubst %.c,%-testin
 	@echo " [LD] $(notdir $@)"
 	${Q}${CC} -o $@ $^ ${LDFLAGS}
 
+oversee: $(foreach v,${SOURCES_OVERSEE} ${SOURCES_LIB},$(patsubst %.c,%.o,${v}))
+	@echo " [LD] $(notdir $@)"
+	${Q}${CC} -o $@ $^ ${LDFLAGS}
+
 %.o: %.c
 	@echo " [CC] $(notdir $@)"
 	${Q}${CC} ${CFLAGS} -c -o $@ $<
@@ -93,6 +99,7 @@ ifneq (${MAKECMDGOALS},clean)
 -include $(SOURCES_EXE:%.c=%.d)
 -include $(SOURCES_LIBHOOK:%.c=%.d)
 -include $(SOURCES_TEST:%.c=%.d)
+-include $(SOURCES_OVERSEE:%.c=%.d)
 endif
 
 test.d: test.c
