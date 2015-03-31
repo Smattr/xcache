@@ -1,6 +1,7 @@
 #ifndef _XCACHE_TRACE_H_
 #define _XCACHE_TRACE_H_
 
+#include "collection/dict.h"
 #include "collection/list.h"
 #include <linux/limits.h>
 #include <pthread.h>
