@@ -111,6 +111,8 @@ static int trace(pid_t root) {
         } else if (WIFSIGNALED(status)) {
             int sig = WTERMSIG(status);
             fprintf(stderr, "%d terminated by signal %d\n", pid, sig);
+            if (pid == root)
+                return -sig;
         } else {
             fprintf(stderr, "%d received unhandled stop event\n", pid);
         }
