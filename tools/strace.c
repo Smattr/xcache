@@ -108,6 +108,9 @@ static int trace(pid_t root) {
                 printf("%d received signal %d\n", pid, sig);
                 ptrace(PTRACE_SYSCALL, pid, NULL, sig);
             }
+        } else if (WIFSIGNALED(status)) {
+            int sig = WTERMSIG(status);
+            fprintf(stderr, "%d terminated by signal %d\n", pid, sig);
         } else {
             fprintf(stderr, "%d received unhandled stop event\n", pid);
         }
