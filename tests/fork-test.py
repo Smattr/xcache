@@ -23,11 +23,15 @@ fork_test_source = '''
 
 void parent(void) {
     int f = open("hello.txt", O_RDONLY);
+    char buf[10];
+    (void)read(f, buf, sizeof(buf));
     close(f);
 }
 
 void child(void) {
-    int f = open("world.txt", O_WRONLY);
+    int f = open("world.txt", O_WRONLY|O_CREAT);
+    char buf[] = "hello world";
+    (void)write(f, buf, sizeof(buf));
     close(f);
 }
 
