@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <openssl/md5.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,16 +29,34 @@ static char *hex(unsigned char *hash) {
 }
 
 char *filehash(const char *filename) {
-    int fd = open(filename, O_RDONLY);
-    if (fd < 0)
-        return NULL;
-
-    /* Measure the size of the file. */
+    /* Measure the file. */
     struct stat st;
-    if (fstat(fd, &st) != 0) {
-        close(fd);
+    if (stat(filename, &st) != 0) {
+        /* Failed to stat. */
         return NULL;
     }
+
+    bool permissions_altered = false;
+
+    if (access(filename, R_OK) != 0) {
+        /* We can't read the file. We'll need to twiddle its permission bits to
+         * allow this and reset them afterwards. Note that this temporarily
+         * exposes the file as readable by everyone.
+         */
+        mode_t mode = st.st_mode | S_IRUSR | S_IRGRP | S_IROTH;
+        if (chmod(filename, mode) != 0) {
+            /* Failed to make file readable. */
+            return NULL;
+        }
+        permissions_altered = true;
+    }
+
+    char *ph = NULL; /* the final hash we'll return */
+
+    int fd = open(filename, O_RDONLY);
+    if (fd < 0)
+        goto end;
+
     size_t sz = st.st_size;
 
     /* Mmap the file for MD5. If the file is empty then we avoid mmaping as it
@@ -47,7 +66,7 @@ char *filehash(const char *filename) {
         mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
     if (addr == MAP_FAILED) {
         close(fd);
-        return NULL;
+        goto end;
     }
 
     unsigned char *h = malloc(MD5_DIGEST_LENGTH);
@@ -55,7 +74,7 @@ char *filehash(const char *filename) {
         if (addr != NULL)
             munmap(addr, sz);
         close(fd);
-        return NULL;
+        goto end;
     }
     MD5((unsigned char*)addr, sz, h);
 
@@ -65,10 +84,19 @@ char *filehash(const char *filename) {
         munmap(addr, sz);
     close(fd);
 
-    char *ph = hex(h);
+    ph = hex(h);
     /* Note, it's possible hex just failed. In this case we naturally free h
      * and return NULL to the caller anyway.
      */
     free(h);
+
+end:
+    if (permissions_altered) {
+        /* Reset the original permissions. Ignore failure because there's not
+         * much we can do about it.
+         */
+        (void)chmod(filename, st.st_mode);
+    }
+
     return ph;
 }
