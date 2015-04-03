@@ -1,0 +1,9 @@
+.PHONY: default
+default: strace
+
+strace: strace.c
+	gcc -W -Wall -Wextra -o $@ $<
+
+.PHONY: clean
+clean:
+	rm strace
