@@ -9,8 +9,8 @@
 /* Trace the calling process. */
 long pt_traceme(void);
 
-/* Trap all fork (and fork-like) events originating from the given process. */
-long pt_tracechildren(pid_t pid);
+/* Setup default options for tracing. */
+long pt_setoptions(pid_t pid);
 
 /* Continue execution of the (blocked) process until the next syscall. */
 long pt_runtosyscall(pid_t pid);
@@ -38,5 +38,10 @@ void pt_passthrough(pid_t pid, int event);
 
 /* Stop tracing the given (unblocked) process. */
 void pt_detach(pid_t pid);
+
+/* Signal that gets delivered when we see a syscall from the target. See `man
+ * ptrace` for more information.
+ */
+#define SIGSYSCALL (SIGTRAP|0x80)
 
 #endif

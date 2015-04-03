@@ -199,9 +199,9 @@ int trace(target_t *t, char **argv, const char *tracer) {
         goto fail;
     }
 
-    long r = pt_tracechildren(t->root.pid);
+    long r = pt_setoptions(t->root.pid);
     if (r != 0) {
-        DEBUG("failed to set tracing to catch forks (%d)\n", errno);
+        DEBUG("failed to set default tracing options (%d)\n", errno);
         goto fail;
     }
 
@@ -396,9 +396,9 @@ retry:;
             return NULL;
         }
         list_add(&tracee->children, p);
-        if (pt_tracechildren(pid) != 0)
-            DEBUG("warning: failed to enable child tracing for forked child "
-                "%d\n", pid);
+        if (pt_setoptions(pid) != 0)
+            DEBUG("warning: failed to set default tracing options for forked "
+                "child %d\n", pid);
         long r = pt_runtosyscall(pid);
         if (r != 0)
             DEBUG("warning: failed to continue forked child %d (errno: %d)\n",

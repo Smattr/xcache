@@ -24,9 +24,12 @@ long pt_traceme(void) {
     return raise(SIGSTOP);
 }
 
-long pt_tracechildren(pid_t pid) {
-    return ptrace(PTRACE_SETOPTIONS, pid, NULL,
-        PTRACE_O_TRACEFORK|PTRACE_O_TRACEVFORK|PTRACE_O_TRACECLONE);
+long pt_setoptions(pid_t pid) {
+    return ptrace(PTRACE_SETOPTIONS, pid, NULL, 0
+            /* trace children */
+        |PTRACE_O_TRACEFORK|PTRACE_O_TRACEVFORK|PTRACE_O_TRACECLONE
+            /* allow us to discriminate between syscalls and signals */
+        |PTRACE_O_TRACESYSGOOD);
 }
 
 long pt_runtosyscall(pid_t pid) {
@@ -107,8 +110,8 @@ long pt_continue(pid_t pid) {
 void pt_passthrough(pid_t pid, int event) {
     assert(WIFSTOPPED(event));
     int sig = WSTOPSIG(event);
-    if (sig == SIGTRAP)
-        pt_continue(pid);
+    if (sig == SIGSYSCALL)
+        pt_runtosyscall(pid);
     else
         ptrace(PTRACE_CONT, pid, NULL, sig);
 }
