@@ -487,7 +487,6 @@ int complete(target_t *tracee) {
         tracee->exit_status = finish(tracee->root.pid);
         tracee->root.state = TERMINATED;
     }
-    assert(tracee->outfile == NULL);
     (void)hook_close(tracee);
     /* Now that we've closed the hook thread and the tracee has exited, we no
      * longer need any of the monitoring pipes.
