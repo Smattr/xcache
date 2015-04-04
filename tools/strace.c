@@ -110,12 +110,14 @@ static int trace(pid_t root) {
                 /* On execve, Linux resets the pid to the thread leader's pid.
                  * Retrieve the old pid so we can correctly bump the right pid.
                  */
-                pid_t oldpid;
-                if (ptrace(PTRACE_GETEVENTMSG, pid, NULL, &oldpid) == 0) {
+                unsigned long _oldpid;
+                if (ptrace(PTRACE_GETEVENTMSG, pid, NULL, &_oldpid) == 0) {
+                    pid_t oldpid = (pid_t)_oldpid;
                     printf(" (oldpid = %d)\n", oldpid);
                     ptrace(PTRACE_SYSCALL, oldpid, NULL, NULL);
                 } else {
                     printf(" (failed to retrieve oldpid)\n");
+                    ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
                 }
             } else if (sig == SIGTRAP &&
                     ((status >> 8 == (SIGTRAP|(PTRACE_EVENT_FORK << 8))) ||
