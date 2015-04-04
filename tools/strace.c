@@ -29,7 +29,7 @@ static int child(char **argv) {
 /* Get default ptrace options */
 static void *ptrace_options(bool trace_children) {
     /* Give us the ability to detect syscalls */
-    long options = PTRACE_O_TRACESYSGOOD;
+    long options = PTRACE_O_TRACESYSGOOD|PTRACE_O_TRACEEXEC;
 
     if (trace_children)
         options |= PTRACE_O_TRACEFORK|
@@ -104,13 +104,33 @@ static int trace(pid_t root) {
             if (sig == (SIGTRAP|0x80)) { /* see `man ptrace` on sysgood */
                 printf("%d syscall %d\n", pid, get_syscall_no(pid));
                 ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+            } else if (sig == SIGTRAP &&
+                     (status >> 8 == (SIGTRAP|(PTRACE_EVENT_EXEC << 8)))) {
+                printf("%d execing", pid);
+                /* On execve, Linux resets the pid to the thread leader's pid.
+                 * Retrieve the old pid so we can correctly bump the right pid.
+                 */
+                pid_t oldpid;
+                if (ptrace(PTRACE_GETEVENTMSG, pid, NULL, &oldpid) == 0) {
+                    printf(" (oldpid = %d)\n", oldpid);
+                    ptrace(PTRACE_SYSCALL, oldpid, NULL, NULL);
+                } else {
+                    printf(" (failed to retrieve oldpid)\n");
+                }
+            } else if (sig == SIGTRAP &&
+                    ((status >> 8 == (SIGTRAP|(PTRACE_EVENT_FORK << 8))) ||
+                     (status >> 8 == (SIGTRAP|(PTRACE_EVENT_VFORK << 8))) ||
+                     (status >> 8 == (SIGTRAP|(PTRACE_EVENT_CLONE << 8))))) {
+                printf("%d forking a child\n", pid);
+                ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
             } else {
-                printf("%d received signal %d\n", pid, sig);
+                printf("%d received signal %d (status = %d)\n", pid, sig,
+                    status);
                 ptrace(PTRACE_SYSCALL, pid, NULL, sig);
             }
         } else if (WIFSIGNALED(status)) {
             int sig = WTERMSIG(status);
-            fprintf(stderr, "%d terminated by signal %d\n", pid, sig);
+            printf("%d terminated by signal %d\n", pid, sig);
             if (pid == root)
                 return -sig;
         } else {
