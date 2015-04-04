@@ -11,6 +11,7 @@
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include "tkill.h"
 #include <unistd.h>
 #include "util.h"
 
@@ -125,10 +126,10 @@ void pt_passthrough(pid_t pid, int event) {
 }
 
 void pt_detach(pid_t pid) {
-    kill(pid, SIGSTOP);
+    tkill(pid, SIGSTOP);
     while (true) {
         int status;
-        waitpid(pid, &status, 0);
+        waitpid(pid, &status, __WALL);
         if (WIFSTOPPED(status)) {
             if (WSTOPSIG(status) == SIGSTOP) {
                 long r __attribute__((unused)) = ptrace(PTRACE_DETACH, pid, NULL, SIGCONT);
