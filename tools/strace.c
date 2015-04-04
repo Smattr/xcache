@@ -123,7 +123,14 @@ static int trace(pid_t root) {
                     ((status >> 8 == (SIGTRAP|(PTRACE_EVENT_FORK << 8))) ||
                      (status >> 8 == (SIGTRAP|(PTRACE_EVENT_VFORK << 8))) ||
                      (status >> 8 == (SIGTRAP|(PTRACE_EVENT_CLONE << 8))))) {
-                printf("%d forking a child\n", pid);
+                printf("%d forking a child", pid);
+                unsigned long _newpid;
+                if (ptrace(PTRACE_GETEVENTMSG, pid, NULL, &_newpid) == 0) {
+                    pid_t newpid = (pid_t)_newpid;
+                    printf(" (newpid = %d)\n", newpid);
+                } else {
+                    printf(" (failed to retrieve newpid)\n");
+                }
                 ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
             } else {
                 printf("%d received signal %d (status = %d)\n", pid, sig,
