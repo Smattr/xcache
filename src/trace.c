@@ -331,7 +331,7 @@ syscall_t *next_syscall(target_t *tracee) {
 
 retry:;
     int status;
-    pid_t pid = wait(&status);
+    pid_t pid = waitpid(-1, &status, __WALL);
 
     if (WIFEXITED(status)) {
         if (pid != tracee->root.pid) {
