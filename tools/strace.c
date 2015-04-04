@@ -86,7 +86,7 @@ static int get_syscall_no(pid_t pid) {
 static int trace(pid_t root) {
     while (true) {
         int status;
-        pid_t pid = wait(&status);
+        pid_t pid = waitpid(-1, &status, __WALL);
 
         if (pid == -1) {
             fprintf(stderr, "failed wait()\n");
