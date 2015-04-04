@@ -29,7 +29,7 @@ static int child(char **argv) {
 /* Get default ptrace options */
 static void *ptrace_options(bool trace_children) {
     /* Give us the ability to detect syscalls */
-    long options = PTRACE_O_TRACESYSGOOD|PTRACE_O_TRACEEXEC;
+    unsigned long options = PTRACE_O_TRACESYSGOOD|PTRACE_O_TRACEEXEC;
 
     if (trace_children)
         options |= PTRACE_O_TRACEFORK|
