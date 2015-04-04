@@ -27,7 +27,7 @@ long pt_traceme(void) {
 long pt_setoptions(pid_t pid) {
     return ptrace(PTRACE_SETOPTIONS, pid, NULL, 0
             /* trace children */
-        |PTRACE_O_TRACEFORK|PTRACE_O_TRACEVFORK|PTRACE_O_TRACECLONE
+        |PTRACE_O_TRACEEXEC|PTRACE_O_TRACEFORK|PTRACE_O_TRACEVFORK|PTRACE_O_TRACECLONE
             /* allow us to discriminate between syscalls and signals */
         |PTRACE_O_TRACESYSGOOD);
 }
@@ -101,6 +101,14 @@ char *pt_peekfd(pid_t pid, const char *cwd, off_t reg) {
     free(fdlink);
 
     return path;
+}
+
+unsigned long pt_geteventmsg(pid_t pid) {
+    unsigned long msg;
+    long r = ptrace(PTRACE_GETEVENTMSG, pid, NULL, &msg);
+    if (r != 0)
+        return (unsigned long)r;
+    return msg;
 }
 
 long pt_continue(pid_t pid) {

@@ -375,6 +375,35 @@ retry:;
         goto retry;
     }
 
+    if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP &&
+             (status >> 8) == (SIGTRAP|PTRACE_EVENT_EXEC << 8)) {
+        /* The target called execve (or a cousin of). We actually don't care
+         * about exec's at all, but we receive this notification because we
+         * previously set PTRACE_O_TRACEEXEC, which we only did to avoid a
+         * spurious SIGTRAP. At this point, we just want to bump the target and
+         * keep going.
+         */
+
+        /* execve has this messy behaviour where it resets a process's PID to
+         * the thread group leader's PID just prior to execing. This is very
+         * confusing because the thread leader may be in the middle of an
+         * unrelated action or may even be dead. Anyway, luckily we have a way
+         * of retrieving its authentic, old PID.
+         */
+        pid_t oldpid = (pid_t)pt_geteventmsg(pid);
+
+        if (oldpid <= 0) {
+            DEBUG("failed to retrieve previous PID of execing process %d\n",
+                pid);
+            oldpid = pid;
+        }
+
+        if (pt_runtosyscall(oldpid) != 0)
+            DEBUG("failed to resume execing process %d\n", oldpid);
+
+        goto retry;
+    }
+
     assert(WIFSTOPPED(status));
     proc_t *p;
     if (pid == tracee->root.pid)

@@ -28,6 +28,9 @@ char *pt_peekstring(pid_t pid, off_t reg);
  */
 char *pt_peekfd(pid_t pid, const char *cwd, off_t reg) __attribute__((nonnull));
 
+/* Retrieve the event message associated with the last ptrace event. */
+unsigned long pt_geteventmsg(pid_t pid);
+
 /* Continue execution of a blocked process. */
 long pt_continue(pid_t pid);
 
