@@ -1,6 +1,7 @@
-/* Log functionality. See log.h for further documentation. */
+/** \file Log functionality. See log.h for further documentation. */
 
 #include "log.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -8,7 +9,7 @@ verbosity_t verbosity = L_ERROR;
 
 FILE *log_file;
 
-int log_initialised;
+bool log_initialised;
 
 int log_init(const char *filename) {
     if (filename == NULL) {
@@ -19,12 +20,12 @@ int log_init(const char *filename) {
             return -1;
         }
     }
-    log_initialised = 1;
+    log_initialised = true;
     return 0;
 }
 
 void log_deinit(void) {
     if (log_file != stderr)
         fclose(log_file);
-    log_initialised = 0;
+    log_initialised = false;
 }
