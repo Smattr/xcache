@@ -18,7 +18,7 @@ static bool ready(int fd) {
             .events = POLLIN,
         },
     };
-    if (poll(fds, 1, 0) > 1)
+    if (poll(fds, 1, 0) > 0)
         return true;
     return false;
 }
