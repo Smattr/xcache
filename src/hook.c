@@ -41,7 +41,7 @@ ssize_t tee(int in, int out1, int out2) {
     char buffer[1024];
     do {
         len = read(in, buffer, sizeof(buffer));
-        assert(len <= sizeof(buffer));
+        assert(len <= (ssize_t)sizeof(buffer));
 
         if (len == -1)
             break;
