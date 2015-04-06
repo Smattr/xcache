@@ -121,4 +121,25 @@ void *ralloc(void *ptr, size_t size);
  */
 char *readln(const char *path);
 
+/** \brief Retrieve a resolved path to ourselves.
+ *
+ * @return A fully resolved path to our own executable. The returned pointer
+ *   should be freed by the caller.
+ */
+char *my_exe(void);
+
+/** \brief Retrieve a resolved path to the first executable we shadow.
+ *
+ * Based on our environment variable $PATH, there are potentially several
+ * executables that could be referred to by our argv[0]. By the fact that we
+ * are running, we know that we are the first to be resolved. The following
+ * function retrieves the second to be resolved. Note that this skips any
+ * secondary (shadowed) executables that are just symlinks back to ourself.
+ *
+ * @param argv0 The value of argv[0] passed to `main`.
+ * @return A resolved path to our first shadow. The returned pointer should be
+ *   freed by the caller. `NULL` is returned if we're not shadowing anything.
+ */
+char *my_shadow(const char *argv0);
+
 #endif
