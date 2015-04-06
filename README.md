@@ -18,10 +18,11 @@ do the same thing but for any program, not just your C compiler.
 
 ## How Does It Work?
 
-Internally xcache uses the Linux ptrace infrastructure. It traps the target
-(the program being traced) every time it makes a relevant syscall and records
-any new input or output. After a successful run, a cache entry is stored on
-disk with metadata in a SQLite database.
+Internally xcache uses the Linux [ptrace](http://linux.die.net/man/2/ptrace)
+infrastructure. It traps the target (the program being traced) every time it
+makes a relevant syscall and records any new input or output. After a successful
+run, a cache entry is stored on disk with metadata in a
+[SQLite](https://www.sqlite.org/) database.
 
 When invoked with any target program, xcache first checks its cache for a
 successful previous execution of this program in the same environment. If the
@@ -63,7 +64,7 @@ You can find more about xxxcache in xxxcache/README.md.
 
 ## Legal
 
-Copyright (c) 2014, Matthew Fernandez
+Copyright (c) 2015, Matthew Fernandez
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
