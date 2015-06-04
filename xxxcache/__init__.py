@@ -1,4 +1,2 @@
-from Cache import Cache
-from File import File
-from String import String
-from util import resolve
+from .cache import Cache, make_key
+from .util import resolve
