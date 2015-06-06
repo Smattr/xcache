@@ -1,9 +1,4 @@
 import collections, os, shelve
-from .digest import digest
-
-def make_key(*args):
-    assert all(isinstance(a, basestring) for a in args)
-    return '|'.join(digest(x) for x in args)
 
 class Cache(collections.MutableMapping):
     '''Cache for mapping process inputs to outputs.'''
