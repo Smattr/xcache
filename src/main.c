@@ -34,7 +34,7 @@ static char *exclude[] = {
     "^/dev/",
     "^/proc/",
 };
-#define exclude_sz (sizeof(exclude) / sizeof(exclude[0]))
+static const size_t exclude_sz = sizeof(exclude) / sizeof(exclude[0]);
 
 static void usage(const char *prog) {
     fprintf(stderr, "Usage:\n"
