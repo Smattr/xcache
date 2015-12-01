@@ -151,24 +151,21 @@ static int add_from_string(depset_t *d, const char *cwd, char *path,
         }
     }
 
-    bool excluded = false;
     for (unsigned int i = 0; i < exclude_sz; i++) {
         if (regexec(&exclude_regexs[i], absolute, 0, NULL, 0) == 0) {
-            excluded = true;
-            break;
+            free(absolute);
+            return 0;
         }
     }
 
-    if (!excluded) {
-        if (depset_add(d, absolute, type) != 0) {
-            DEBUG("Failed to add %s \"%s\"\n",
-                type == XC_INPUT ? "input" :
-                type == XC_OUTPUT ? "output" :
-                type == XC_AMBIGUOUS ? "ambiguous" : "unknown",
-                absolute);
-            free(absolute);
-            return -1;
-        }
+    if (depset_add(d, absolute, type) != 0) {
+        DEBUG("Failed to add %s \"%s\"\n",
+            type == XC_INPUT ? "input" :
+            type == XC_OUTPUT ? "output" :
+            type == XC_AMBIGUOUS ? "ambiguous" : "unknown",
+            absolute);
+        free(absolute);
+        return -1;
     }
     free(absolute);
 
