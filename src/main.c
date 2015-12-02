@@ -3,7 +3,6 @@
 #include "depset.h"
 #include <fcntl.h>
 #include "log.h"
-#include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,11 +27,16 @@ static bool statistics = true;
 
 /* Paths to never consider as inputs. This is to avoid tracking things that are
  * not conceptually files, but rather Linux APIs. Entries to this array should
- * be regular expressions.
+ * be path prefixes.
  */
-static char *exclude[] = {
-    "^/dev/",
-    "^/proc/",
+static const struct {
+    const char *prefix;
+    size_t length;
+} exclude[] = {
+#define EXCLUDE_ENTRY(pref) { .prefix = pref, .length = sizeof(pref) - 1 }
+    EXCLUDE_ENTRY("/dev/"),
+    EXCLUDE_ENTRY("/proc/"),
+#undef EXCLUDE_ENTRY
 };
 static const size_t exclude_sz = sizeof(exclude) / sizeof(exclude[0]);
 
@@ -132,7 +136,7 @@ static int parse_arguments(int argc, char **argv) {
 
 /* Add an item to a dependency set. */
 static int add_from_string(depset_t *d, const char *cwd, char *path,
-        filetype_t type, regex_t exclude_regexs[]) {
+        filetype_t type) {
     char *absolute = abspath(cwd, path);
     if (absolute == NULL) {
         DEBUG("Failed to resolve path \"%s\"\n", path);
@@ -152,7 +156,7 @@ static int add_from_string(depset_t *d, const char *cwd, char *path,
     }
 
     for (unsigned int i = 0; i < exclude_sz; i++) {
-        if (regexec(&exclude_regexs[i], absolute, 0, NULL, 0) == 0) {
+        if (strncmp(exclude[i].prefix, absolute, exclude[i].length) == 0) {
             free(absolute);
             return 0;
         }
@@ -172,8 +176,7 @@ static int add_from_string(depset_t *d, const char *cwd, char *path,
     return 0;
 }
 
-static int add_from_reg(depset_t *d, syscall_t *syscall, int argno, filetype_t type,
-        regex_t exclude_regexs[]) {
+static int add_from_reg(depset_t *d, syscall_t *syscall, int argno, filetype_t type) {
     char *filename = syscall_getstring(syscall, argno);
     if (filename == NULL) {
         if (syscall->call == SYS_execve) {
@@ -188,14 +191,13 @@ static int add_from_reg(depset_t *d, syscall_t *syscall, int argno, filetype_t t
         return -1;
     }
 
-    int r = add_from_string(d, syscall->proc->cwd, filename, type,
-        exclude_regexs);
+    int r = add_from_string(d, syscall->proc->cwd, filename, type);
     free(filename);
     return r;
 }
 
 static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
-        int argno, filetype_t type, regex_t exclude_regexs[]) {
+        int argno, filetype_t type) {
     char *filename = syscall_getstring(syscall, argno);
     if (filename == NULL) {
         DEBUG("Failed to retrieve string argument %d from syscall %s (%ld)\n",
@@ -214,8 +216,7 @@ static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
     normpath(fdpath, filename);
     free(filename);
 
-    int r = add_from_string(d, syscall->proc->cwd, fdpath, type,
-        exclude_regexs);
+    int r = add_from_string(d, syscall->proc->cwd, fdpath, type);
     free(fdpath);
     return r;
 }
@@ -326,14 +327,6 @@ int main(int argc, char **argv) {
      * for this execution. We need to actually run the program itself.
      */
 
-    regex_t exclude_regexs[exclude_sz];
-    for (unsigned int i = 0; i < exclude_sz; i++) {
-        if (regcomp(&exclude_regexs[i], exclude[i], 0) != 0) {
-            ERROR("Failed to parse exclude regex %d\n", i);
-            return -1;
-        }
-    }
-
     depset_t *deps = depset_new();
     if (deps == NULL) {
         ERROR("Failed to create dependency set\n");
@@ -367,7 +360,7 @@ int main(int argc, char **argv) {
                  * on kernel exit.
                  */
                 case SYS_execve:
-                    if (add_from_reg(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                    if (add_from_reg(deps, s, 1, XC_INPUT) != 0)
                         goto bailout;
                     break;
 
@@ -381,7 +374,7 @@ int main(int argc, char **argv) {
                     int flags = (int)syscall_getarg(s, 2);
                     filetype_t type = classify_open_entry(flags);
                     if (type != XC_NONE)
-                        if (add_from_reg(deps, s, 1, type, exclude_regexs) != 0)
+                        if (add_from_reg(deps, s, 1, type) != 0)
                             goto bailout;
                     break;
                 }
@@ -393,23 +386,23 @@ int main(int argc, char **argv) {
                     int flags = (int)syscall_getarg(s, 3);
                     filetype_t type = classify_open_entry(flags);
                     if (type != XC_NONE)
-                        if (add_from_fd_and_reg(deps, s, 1, 2, type, exclude_regexs) != 0)
+                        if (add_from_fd_and_reg(deps, s, 1, 2, type) != 0)
                             goto bailout;
                     break;
                 }
 
                 case SYS_rename:
-                    if (add_from_reg(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                    if (add_from_reg(deps, s, 1, XC_INPUT) != 0)
                         goto bailout;
                     break;
 
                 case SYS_unlink:
-                    if (add_from_reg(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                    if (add_from_reg(deps, s, 1, XC_INPUT) != 0)
                         goto bailout;
                     break;
 
                 case SYS_rmdir:
-                    if (add_from_reg(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                    if (add_from_reg(deps, s, 1, XC_INPUT) != 0)
                         goto bailout;
                     break;
 
@@ -438,7 +431,7 @@ int main(int argc, char **argv) {
         switch (s->call) {
 
             case SYS_access:
-                if (add_from_reg(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                if (add_from_reg(deps, s, 1, XC_INPUT) != 0)
                     goto bailout;
                 break;
 
@@ -463,12 +456,12 @@ int main(int argc, char **argv) {
                 break;
 
             case SYS_chmod:
-                if (add_from_reg(deps, s, 1, XC_OUTPUT, exclude_regexs) != 0)
+                if (add_from_reg(deps, s, 1, XC_OUTPUT) != 0)
                     goto bailout;
                 break;
 
             case SYS_creat:
-                if (add_from_reg(deps, s, 1, XC_OUTPUT, exclude_regexs) != 0)
+                if (add_from_reg(deps, s, 1, XC_OUTPUT) != 0)
                     goto bailout;
                 break;
 
@@ -480,7 +473,7 @@ int main(int argc, char **argv) {
                 int flags = (int)syscall_getarg(s, 2);
                 filetype_t type = classify_open_exit(flags);
                 if (type != XC_NONE)
-                    if (add_from_reg(deps, s, 1, type, exclude_regexs) != 0)
+                    if (add_from_reg(deps, s, 1, type) != 0)
                         goto bailout;
                 break;
             }
@@ -489,18 +482,18 @@ int main(int argc, char **argv) {
                 int flags = (int)syscall_getarg(s, 3);
                 filetype_t type = classify_open_exit(flags);
                 if (type != XC_NONE)
-                    if (add_from_fd_and_reg(deps, s, 1, 2, type, exclude_regexs) != 0)
+                    if (add_from_fd_and_reg(deps, s, 1, 2, type) != 0)
                         goto bailout;
                 break;
             }
 
             case SYS_readlink:
-                if (add_from_reg(deps, s, 1, XC_INPUT, exclude_regexs) != 0)
+                if (add_from_reg(deps, s, 1, XC_INPUT) != 0)
                     goto bailout;
                 break;
 
             case SYS_stat:
-                if (add_from_reg(deps, s, 1, XC_AMBIGUOUS, exclude_regexs) != 0)
+                if (add_from_reg(deps, s, 1, XC_AMBIGUOUS) != 0)
                     goto bailout;
                 break;
 
@@ -556,10 +549,7 @@ int main(int argc, char **argv) {
      */
     success = true;
 
-bailout:
-    /* We no longer need the regexs. */
-    for (unsigned int i = 0; i < exclude_sz; i++)
-        regfree(&exclude_regexs[i]);
+bailout:;
 
     int ret = complete(&target);
 
