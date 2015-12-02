@@ -13,7 +13,7 @@ ifneq (${V},)
   CFLAGS += -ggdb
 else
   Q := @
-  CFLAGS += -O2 -DNDEBUG
+  CFLAGS += -O3 -DNDEBUG
 endif
 
 CFLAGS  += -std=gnu1x -W -Wall -Wextra -fPIC -DXCACHE_PIPE=\"XCACHE_PIPE\" \
