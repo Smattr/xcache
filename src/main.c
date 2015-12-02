@@ -222,7 +222,7 @@ static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
 }
 
 /* Sanity checks on open flags because checking for O_RDONLY is awkward. */
-_Static_assert(O_RDONLY == 00 && O_WRONLY == 01 && O_RDWR == 02,
+static_assert(O_RDONLY == 00 && O_WRONLY == 01 && O_RDWR == 02,
     "unexpected file open flag values");
 /* See usage of this below. */
 static const int FLAG_MASK = O_RDONLY | O_WRONLY | O_RDWR;
