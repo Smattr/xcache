@@ -257,7 +257,8 @@ int cache_locate(cache_t *cache, int argc, char **argv) {
         assert(name != NULL);
         char *local_value = getenv(name);
         return !((local_value == NULL && value == NULL) ||
-            !strcmp(local_value, value));
+                 (local_value != NULL && value != NULL &&
+                    strcmp(local_value, value) == 0));
     }
     if (db_for_env(&cache->db, id, env_check) != 0)
         return -1;
