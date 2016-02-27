@@ -16,10 +16,12 @@ int mkdirp(const char *path) {
     assert(path != NULL);
 
     char *abspath;
-    if (path[0] == '/')
+    if (path[0] == '/') {
         /* Path is already absolute. */
-        abspath = (char*)path;
-    else {
+        abspath = strdup(path);
+        if (abspath == NULL)
+            return -1;
+    } else {
         char *cwd = getcwd(NULL, 0);
         if (cwd == NULL)
             return -1;
@@ -30,29 +32,21 @@ int mkdirp(const char *path) {
         strcat(abspath, path);
     }
 
-    /* We commit a white lie, in that we told the caller we weren't going to
-     * modify their string and we do. I think it's acceptable because we undo
-     * the changes we make.
-     */
     for (char *p = abspath + 1; *p != '\0'; p++) {
         if (*p == '/') {
             *p = '\0';
             int r = mkdir(path, 0775);
             if (r != 0 && errno != EEXIST) {
-                *p = '/';
-                if (path[0] != '/')
-                    free(abspath);
+                free(abspath);
                 return -1;
             }
             *p = '/';
         }
     }
     if (mkdir(path, 0775) != 0 && errno != EEXIST) {
-        if (path[0] != '/')
-            free(abspath);
+        free(abspath);
         return -1;
     }
-    if (path[0] != '/')
-        free(abspath);
+    free(abspath);
     return 0;
 }
