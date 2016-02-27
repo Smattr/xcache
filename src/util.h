@@ -38,6 +38,24 @@ char *abspath(const char *cwd, char *relpath) __attribute__((nonnull));
  */
 char *aprintf(const char *fmt, ...);
 
+/** \brief Support for managed pointers.
+ *
+ * This function is not intended to be called directly, but is expected to be
+ * accessed through the adjacent macro. Sample usage:
+ *
+ *     void foo(void) {
+ *       autofree int *x = malloc(sizeof(int));
+ *       // no need to call free(x)
+ *     }
+ *
+ * @param p Pointer to a pointer to free.
+ */
+static inline void autofree_(void *p) {
+    void **q = p;
+    free(*q);
+}
+#define autofree __attribute__((cleanup(autofree_)))
+
 /** \brief Return the hash of the contents of a file.
  *
  * The caller should not rely on any property of the hash except it being
