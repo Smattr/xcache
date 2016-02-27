@@ -2,7 +2,7 @@
 
 '''Run all tests from this directory'''
 
-import copy, os, subprocess, sys
+import atexit, copy, os, shutil, subprocess, sys, tempfile
 
 def run(cmd, **kwargs):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -13,12 +13,18 @@ def run(cmd, **kwargs):
         print >>sys.stderr, stderr
     return p.returncode
 
-def main(argv):
+def main():
     me = os.path.abspath(__file__)
 
     print >>sys.stderr, 'Building all targets...',
     src = os.path.abspath(os.path.join(os.path.dirname(me), '../src'))
-    ret = run(['make'], cwd=src)
+    tmp = tempfile.mkdtemp()
+    atexit.register(shutil.rmtree, tmp)
+    ret = run(['cmake', src, '-G', 'Ninja'], cwd=tmp)
+    if ret != 0:
+        print >>sys.stderr, 'Failed'
+        return ret
+    ret = run(['ninja'], cwd=tmp)
     if ret == 0:
         print >>sys.stderr, 'Passed'
     else:
@@ -29,7 +35,7 @@ def main(argv):
     failed = False
 
     print >>sys.stderr, 'Running unit tests...',
-    ret = run([os.path.join(src, 'xcache-tests')])
+    ret = run([os.path.join(tmp, 'xcache-tests')])
     if ret == 0:
         print >>sys.stderr, 'Passed'
     else:
@@ -37,7 +43,7 @@ def main(argv):
         failed = True
 
     env = copy.deepcopy(os.environ)
-    env['PATH'] = '%s:%s' % (env.get('PATH', ''), src)
+    env['PATH'] = '%s:%s' % (env.get('PATH', ''), tmp)
     env['LD_LIBRARY_PATH'] = src
 
     for t in os.listdir(os.path.dirname(me)):
@@ -56,4 +62,4 @@ def main(argv):
     return 0
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    sys.exit(main())
