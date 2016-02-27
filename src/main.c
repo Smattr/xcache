@@ -177,6 +177,7 @@ static int add_from_string(depset_t *d, const char *cwd, char *path,
 }
 
 static int add_from_reg(depset_t *d, syscall_t *syscall, int argno, filetype_t type) {
+    assert(argno > 0);
     char *filename = syscall_getstring(syscall, argno);
     if (filename == NULL) {
         if (syscall->call == SYS_execve) {
