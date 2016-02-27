@@ -15,9 +15,10 @@ def run(cmd, **kwargs):
 
 def main():
     me = os.path.abspath(__file__)
+    my_dir = os.path.dirname(me)
 
     print >>sys.stderr, 'Building all targets...',
-    src = os.path.abspath(os.path.join(os.path.dirname(me), '../src'))
+    src = os.path.abspath(os.path.join(my_dir, '../src'))
     tmp = tempfile.mkdtemp()
     atexit.register(shutil.rmtree, tmp)
     ret = run(['cmake', src, '-G', 'Ninja'], cwd=tmp)
@@ -46,8 +47,8 @@ def main():
     env['PATH'] = '%s:%s' % (env.get('PATH', ''), tmp)
     env['LD_LIBRARY_PATH'] = src
 
-    for t in os.listdir(os.path.dirname(me)):
-        test = os.path.abspath(os.path.join(os.path.dirname(me), t))
+    for t in os.listdir(my_dir):
+        test = os.path.abspath(os.path.join(my_dir, t))
         if os.path.isfile(test) and os.access(test, os.X_OK) and test != me:
             print >>sys.stderr, 'Running %s...' % test,
             cwd = tempfile.mkdtemp()
