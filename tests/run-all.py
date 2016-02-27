@@ -2,7 +2,7 @@
 
 '''Run all tests from this directory'''
 
-import atexit, copy, os, shutil, subprocess, sys, tempfile
+import atexit, colors, copy, os, shutil, subprocess, sys, tempfile
 
 def run(cmd, **kwargs):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -12,6 +12,12 @@ def run(cmd, **kwargs):
         sys.stdout.write(stdout)
         sys.stderr.write(stderr)
     return p.returncode
+
+def show_passed():
+    sys.stderr.write(colors.green('Passed\n', style='bold'))
+
+def show_failed():
+    sys.stderr.write(colors.red('Failed\n', style='bold'))
 
 def main():
     me = os.path.abspath(__file__)
@@ -24,14 +30,14 @@ def main():
     atexit.register(shutil.rmtree, tmp)
     ret = run(['cmake', src, '-G', 'Ninja'], cwd=tmp)
     if ret != 0:
-        sys.stderr.write('Failed\n')
+        show_failed()
         return ret
     ret = run(['ninja'], cwd=tmp)
     if ret == 0:
-        sys.stderr.write('Passed\n')
+        show_passed()
     else:
         # If this fails it's critical; bail out
-        sys.stderr.write('Failed\n')
+        show_failed()
         return ret
 
     failed = False
@@ -39,9 +45,9 @@ def main():
     sys.stderr.write('Running unit tests... ')
     ret = run([os.path.join(tmp, 'xcache-tests')])
     if ret == 0:
-        sys.stderr.write('Passed\n')
+        show_passed()
     else:
-        sys.stderr.write('Failed\n')
+        show_failed()
         failed = True
 
     env = copy.deepcopy(os.environ)
@@ -57,9 +63,9 @@ def main():
             atexit.register(shutil.rmtree, cwd)
             ret = run([test], env=env, cwd=cwd)
             if ret == 0:
-                sys.stderr.write('Passed\n')
+                show_passed()
             else:
-                sys.stderr.write('Failed\n')
+                show_failed()
                 failed = True
 
     if failed:
