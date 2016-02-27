@@ -110,13 +110,11 @@ static char *cache_save(cache_t *c, const char *filename) {
 int cache_write(cache_t *cache, int argc, char **argv,
         depset_t *depset, dict_t *env, const char *outfile,
         const char *errfile) {
-    fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
+    auto_fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
     if (fp == NULL)
         return -1;
-    if (db_begin(&cache->db) != 0) {
-        fingerprint_destroy(fp);
+    if (db_begin(&cache->db) != 0)
         return -1;
-    }
 
     int id = get_id(cache, fp);
     if (id != -1) {
@@ -130,8 +128,6 @@ int cache_write(cache_t *cache, int argc, char **argv,
     }
     if (db_insert_id(&cache->db, &id, fp) != 0)
         goto fail;
-    fingerprint_destroy(fp);
-    fp = NULL;
 
     assert(id >= 0);
 
@@ -196,8 +192,6 @@ int cache_write(cache_t *cache, int argc, char **argv,
 
 fail:
     db_rollback(&cache->db);
-    if (fp != NULL)
-        fingerprint_destroy(fp);
     return -1;
 }
 
@@ -206,7 +200,7 @@ int cache_clear(cache_t *cache) {
 }
 
 int cache_locate(cache_t *cache, int argc, char **argv) {
-    fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
+    auto_fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
     if (fp == NULL)
         return -1;
 
@@ -214,10 +208,8 @@ int cache_locate(cache_t *cache, int argc, char **argv) {
     if (id == -1) {
         DEBUG("Failed to locate cache entry for \"%s\" in directory \"%s\"\n",
             fp->argv, fp->cwd);
-        fingerprint_destroy(fp);
         return -1;
     }
-    fingerprint_destroy(fp);
 
     if (cache->statistics) {
         /* Ignore the return value because failure here is non-critical. */

@@ -8,6 +8,7 @@
 #define _XCACHE_FINGERPRINT_
 
 #include <stdint.h>
+#include <stdlib.h>
 
 typedef struct {
     /* Current working directory */
@@ -26,5 +27,16 @@ fingerprint_t *fingerprint(unsigned int argc, char **argv);
 
 /* Deallocate memory associated with a fingerprint. */
 void fingerprint_destroy(fingerprint_t *fp);
+
+/* Support for automatically managed fingerprints. */
+static inline void autofingerprint_destroy_(void *p) {
+    fingerprint_t **fp = p;
+    if (*fp != NULL)
+        fingerprint_destroy(*fp);
+}
+/* XXX: Would be nice for this to be a typedef but GCC doesn't let you attach
+ * this attribute to a typedef.
+ */
+#define auto_fingerprint_t __attribute__((cleanup(autofingerprint_destroy_))) fingerprint_t
 
 #endif
