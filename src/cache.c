@@ -199,6 +199,24 @@ int cache_clear(cache_t *cache) {
     return db_clear(&cache->db);
 }
 
+static char *debug_timestamp(time_t ts) {
+    if (verbosity < L_DEBUG)
+        return NULL;
+
+    static const char format[] = "%F %T";
+    char buf[sizeof("0000-00-00 00:00:00")];
+    if (ts == MISSING) {
+        strcpy(buf, "<MISSING>");
+    } else {
+        struct tm local;
+        localtime_r(&ts, &local);
+        int r = strftime(buf, sizeof(buf), format, &local);
+        if (r == 0)
+            strcpy(buf, "<conversion failed>");
+    }
+    return aprintf("%llu (%s)", (long long unsigned)ts, buf);
+}
+
 int cache_locate(cache_t *cache, int argc, char **argv) {
     auto_fingerprint_t *fp = fingerprint((unsigned int)argc, argv);
     if (fp == NULL)
@@ -228,9 +246,11 @@ int cache_locate(cache_t *cache, int argc, char **argv) {
             /* This is actually the expected case; that we found the input file
              * but its timestamp has changed.
              */
-            DEBUG("Found %s but its timestamp was %llu, not %llu as expected\n",
-                filename, (long long unsigned)st.st_mtime,
-                (long long unsigned)timestamp);
+            autofree char *time1 = debug_timestamp(st.st_mtime);
+            autofree char *time2 = debug_timestamp(timestamp);
+
+            DEBUG("Found %s but its timestamp was %s not %s as expected",
+                filename, time1, time2);
             return -1;
         }
         return 0;
