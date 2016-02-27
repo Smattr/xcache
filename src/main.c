@@ -137,7 +137,7 @@ static int parse_arguments(int argc, char **argv) {
 /* Add an item to a dependency set. */
 static int add_from_string(depset_t *d, const char *cwd, char *path,
         filetype_t type) {
-    char *absolute = abspath(cwd, path);
+    autofree char *absolute = abspath(cwd, path);
     if (absolute == NULL) {
         DEBUG("Failed to resolve path \"%s\"\n", path);
         return -1;
@@ -150,16 +150,13 @@ static int add_from_string(depset_t *d, const char *cwd, char *path,
          */
         if (stat(absolute, &st) == 0 && (st.st_mode & S_IFDIR)) {
             IDEBUG("Skipping directory %s\n", absolute);
-            free(absolute);
             return 0;
         }
     }
 
     for (unsigned int i = 0; i < exclude_sz; i++) {
-        if (strncmp(exclude[i].prefix, absolute, exclude[i].length) == 0) {
-            free(absolute);
+        if (strncmp(exclude[i].prefix, absolute, exclude[i].length) == 0)
             return 0;
-        }
     }
 
     if (depset_add(d, absolute, type) != 0) {
@@ -168,17 +165,15 @@ static int add_from_string(depset_t *d, const char *cwd, char *path,
             type == XC_OUTPUT ? "output" :
             type == XC_AMBIGUOUS ? "ambiguous" : "unknown",
             absolute);
-        free(absolute);
         return -1;
     }
-    free(absolute);
 
     return 0;
 }
 
 static int add_from_reg(depset_t *d, syscall_t *syscall, int argno, filetype_t type) {
     assert(argno > 0);
-    char *filename = syscall_getstring(syscall, argno);
+    autofree char *filename = syscall_getstring(syscall, argno);
     if (filename == NULL) {
         if (syscall->call == SYS_execve) {
             /* A successful execve results in two entry SIGTRAPs, the
@@ -193,13 +188,12 @@ static int add_from_reg(depset_t *d, syscall_t *syscall, int argno, filetype_t t
     }
 
     int r = add_from_string(d, syscall->proc->cwd, filename, type);
-    free(filename);
     return r;
 }
 
 static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
         int argno, filetype_t type) {
-    char *filename = syscall_getstring(syscall, argno);
+    autofree char *filename = syscall_getstring(syscall, argno);
     if (filename == NULL) {
         DEBUG("Failed to retrieve string argument %d from syscall %s (%ld)\n",
             argno, translate_syscall(syscall->call), syscall->call);
@@ -207,18 +201,15 @@ static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
     }
     IDEBUG("%s: retrieved filename \"%s\"\n", __func__, filename);
 
-    char *fdpath = syscall_getfd(syscall, fdarg);
+    autofree char *fdpath = syscall_getfd(syscall, fdarg);
     if (fdpath == NULL) {
-        free(filename);
         DEBUG("Failed to retrieve file descriptor argument %d from syscall %s "
             "(%ld)\n", fdarg, translate_syscall(syscall->call), syscall->call);
         return -1;
     }
     IDEBUG("%s: retrieved fd path \"%s\"\n", __func__, fdpath);
 
-    char *path = abspath(fdpath, filename);
-    free(fdpath);
-    free(filename);
+    autofree char *path = abspath(fdpath, filename);
     if (path == NULL) {
         DEBUG("Failed to resolve absolute path from syscall %s (%ld)\n",
             translate_syscall(syscall->call), syscall->call);
@@ -227,7 +218,6 @@ static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
     IDEBUG("%s: normalised path to \"%s\"\n", __func__, fdpath);
 
     int r = add_from_string(d, syscall->proc->cwd, path, type);
-    free(path);
     return r;
 }
 

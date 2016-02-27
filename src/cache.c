@@ -47,17 +47,15 @@ cache_t *cache_open(const char *path, bool statistics) {
     if (c == NULL)
         return NULL;
 
-    char *db_path = aprintf("%s/" DB, path);
+    autofree char *db_path = aprintf("%s/" DB, path);
     if (db_path == NULL) {
         free(c);
         return NULL;
     }
     if (db_open(&c->db, db_path) != 0) {
-        free(db_path);
         free(c);
         return NULL;
     }
-    free(db_path);
 
     c->root = aprintf("%s" DATA, path);
     if (c->root == NULL) {
@@ -97,17 +95,15 @@ static char *cache_save(cache_t *c, const char *filename) {
     if (h == NULL)
         return NULL;
 
-    char *cpath = aprintf("%s/%s", c->root, h);
+    autofree char *cpath = aprintf("%s/%s", c->root, h);
     if (cpath == NULL) {
         free(h);
         return NULL;
     }
     if (cp(filename, cpath) != 0) {
-        free(cpath);
         free(h);
         return NULL;
     }
-    free(cpath);
     return h;
 }
 
@@ -150,12 +146,11 @@ int cache_write(cache_t *cache, int argc, char **argv,
             if (stat(filename, &st) != 0)
                 return 0;
 
-            char *h = cache_save(cache, filename);
+            autofree char *h = cache_save(cache, filename);
             if (h == NULL)
                 return -1;
 
             int r = db_insert_output(&cache->db, id, filename, st.st_mtime, st.st_mode, h);
-            free(h);
             return r;
         }
 
@@ -171,23 +166,21 @@ int cache_write(cache_t *cache, int argc, char **argv,
         goto fail;
 
     if (outfile != NULL) {
-        char *h = cache_save(cache, outfile);
+        autofree char *h = cache_save(cache, outfile);
         if (h == NULL)
             goto fail;
 
         int r = db_insert_output(&cache->db, id, "/dev/stdout", 0, 0, h);
-        free(h);
         if (r != 0)
             goto fail;
     }
 
     if (errfile != NULL) {
-        char *h = cache_save(cache, errfile);
+        autofree char *h = cache_save(cache, errfile);
         if (h == NULL)
             goto fail;
 
         int r = db_insert_output(&cache->db, id, "/dev/stderr", 0, 0, h);
-        free(h);
         if (r != 0)
             goto fail;
     }
@@ -291,13 +284,12 @@ int cache_dump(cache_t *cache, int id) {
             last_slash[0] = '/';
         }
 
-        char *cached_copy = aprintf("%s/%s", cache->root, contents);
+        autofree char *cached_copy = aprintf("%s/%s", cache->root, contents);
         if (cached_copy == NULL) {
             ERROR("Out of memory while dumping cache entry %s\n", filename);
             return -1;
         }
         int res = cp(cached_copy, filename);
-        free(cached_copy);
         chmod(filename, mode);
         struct utimbuf ut = {
             .actime = timestamp,

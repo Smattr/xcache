@@ -44,7 +44,7 @@ char *my_shadow(const char *argv0) {
     if (path == NULL)
         return NULL;
 
-    char *me = my_exe();
+    autofree char *me = my_exe();
     if (me == NULL)
         return NULL; /* bummer */
 
@@ -96,11 +96,9 @@ loop:
         /* If we reached here, we found an executable under the same name as
          * `argv0` that we are shadowing.
          */
-        free(me);
         return strdup(candidate);
     }
 
     /* We exhausted $PATH and didn't find anything we are shadowing. */
-    free(me);
     return NULL;
 }

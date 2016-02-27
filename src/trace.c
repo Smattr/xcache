@@ -30,11 +30,10 @@ static int proc_cmp(void *proc, void *pid) {
 }
 
 int proc_update_cwd(proc_t *proc) {
-    char *cwdlink = aprintf("/proc/%d/cwd", proc->pid);
+    autofree char *cwdlink = aprintf("/proc/%d/cwd", proc->pid);
     if (cwdlink == NULL)
         return -1;
     ssize_t sz = readlink(cwdlink, proc->cwd, sizeof(proc->cwd));
-    free(cwdlink);
     if (sz >= (ssize_t)sizeof(proc->cwd))
         return -1;
     proc->cwd[sz] = '\0';
@@ -51,14 +50,13 @@ int proc_update_cwd(proc_t *proc) {
  * about why the hook fails.
  */
 static char *locate_hooklib(const char *exe) {
-    char *resolved = realpath(exe, NULL);
+    autofree char *resolved = realpath(exe, NULL);
     if (resolved == NULL)
         return NULL;
 
     char *root = dirname(resolved);
 
     char *libhook = aprintf("%s/libhook.so", root);
-    free(resolved);
 
     return libhook;
 }
@@ -146,7 +144,7 @@ int trace(target_t *t, char **argv, const char *tracer) {
              * critical.
              */
             if (tracer != NULL) {
-                char *lib = locate_hooklib(tracer);
+                autofree char *lib = locate_hooklib(tracer);
                 if (lib != NULL) {
                     char *ld_preload = getenv("LD_PRELOAD");
                     if (ld_preload == NULL) {
@@ -157,15 +155,13 @@ int trace(target_t *t, char **argv, const char *tracer) {
                     (void)setenv("LD_PRELOAD", ld_preload, 1);
                     if (ld_preload != lib)
                         free(ld_preload);
-                    free(lib);
 
                     /* Make sure libhook can find the pipe back to the
                      * tracer.
                      */
-                    char *xcache_pipe = aprintf("%d", t->msg_pipe[1]);
+                    autofree char *xcache_pipe = aprintf("%d", t->msg_pipe[1]);
                     if (xcache_pipe != NULL) {
                         (void)setenv(XCACHE_PIPE, xcache_pipe, 1);
-                        free(xcache_pipe);
                     }
                 }
             }
@@ -337,10 +333,9 @@ retry:;
         if (pid != tracee->root.pid) {
             /* A forked child exited. */
             IDEBUG("child %d exited\n", pid);
-            proc_t *p = list_remove(&tracee->children,
+            autofree proc_t *p = list_remove(&tracee->children,
                 (void*)(uintptr_t)pid);
             assert(p != NULL && p->pid == pid);
-            free(p);
             goto retry;
         }
         /* In the following we are assuming a well behaved tracee that waits on

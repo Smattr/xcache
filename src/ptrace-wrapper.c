@@ -51,24 +51,20 @@ char *pt_peekstring(pid_t pid, off_t reg) {
      * to do this through the /proc file system.
      */
 
-    char *filename = aprintf("/proc/%d/mem", pid);
+    autofree char *filename = aprintf("/proc/%d/mem", pid);
     if (filename == NULL)
         return NULL;
     FILE *f = fopen(filename, "r");
     if (f == NULL) {
         DEBUG("failed to open %s to read string\n", filename);
-        free(filename);
         return NULL;
     }
 
     if (fseek(f, (off_t)addr, SEEK_SET) != 0) {
         DEBUG("failed to seek %s\n", filename);
         fclose(f);
-        free(filename);
         return NULL;
     }
-
-    free(filename);
 
     char *s = malloc(PATH_MAX + 1);
     if (s == NULL) {
@@ -92,14 +88,13 @@ char *pt_peekfd(pid_t pid, const char *cwd, off_t reg) {
     if (fd == AT_FDCWD)
         return strdup(cwd);
 
-    char *fdlink = aprintf("/proc/%d/fd/%d", pid, fd);
+    autofree char *fdlink = aprintf("/proc/%d/fd/%d", pid, fd);
     if (fdlink == NULL)
         return NULL;
 
     char *path = readln(fdlink);
     if (path == NULL)
         DEBUG("Failed to resolve link %s\n", fdlink);
-    free(fdlink);
 
     return path;
 }

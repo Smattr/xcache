@@ -15,7 +15,7 @@
 int mkdirp(const char *path) {
     assert(path != NULL);
 
-    char *abspath;
+    autofree char *abspath = NULL;
     if (path[0] == '/') {
         /* Path is already absolute. */
         abspath = strdup(path);
@@ -37,16 +37,12 @@ int mkdirp(const char *path) {
             *p = '\0';
             int r = mkdir(path, 0775);
             if (r != 0 && errno != EEXIST) {
-                free(abspath);
                 return -1;
             }
             *p = '/';
         }
     }
-    if (mkdir(path, 0775) != 0 && errno != EEXIST) {
-        free(abspath);
+    if (mkdir(path, 0775) != 0 && errno != EEXIST)
         return -1;
-    }
-    free(abspath);
     return 0;
 }
