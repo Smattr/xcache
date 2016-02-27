@@ -52,7 +52,7 @@ def main():
 
     env = copy.deepcopy(os.environ)
     env['PATH'] = '%s:%s' % (env.get('PATH', ''), tmp)
-    env['LD_LIBRARY_PATH'] = src
+    env['LD_LIBRARY_PATH'] = tmp
 
     for t in os.listdir(my_dir):
         test = os.path.abspath(os.path.join(my_dir, t))
