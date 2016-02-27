@@ -205,6 +205,7 @@ static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
             argno, translate_syscall(syscall->call), syscall->call);
         return -1;
     }
+    IDEBUG("%s: retrieved filename \"%s\"\n", __func__, filename);
 
     char *fdpath = syscall_getfd(syscall, fdarg);
     if (fdpath == NULL) {
@@ -213,12 +214,20 @@ static int add_from_fd_and_reg(depset_t *d, syscall_t *syscall, int fdarg,
             "(%ld)\n", fdarg, translate_syscall(syscall->call), syscall->call);
         return -1;
     }
+    IDEBUG("%s: retrieved fd path \"%s\"\n", __func__, fdpath);
 
-    normpath(fdpath, filename);
-    free(filename);
-
-    int r = add_from_string(d, syscall->proc->cwd, fdpath, type);
+    char *path = abspath(fdpath, filename);
     free(fdpath);
+    free(filename);
+    if (path == NULL) {
+        DEBUG("Failed to resolve absolute path from syscall %s (%ld)\n",
+            translate_syscall(syscall->call), syscall->call);
+        return -1;
+    }
+    IDEBUG("%s: normalised path to \"%s\"\n", __func__, fdpath);
+
+    int r = add_from_string(d, syscall->proc->cwd, path, type);
+    free(path);
     return r;
 }
 
