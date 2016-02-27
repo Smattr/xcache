@@ -135,7 +135,8 @@ static int bind_blob(sqlite3_stmt *s, const char *param, const void *value,
 #undef X
 
 static const char *column_text(sqlite3_stmt *s, int index) {
-    assert(sqlite3_column_type(s, index) == SQLITE_TEXT);
+    assert(sqlite3_column_type(s, index) == SQLITE_TEXT ||
+           sqlite3_column_type(s, index) == SQLITE_NULL);
     return (const char*)sqlite3_column_text(s, index);
 }
 
