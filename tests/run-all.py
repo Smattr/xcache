@@ -50,7 +50,9 @@ def main():
         test = os.path.abspath(os.path.join(os.path.dirname(me), t))
         if os.path.isfile(test) and os.access(test, os.X_OK) and test != me:
             print >>sys.stderr, 'Running %s...' % test,
-            ret = run([test], env=env)
+            cwd = tempfile.mkdtemp()
+            atexit.register(shutil.rmtree, cwd)
+            ret = run([test], env=env, cwd=cwd)
             if ret == 0:
                 print >>sys.stderr, 'Passed'
             else:
