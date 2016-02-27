@@ -62,7 +62,7 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/arch/${ARCH})
 add_executable (oversee oversee.c translate-syscall.c)
 target_link_libraries (oversee xcache ${GLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-add_library (hook comm-protocol.c getenv.c message-protocol.c)
+add_library (hook SHARED comm-protocol.c getenv.c message-protocol.c)
 
 set (LIBXCACHE_SOURCES cache.c collection/list.c comm-protocol.c db.c depset.c
                        collection/dict.c fingerprint.c hook.c log.c
