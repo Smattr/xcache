@@ -17,6 +17,14 @@ static int exec(db_t *db, const char *query) {
     return sqlite3_exec(db->handle, query, NULL, NULL, NULL);
 }
 
+/* Helper to avoid having to remember to finalise statements all the time. */
+static void autofinalize_(void *p) {
+    sqlite3_stmt **s = p;
+    if (*s != NULL)
+        sqlite3_finalize(*s);
+}
+#define auto_sqlite3_stmt __attribute__((cleanup(autofinalize_))) sqlite3_stmt
+
 int db_open(db_t *db, const char *path) {
     int r = sqlite3_open(path, &db->handle);
     if (r != SQLITE_OK)
@@ -132,246 +140,203 @@ static const char *column_text(sqlite3_stmt *s, int index) {
 }
 
 int db_select_id(db_t *db, int *id, const fingerprint_t *fp) {
-    sqlite3_stmt *s;
+    auto_sqlite3_stmt *s = NULL;
     char *getid = "select id from trace where cwd = @cwd and arg_lens = @arg_lens and arg_lens_sz = @arg_lens_sz and argv = @argv;";
     if (prepare(db, &s, getid) != SQLITE_OK)
         return -1;
-
-    int result = -1;
 
     if (bind_text(s, "@cwd", fp->cwd) != SQLITE_OK ||
             bind_blob(s, "@arg_lens", fp->arg_lens, fp->arg_lens_sz * sizeof(*fp->arg_lens)) ||
             bind_int(s, "@arg_lens_sz", fp->arg_lens_sz) ||
             bind_text(s, "@argv", fp->argv) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     if (sqlite3_step(s) != SQLITE_ROW)
-        goto fail;
+        return -1;
 
     assert(sqlite3_column_count(s) == 1);
     *id = column_int(s, 0);
 
     assert(sqlite3_step(s) == SQLITE_DONE);
 
-    result = 0;
-
-fail:
-    sqlite3_finalize(s);
-
-    return result;
+    return 0;
 }
 
 int db_remove_id(db_t *db, int id) {
-    sqlite3_stmt *s = NULL;
+    {
+        auto_sqlite3_stmt *s = NULL;
+        char *deleteoutput = "delete from output where fk_trace = @id;";
 
-    int result = -1;
+        if (prepare(db, &s, deleteoutput) != SQLITE_OK)
+            return -1;
+        if (bind_int(s, "@id", id) != SQLITE_OK)
+            return -1;
+        if (sqlite3_step(s) != SQLITE_DONE)
+            return -1;
+    }
 
-    char *deleteoutput = "delete from output where fk_trace = @id;";
+    {
+        auto_sqlite3_stmt *s = NULL;
+        char *deleteinput = "delete from input where fk_trace = @id;";
 
-    if (prepare(db, &s, deleteoutput) != SQLITE_OK)
-        goto fail;
-    if (bind_int(s, "@id", id) != SQLITE_OK)
-        goto fail;
-    if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
-    sqlite3_finalize(s);
-    s = NULL;
+        if (prepare(db, &s, deleteinput) != SQLITE_OK)
+            return -1;
+        if (bind_int(s, "@id", id) != SQLITE_OK)
+            return -1;
+        if (sqlite3_step(s) != SQLITE_DONE)
+            return -1;
+    }
 
+    {
+        auto_sqlite3_stmt *s = NULL;
+        char *deleteenv = "delete from env where fk_trace = @id;";
 
-    char *deleteinput = "delete from input where fk_trace = @id;";
+        if (prepare(db, &s, deleteenv) != SQLITE_OK)
+            return -1;
+        if (bind_int(s, "@id", id) != SQLITE_OK)
+            return -1;
+        if (sqlite3_step(s) != SQLITE_DONE)
+            return -1;
+    }
 
-    if (prepare(db, &s, deleteinput) != SQLITE_OK)
-        goto fail;
-    if (bind_int(s, "@id", id) != SQLITE_OK)
-        goto fail;
-    if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
-    sqlite3_finalize(s);
-    s = NULL;
+    {
+        auto_sqlite3_stmt *s = NULL;
+        char *deletestatistics = "delete from statistics where fk_trace = @id;";
 
-    char *deleteenv = "delete from env where fk_trace = @id;";
+        if (prepare(db, &s, deletestatistics) != SQLITE_OK)
+            return -1;
+        if (bind_int(s, "@id", id) != SQLITE_OK)
+            return -1;
+        if (sqlite3_step(s) != SQLITE_DONE)
+            return -1;
+    }
 
-    if (prepare(db, &s, deleteenv) != SQLITE_OK)
-        goto fail;
-    if (bind_int(s, "@id", id) != SQLITE_OK)
-        goto fail;
-    if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
-    sqlite3_finalize(s);
-    s = NULL;
+    {
+        auto_sqlite3_stmt *s = NULL;
+        char *deletetrace = "delete from trace where id = @id;";
 
-    char *deletestatistics = "delete from statistics where fk_trace = @id;";
-    if (prepare(db, &s, deletestatistics) != SQLITE_OK)
-        goto fail;
-    if (bind_int(s, "@id", id) != SQLITE_OK)
-        goto fail;
-    if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
-    sqlite3_finalize(s);
-    s = NULL;
+        if (prepare(db, &s, deletetrace) != SQLITE_OK)
+            return -1;
+        if (bind_int(s, "@id", id) != SQLITE_OK)
+            return -1;
+        if (sqlite3_step(s) != SQLITE_DONE)
+            return -1;
+    }
 
-    char *deletetrace = "delete from trace where id = @id;";
-    if (prepare(db, &s, deletetrace) != SQLITE_OK)
-        goto fail;
-    if (bind_int(s, "@id", id) != SQLITE_OK)
-        goto fail;
-    if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
-
-    result = 0;
-
-fail:
-    if (s != NULL)
-        sqlite3_finalize(s);
-
-    return result;
+    return 0;
 }
 
 int db_insert_event(db_t *db, int id, db_event_t event) {
-    sqlite3_stmt *s;
+    auto_sqlite3_stmt *s = NULL;
     char *add = "insert into statistics (fk_trace, event) values (@fk_trace, "
         "@event);";
     if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
-    int result = -1;
-
     if (bind_int(s, "@fk_trace", id) != SQLITE_OK ||
             bind_int(s, "@event", event) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
+        return -1;
 
-    result = 0;
-
-fail:
-    sqlite3_finalize(s);
-
-    return result;
+    return 0;
 }
 
 int db_insert_id(db_t *db, int *id, const fingerprint_t *fp) {
-    sqlite3_stmt *s;
+    auto_sqlite3_stmt *s = NULL;
     char *add = "insert into trace (cwd, arg_lens, arg_lens_sz, argv) values (@cwd, @arg_lens, @arg_lens_sz, @argv);";
     if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
-
-    int result = -1;
 
     if (bind_text(s, "@cwd", fp->cwd) != SQLITE_OK ||
             bind_blob(s, "@arg_lens", fp->arg_lens, fp->arg_lens_sz * sizeof(*fp->arg_lens)) ||
             bind_int(s, "@arg_lens_sz", fp->arg_lens_sz) ||
             bind_text(s, "@argv", fp->argv) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
+        return -1;
 
-    result = db_select_id(db, id, fp);
+    int result = db_select_id(db, id, fp);
     assert(result == 0);
-
-fail:
-    sqlite3_finalize(s);
 
     return result;
 }
 
 int db_insert_input(db_t *db, int id, const char *filename, time_t timestamp) {
-    sqlite3_stmt *s;
+    auto_sqlite3_stmt *s = NULL;
     char *add = "insert into input (fk_trace, filename, timestamp) values "
         "(@fk_trace, @filename, @timestamp);";
     if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
-    int result = -1;
-
     if (bind_int(s, "@fk_trace", id) != SQLITE_OK ||
             bind_text(s, "@filename", filename) != SQLITE_OK ||
             bind_time_t(s, "@timestamp", timestamp) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
+        return -1;
 
-    result = 0;
-
-fail:
-    sqlite3_finalize(s);
-
-    return result;
+    return 0;
 }
 
 int db_insert_output(db_t *db, int id, const char *filename, time_t timestamp,
         mode_t mode, const char *contents) {
-    sqlite3_stmt *s;
+    auto_sqlite3_stmt *s = NULL;
     char *add = "insert into output (fk_trace, filename, timestamp, mode, "
         "contents) values (@fk_trace, @filename, @timestamp, "
         "@mode, @contents);";
     if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
-    int result = -1;
-
     if (bind_int(s, "@fk_trace", id) != SQLITE_OK ||
             bind_text(s, "@filename", filename) != SQLITE_OK ||
             bind_time_t(s, "@timestamp", timestamp) != SQLITE_OK ||
             bind_mode_t(s, "@mode", mode) != SQLITE_OK ||
             bind_text(s, "@contents", contents) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
+        return -1;
 
-    result = 0;
-
-fail:
-    sqlite3_finalize(s);
-
-    return result;
+    return 0;
 }
 
 int db_insert_env(db_t *db, int id, const char *name, const char *value) {
-    sqlite3_stmt *s;
+    auto_sqlite3_stmt *s = NULL;
     char *add = "insert into env (fk_trace, name, value) values (@fk_trace, "
         "@name, @value);";
     if (prepare(db, &s, add) != SQLITE_OK)
         return -1;
 
-    int result = -1;
-
     if (bind_int(s, "@fk_trace", id) != SQLITE_OK ||
             bind_text(s, "@name", name) != SQLITE_OK ||
             bind_text(s, "@value", value) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     if (sqlite3_step(s) != SQLITE_DONE)
-        goto fail;
+        return -1;
 
-    result = 0;
-
-fail:
-    sqlite3_finalize(s);
-
-    return result;
+    return 0;
 }
 
 int db_for_inputs(db_t *db, int id,
         int (*cb)(const char *filename, time_t timestamp)) {
-    sqlite3_stmt *s = NULL;
+    auto_sqlite3_stmt *s = NULL;
 
     char *getinputs = "select filename, timestamp from input where "
         "fk_trace = @fk_trace;";
     if (prepare(db, &s, getinputs) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     while (true) {
         switch (sqlite3_step(s)) {
             case SQLITE_DONE:
-                sqlite3_finalize(s);
                 return 0;
 
             case SQLITE_ROW:
@@ -380,42 +345,34 @@ int db_for_inputs(db_t *db, int id,
                 assert(filename != NULL);
                 time_t timestamp = column_time_t(s, 1);
                 int r = cb(filename, timestamp);
-                if (r != 0) {
-                    sqlite3_finalize(s);
+                if (r != 0)
                     return r;
-                }
                 break;
 
             default:
-                goto fail;
+                return -1;
         }
     }
 
     assert(!"unreachable");
-
-fail:
-    if (s != NULL)
-        sqlite3_finalize(s);
-    return -1;
 }
 
 int db_for_outputs(db_t *db, int id,
         int (*cb)(const char *filename, time_t timestamp, mode_t mode,
         const char *contents)) {
-    sqlite3_stmt *s = NULL;
+    auto_sqlite3_stmt *s = NULL;
 
     char *getoutputs = "select filename, timestamp, mode, contents "
         "from output where fk_trace = @fk_trace;";
     if (prepare(db, &s, getoutputs) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     while (true) {
         switch (sqlite3_step(s)) {
             case SQLITE_DONE:
-                sqlite3_finalize(s);
                 return 0;
 
             case SQLITE_ROW:
@@ -426,40 +383,32 @@ int db_for_outputs(db_t *db, int id,
                 mode_t mode = column_mode_t(s, 2);
                 const char *contents = column_text(s, 3);
                 int r = cb(filename, timestamp, mode, contents);
-                if (r != 0) {
-                    sqlite3_finalize(s);
+                if (r != 0)
                     return r;
-                }
                 break;
 
             default:
-                goto fail;
+                return -1;
         }
     }
 
     assert(!"unreachable");
-
-fail:
-    if (s != NULL)
-        sqlite3_finalize(s);
-    return -1;
 }
 
 int db_for_env(db_t *db, int id,
         int (*cb)(const char *name, const char *value)) {
-    sqlite3_stmt *s = NULL;
+    auto_sqlite3_stmt *s = NULL;
 
     char *getenv = "select name, value from env where fk_trace = @fk_trace;";
     if (prepare(db, &s, getenv) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     if (bind_int(s, "@fk_trace", id) != SQLITE_OK)
-        goto fail;
+        return -1;
 
     while (true) {
         switch (sqlite3_step(s)) {
             case SQLITE_DONE:
-                sqlite3_finalize(s);
                 return 0;
 
             case SQLITE_ROW:
@@ -468,21 +417,14 @@ int db_for_env(db_t *db, int id,
                 assert(name != NULL);
                 const char *value = column_text(s, 1);
                 int r = cb(name, value);
-                if (r != 0) {
-                    sqlite3_finalize(s);
+                if (r != 0)
                     return r;
-                }
                 break;
 
             default:
-                goto fail;
+                return -1;
         }
     }
 
     assert(!"unreachable");
-
-fail:
-    if (s != NULL)
-        sqlite3_finalize(s);
-    return -1;
 }
