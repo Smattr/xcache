@@ -475,6 +475,11 @@ int main(int argc, char **argv) {
                     goto bailout;
                 break;
 
+            case SYS_mkdir:
+                if (add_from_reg(deps, s, 1, XC_OUTPUT) != 0)
+                    goto bailout;
+                break;
+
             case SYS_open: {
                 /* Note that we are only handling the 'write' aspects of an
                  * open call here, because the 'read' aspects were handled on
@@ -517,7 +522,6 @@ int main(int argc, char **argv) {
             case SYS_fchdir:
             case SYS_link:
             case SYS_linkat:
-            case SYS_mkdir:
             case SYS_mkdirat:
             case SYS_mknod:
             case SYS_mknodat:
