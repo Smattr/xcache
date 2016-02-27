@@ -69,13 +69,7 @@ char *filehash(const char *filename) {
         goto end;
     }
 
-    unsigned char *h = malloc(MD5_DIGEST_LENGTH);
-    if (h == NULL) {
-        if (addr != NULL)
-            munmap(addr, sz);
-        close(fd);
-        goto end;
-    }
+    unsigned char h[MD5_DIGEST_LENGTH];
     MD5((unsigned char*)addr, sz, h);
 
     /* Success! */
@@ -85,10 +79,9 @@ char *filehash(const char *filename) {
     close(fd);
 
     ph = hex(h);
-    /* Note, it's possible hex just failed. In this case we naturally free h
-     * and return NULL to the caller anyway.
+    /* Note, it's possible hex just failed. In this case we naturally return
+     * NULL to the caller anyway.
      */
-    free(h);
 
 end:
     if (permissions_altered) {
