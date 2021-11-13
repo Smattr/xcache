@@ -21,24 +21,28 @@ int copy_file(const char *src, const char *dst) {
   int out = -1;
   int rc = -1;
 
+  // open the source file
   in = open(src, O_RDONLY);
   if (in < 0) {
     rc = errno;
     goto done;
   }
 
+  // learn the size of the source file
   struct stat st;
   if (fstat(in, &st) != 0) {
     rc = errno;
     goto done;
   }
 
+  // open the destination file
   out = open(dst, O_WRONLY);
   if (out < 0) {
     rc = errno;
     goto done;
   }
 
+  // perform the copy
   size_t size = st.st_size;
   while (size > 0) {
 
