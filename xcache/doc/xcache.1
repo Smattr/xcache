@@ -1,0 +1,50 @@
+.TH XCACHE 1
+.SH NAME
+xcache \- ccache for everything
+.SH SYNOPSIS
+.B \fBxcache\fR \fBoptions\fR
+.SH DESCRIPTION
+Xcache is a tool for tracing and then caching the outputs of arbitrary programs.
+You run something once with xcache observing it. If its inputs have not changed
+the next time you execute it, xcache can retrieve the outputs it cached from the
+previous run and avoid re-executing the program.
+.PP
+The purpose of this is to save time spent executing programs that do complicated
+calculations. The prime example is a compiler. Running a compiler on a large
+program can take a long time due to time spent computing optimisations. Xcache
+can save you spending this time repeatedly in future compilations.
+.PP
+If you are familiar with
+.BR ccache(1)
+xcache tries to do the same thing, but for any program, not just your C
+compiler.
+.SH OPTIONS
+TODO
+.SH AUTHOR
+All comments, questions and complaints should be directed to Matthew Fernandez
+<matthew.fernandez@gmail.com>.
+.SH LICENSE
+This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to <http://unlicense.org>
