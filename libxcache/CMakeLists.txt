@@ -1,18 +1,23 @@
 add_library(libxcache
   include/xcache/hash.h
   include/xcache/proc.h
+  include/xcache/trace.h
   include/xcache/xcache.h
 
+  src/copy_file.h
   src/make_hash.h
   src/macros.h
   src/proc.h
+  src/trace.h
 
+  src/copy_file.c
   src/hash_data.c
   src/hash_file.c
   src/make_hash.c
   src/proc_exec.c
   src/proc_free.c
   src/proc_new.c
+  src/trace_replay.c
 )
 
 target_include_directories(libxcache

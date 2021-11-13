@@ -8,3 +8,4 @@
 
 #include <xcache/hash.h>
 #include <xcache/proc.h>
+#include <xcache/trace.h>
