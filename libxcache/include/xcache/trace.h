@@ -7,6 +7,7 @@
 #define XCACHE_API __attribute__((visibility("default")))
 #endif
 
+/// an observed execution of a process and its side effects
 typedef struct xc_trace xc_trace_t;
 
 XCACHE_API int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc);
