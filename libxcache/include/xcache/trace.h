@@ -10,6 +10,17 @@
 /// an observed execution of a process and its side effects
 typedef struct xc_trace xc_trace_t;
 
+/// run the given process and monitor its behaviour
+///
+/// This function calls `fork` to run the given process and then monitors it via
+/// `seccomp`.
+///
+/// TODO: explain what happens to the child if we get a failure after it has
+/// started running and/or allow the caller to control this.
+///
+/// \param trace [out] Trace of the process’ inputs and outputs
+/// \param proc Process to run
+/// \return 0 on success or an errno on failure
 XCACHE_API int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc);
 
 /// check whether a trace is not stale

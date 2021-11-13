@@ -17,6 +17,7 @@ add_library(libxcache
   src/proc_exec.c
   src/proc_free.c
   src/proc_new.c
+  src/trace_record.c
   src/trace_replay.c
   src/trace_is_valid.c
 )
