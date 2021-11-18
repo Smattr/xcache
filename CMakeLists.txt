@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 project(xcache C)
 
 include(GNUInstallDirs)
@@ -14,4 +14,5 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 endif()
 
 add_subdirectory(libxcache)
+add_subdirectory(tests)
 add_subdirectory(xcache)
