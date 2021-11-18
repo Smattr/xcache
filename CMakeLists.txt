@@ -5,7 +5,7 @@ include(GNUInstallDirs)
 
 add_compile_options(-std=c11 -W -Wall -Wextra -Wformat=2 -Wwrite-strings
   -Wmissing-prototypes -Wshadow -Wundef)
-add_definitions(-D_POSIX_C_SOURCE=200809L)
+add_definitions(-D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L)
 
 # enable --as-needed, present on GNU ld on Linux, to minimise dependencies
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
