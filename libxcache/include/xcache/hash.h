@@ -7,6 +7,10 @@
 #define XCACHE_API __attribute__((visibility("default")))
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// A content hash used by xcache for associative lookups. Users should not rely
 /// on the underlying type beyond it being a scalar.
 typedef uint64_t xc_hash_t;
@@ -25,3 +29,7 @@ XCACHE_API int xc_hash_data(xc_hash_t *hash, const void *data, size_t size);
 /// \param path File whose content to hash
 /// \return 0 on success or an errno on failure
 XCACHE_API int xc_hash_file(xc_hash_t *hash, const char *path);
+
+#ifdef __cplusplus
+}
+#endif

@@ -7,6 +7,10 @@
 #define XCACHE_API __attribute__((visibility("default")))
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// an observed execution of a process and its side effects
 typedef struct xc_trace xc_trace_t;
 
@@ -40,3 +44,7 @@ XCACHE_API bool xc_trace_is_valid(const xc_trace_t *trace);
 /// \param trace The trace to replay
 /// \return An errno on failure
 XCACHE_API int xc_trace_replay(const xc_trace_t *trace);
+
+#ifdef __cplusplus
+}
+#endif

@@ -4,6 +4,10 @@
 #define XCACHE_API __attribute__((visibility("default")))
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// a process to be run or traced
 typedef struct xc_proc xc_proc_t;
 
@@ -32,3 +36,7 @@ XCACHE_API int xc_proc_exec(const xc_proc_t *proc);
 ///
 /// \param proc Process object to free
 XCACHE_API void xc_proc_free(xc_proc_t *proc);
+
+#ifdef __cplusplus
+}
+#endif
