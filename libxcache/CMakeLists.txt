@@ -4,6 +4,7 @@ add_library(libxcache
   include/xcache/trace.h
   include/xcache/xcache.h
 
+  src/channel.h
   src/copy_file.h
   src/make_hash.h
   src/macros.h
@@ -11,6 +12,10 @@ add_library(libxcache
   src/trace.h
   src/woros.h
 
+  src/channel_close.c
+  src/channel_open.c
+  src/channel_read.c
+  src/channel_write.c
   src/copy_file.c
   src/hash_data.c
   src/hash_file.c

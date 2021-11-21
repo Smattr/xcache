@@ -1,16 +1,25 @@
+#include "channel.h"
 #include "macros.h"
 #include "proc.h"
 #include "trace.h"
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
+#include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <xcache/proc.h>
 #include <xcache/trace.h>
 
-static int child(const xc_proc_t *proc, int in, int out, int err, int msg) {
+static int child(const xc_proc_t *proc, int in, int out, int err) {
+
+  assert(proc != NULL);
+  assert(in >= 0);
+  assert(out >= 0);
+  assert(err >= 0);
 
   // replace our streams with pipes to the parent
   if (UNLIKELY(dup2(in, STDIN_FILENO) == -1))
@@ -18,13 +27,6 @@ static int child(const xc_proc_t *proc, int in, int out, int err, int msg) {
   if (UNLIKELY(dup2(out, STDOUT_FILENO) == -1))
     return errno;
   if (UNLIKELY(dup2(err, STDERR_FILENO) == -1))
-    return errno;
-
-  // set close-on-exec on our pipe back to the parent, so they will learn we
-  // correctly execed if their read on the pipe fails
-  int flags = fcntl(msg, F_GETFD);
-  flags |= FD_CLOEXEC;
-  if (UNLIKELY(fcntl(msg, F_SETFD, flags) != 0))
     return errno;
 
   // TODO: opt-in to ptrace
@@ -57,7 +59,7 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   int in[] = {-1, -1};
   int out[] = {-1, -1};
   int err[] = {-1, -1};
-  int msg[] = {-1, -1};
+  channel_t msg = {0};
 
   xc_trace_t *t = calloc(1, sizeof(*t));
   if (UNLIKELY(t == NULL)) {
@@ -71,11 +73,10 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
     goto done;
   }
 
-  // setup a pipe for the child to signal exec failure to the parent
-  if (pipe(msg) != 0) {
-    rc = errno;
+  // setup a channel for the child to signal exec failure to the parent
+  rc = channel_open(&msg);
+  if (UNLIKELY(rc != 0))
     goto done;
-  }
 
   pid_t pid = fork();
   if (UNLIKELY(pid == -1)) {
@@ -87,33 +88,19 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   if (pid == 0) {
 
     // close the descriptors we do not need
-    (void)close(msg[0]);
     (void)close(err[0]);
     (void)close(out[0]);
     (void)close(in[1]);
 
-    int r = child(proc, in[0], out[1], err[1], msg[1]);
+    int r = child(proc, in[0], out[1], err[1]);
 
     // we failed, so signal this to the parent
-    {
-      size_t size = sizeof(r);
-      do {
-        size_t offset = sizeof(r) - size;
-        ssize_t w = write(msg[1], (char *)&r + offset, size);
-        if (UNLIKELY(w < 0)) {
-          // error, but we now have no way of signalling this, so give up
-          break;
-        }
-        size -= (size_t)w;
-      } while (size > 0);
-    }
+    (void)channel_write(&msg, r);
 
     exit(EXIT_FAILURE);
   }
 
   // close the descriptors we do not need
-  (void)close(msg[1]);
-  msg[1] = -1;
   (void)close(err[1]);
   err[1] = -1;
   (void)close(out[1]);
@@ -123,34 +110,17 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
 
   // wait for a signal of failure from the child
   {
-    size_t size = sizeof(rc);
-    do {
-      size_t offset = sizeof(rc) - size;
-      ssize_t r = read(msg[0], (char *)&rc + offset, size);
-      if (r == 0) {
-        // the child execed successfully
-        break;
-      }
-      if (r < 0) {
-        if (errno == EINTR) {
-          // suppress and try again
-          r = 0;
-        } else {
-          rc = errno;
-          goto done;
-        }
-      }
-      size -= (size_t)r;
-    } while (size > 0);
+    int r = channel_read(&msg, &rc);
+    if (UNLIKELY(r != 0)) {
+      rc = r;
+      goto done;
+    }
+    if (UNLIKELY(rc != 0))
+      goto done;
   }
 
-  // did the child tell us it failed?
-  if (rc != 0)
-    goto done;
-
-  // we no longer need the message pipe
-  (void)close(msg[0]);
-  msg[0] = -1;
+  // we no longer need the message channel
+  channel_close(&msg);
 
   // TODO: monitor the child
 
@@ -173,10 +143,7 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   *trace = t;
 
 done:
-  if (msg[0] != -1)
-    (void)close(msg[0]);
-  if (msg[1] != -1)
-    (void)close(msg[1]);
+  channel_close(&msg);
   if (err[0] != -1)
     (void)close(err[0]);
   if (err[1] != -1)
