@@ -10,7 +10,6 @@ add_library(libxcache
   src/macros.h
   src/proc.h
   src/trace.h
-  src/woros.h
 
   src/channel_close.c
   src/channel_open.c
@@ -26,10 +25,6 @@ add_library(libxcache
   src/trace_record.c
   src/trace_replay.c
   src/trace_is_valid.c
-  src/woros_free.c
-  src/woros_i_am_reader.c
-  src/woros_i_am_writer.c
-  src/woros_new.c
 )
 
 target_include_directories(libxcache
