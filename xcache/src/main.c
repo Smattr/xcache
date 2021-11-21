@@ -14,18 +14,23 @@ static int parse_args(int argc, char **argv) {
   while (true) {
     static const struct option opts[] = {
         // clang-format off
+        {"debug", no_argument, 0, 'd'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0},
         // clang-format on
     };
 
     int index;
-    int c = getopt_long(argc, argv, "h", opts, &index);
+    int c = getopt_long(argc, argv, "dh", opts, &index);
 
     if (c == -1)
       break;
 
     switch (c) {
+
+    case 'd': // --debug
+      xc_set_debug(stderr);
+      break;
 
     case 'h': // --help
       printf("%s options\n"
