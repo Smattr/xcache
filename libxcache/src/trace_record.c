@@ -1,4 +1,5 @@
 #include "channel.h"
+#include "debug.h"
 #include "macros.h"
 #include "proc.h"
 #include "trace.h"
@@ -119,8 +120,10 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   in[0] = -1;
 
   // wait for a signal of failure from the child
+  DEBUG("waiting on signal from child...\n");
   {
     int r = channel_read(&msg, &rc);
+    DEBUG("channel read of %d, rc = %d from the child\n", r, rc);
     if (UNLIKELY(r != 0)) {
       rc = r;
       goto done;
@@ -130,15 +133,18 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   }
 
   // wait for the child to SIGSTOP itself
+  DEBUG("waiting for the child to SIGSTOP itself...\n");
   {
     int status;
     if (UNLIKELY(waitpid(pid, &status, 0) == -1)) {
       rc = errno;
+      DEBUG("failed to wait on SIGSTOP from the child: %d\n", rc);
       goto done;
     }
   }
 
   // set our tracer preferences
+  DEBUG("setting ptrace preferences...\n");
   {
     static const int opts = PTRACE_O_TRACESECCOMP;
     if (UNLIKELY(ptrace(PTRACE_SETOPTIONS, pid, NULL, 0, opts) != 0)) {
@@ -148,14 +154,18 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   }
 
   // resume the child
+  DEBUG("resuming the child...\n");
   if (UNLIKELY(ptrace(PTRACE_CONT, pid, NULL, NULL) != 0)) {
     rc = errno;
+    DEBUG("failed to continue the child: %d\n", rc);
     goto done;
   }
 
   // wait for a signal of failure from the child in case they fail exec
+  DEBUG("waiting on signal from child...\n");
   {
     int r = channel_read(&msg, &rc);
+    DEBUG("channel read of %d, rc = %d from the child\n", r, rc);
     if (UNLIKELY(r != 0)) {
       rc = r;
       goto done;
