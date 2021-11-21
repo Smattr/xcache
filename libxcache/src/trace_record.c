@@ -14,12 +14,14 @@
 #include <xcache/proc.h>
 #include <xcache/trace.h>
 
-static int child(const xc_proc_t *proc, int in, int out, int err) {
+static int child(const xc_proc_t *proc, int in, int out, int err,
+                 channel_t *msg) {
 
   assert(proc != NULL);
   assert(in >= 0);
   assert(out >= 0);
   assert(err >= 0);
+  assert(msg != NULL);
 
   // replace our streams with pipes to the parent
   if (UNLIKELY(dup2(in, STDIN_FILENO) == -1))
@@ -29,7 +31,15 @@ static int child(const xc_proc_t *proc, int in, int out, int err) {
   if (UNLIKELY(dup2(err, STDERR_FILENO) == -1))
     return errno;
 
-  // TODO: opt-in to ptrace
+  // opt-in to being a ptrace tracee
+  if (UNLIKELY(ptrace(PTRACE_TRACEME, 0, NULL, NULL) != 0))
+    return errno;
+
+  // signal to out parent that we passed phase 1 of our setup
+  (void)channel_write(msg, 0);
+
+  // give our parent an opportunity to attach to us
+  (void)raise(SIGSTOP);
 
   // TODO: install seccomp filter
 
@@ -92,7 +102,7 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
     (void)close(out[0]);
     (void)close(in[1]);
 
-    int r = child(proc, in[0], out[1], err[1]);
+    int r = child(proc, in[0], out[1], err[1], &msg);
 
     // we failed, so signal this to the parent
     (void)channel_write(&msg, r);
@@ -109,6 +119,41 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   in[0] = -1;
 
   // wait for a signal of failure from the child
+  {
+    int r = channel_read(&msg, &rc);
+    if (UNLIKELY(r != 0)) {
+      rc = r;
+      goto done;
+    }
+    if (UNLIKELY(rc != 0))
+      goto done;
+  }
+
+  // wait for the child to SIGSTOP itself
+  {
+    int status;
+    if (UNLIKELY(waitpid(pid, &status, 0) == -1)) {
+      rc = errno;
+      goto done;
+    }
+  }
+
+  // set our tracer preferences
+  {
+    static const int opts = PTRACE_O_TRACESECCOMP;
+    if (UNLIKELY(ptrace(PTRACE_SETOPTIONS, pid, NULL, 0, opts) != 0)) {
+      rc = errno;
+      goto done;
+    }
+  }
+
+  // resume the child
+  if (UNLIKELY(ptrace(PTRACE_CONT, pid, NULL, NULL) != 0)) {
+    rc = errno;
+    goto done;
+  }
+
+  // wait for a signal of failure from the child in case they fail exec
   {
     int r = channel_read(&msg, &rc);
     if (UNLIKELY(r != 0)) {
