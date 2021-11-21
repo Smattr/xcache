@@ -1,9 +1,19 @@
+/// \file
+///
+/// abstraction over in-memory communication between a parent and child process
+///
+/// The following presents an API for communicating `int` data between a process
+/// and one of its forked children. It is assumes that each communicating party
+/// is exclusively reading or exclusively writing. An attempt to do either will
+/// close the opposite end of the channel, making it unusable from the current
+/// process context.
+
 #pragma once
 
 #include "macros.h"
 #include <stdio.h>
 
-/// an in-memory pipe for communication between a parent and child
+/// an in-memory pipe for communication
 typedef struct {
   FILE *in;
   FILE *out;
