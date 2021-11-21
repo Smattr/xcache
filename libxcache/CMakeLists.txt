@@ -1,4 +1,5 @@
 add_library(libxcache
+  include/xcache/debug.h
   include/xcache/hash.h
   include/xcache/proc.h
   include/xcache/trace.h
@@ -6,6 +7,7 @@ add_library(libxcache
 
   src/channel.h
   src/copy_file.h
+  src/debug.h
   src/make_hash.h
   src/macros.h
   src/proc.h
@@ -16,12 +18,14 @@ add_library(libxcache
   src/channel_read.c
   src/channel_write.c
   src/copy_file.c
+  src/debug.c
   src/hash_data.c
   src/hash_file.c
   src/make_hash.c
   src/proc_exec.c
   src/proc_free.c
   src/proc_new.c
+  src/set_debug.c
   src/trace_record.c
   src/trace_replay.c
   src/trace_is_valid.c
