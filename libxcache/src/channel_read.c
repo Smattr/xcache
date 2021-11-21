@@ -7,15 +7,15 @@
 int channel_read(channel_t *channel, int *data) {
 
   assert(channel != NULL);
-  assert(channel->out != NULL);
+  assert(channel->in != NULL);
   assert(data != NULL);
 
-  if (UNLIKELY(fread(data, sizeof(*data), 1, channel->out) != 1)) {
-    if (feof(channel->out)) {
+  if (UNLIKELY(fread(data, sizeof(*data), 1, channel->in) != 1)) {
+    if (feof(channel->in)) {
       *data = 0;
       return 0;
     }
-    return ferror(channel->out);
+    return ferror(channel->in);
   }
 
   return 0;
