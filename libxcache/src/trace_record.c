@@ -6,10 +6,15 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <linux/audit.h>
+#include <linux/filter.h>
+#include <linux/seccomp.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/prctl.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -43,6 +48,27 @@ static int child(const xc_proc_t *proc, int out, int err, channel_t *msg) {
 
   // opt-in to being a ptrace tracee
   if (UNLIKELY(ptrace(PTRACE_TRACEME, 0, NULL, NULL) != 0))
+    return errno;
+
+  // set no-new-privs so we can install a seccomp filter without CAP_SYS_ADMIN
+  if (UNLIKELY(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1))
+    return errno;
+
+  // load a seccomp filter that intercepts relevant syscalls
+  static struct sock_filter filter[] = {
+      BPF_STMT(BPF_LD + BPF_W + BPF_ABS, offsetof(struct seccomp_data, nr)),
+  // TODO: flip this to an allow list instead of a deny list
+#ifdef __NR_exec
+      BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_exec, 0, 1),
+      BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_TRACE),
+#endif
+      BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW),
+  };
+  static const struct sock_fprog prog = {
+      .filter = filter,
+      .len = sizeof(filter) / sizeof(filter[0]),
+  };
+  if (UNLIKELY(prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog, 0, 0) == -1))
     return errno;
 
   // signal to out parent that we passed phase 1 of our setup
