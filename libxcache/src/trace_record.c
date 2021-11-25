@@ -9,24 +9,33 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/ptrace.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <xcache/proc.h>
 #include <xcache/trace.h>
 
-static int child(const xc_proc_t *proc, int in, int out, int err,
-                 channel_t *msg) {
+static int child(const xc_proc_t *proc, int out, int err, channel_t *msg) {
 
   assert(proc != NULL);
-  assert(in >= 0);
   assert(out >= 0);
   assert(err >= 0);
   assert(msg != NULL);
 
+  // dup /dev/null over stdin so tracing cannot depend on interactive input
+  {
+    int in = open("/dev/null", O_RDONLY);
+    if (UNLIKELY(in == -1))
+      return errno;
+    if (UNLIKELY(dup2(in, STDIN_FILENO) == -1)) {
+      int r = errno;
+      (void)close(in);
+      return r;
+    }
+  }
+
   // replace our streams with pipes to the parent
-  if (UNLIKELY(dup2(in, STDIN_FILENO) == -1))
-    return errno;
   if (UNLIKELY(dup2(out, STDOUT_FILENO) == -1))
     return errno;
   if (UNLIKELY(dup2(err, STDERR_FILENO) == -1))
@@ -67,7 +76,6 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   }
 
   int rc = 0;
-  int in[] = {-1, -1};
   int out[] = {-1, -1};
   int err[] = {-1, -1};
   channel_t msg = {0};
@@ -78,8 +86,8 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
     goto done;
   }
 
-  // setup pipes for stdin, stdout, stderr
-  if (pipe(in) != 0 || pipe(out) != 0 || pipe(err) != 0) {
+  // setup pipes for stdout, stderr
+  if (pipe(out) != 0 || pipe(err) != 0) {
     rc = errno;
     goto done;
   }
@@ -101,9 +109,8 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
     // close the descriptors we do not need
     (void)close(err[0]);
     (void)close(out[0]);
-    (void)close(in[1]);
 
-    int r = child(proc, in[0], out[1], err[1], &msg);
+    int r = child(proc, out[1], err[1], &msg);
 
     // we failed, so signal this to the parent
     (void)channel_write(&msg, r);
@@ -116,8 +123,6 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   err[1] = -1;
   (void)close(out[1]);
   out[1] = -1;
-  (void)close(in[0]);
-  in[0] = -1;
 
   // wait for a signal of failure from the child
   DEBUG("waiting on signal from child...\n");
@@ -207,10 +212,6 @@ done:
     (void)close(out[0]);
   if (out[1] != -1)
     (void)close(out[1]);
-  if (in[0] != -1)
-    (void)close(in[0]);
-  if (in[1] != -1)
-    (void)close(in[1]);
   if (UNLIKELY(rc != 0))
     free(t);
 
