@@ -10,12 +10,14 @@
 #include <linux/filter.h>
 #include <linux/seccomp.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <sys/prctl.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <xcache/proc.h>
@@ -208,22 +210,48 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   // we no longer need the message channel
   channel_close(&msg);
 
-  // TODO: monitor the child
+  // monitor the child
+  while (true) {
 
-  // wait for the child to finish
-  int status;
-  if (UNLIKELY(waitpid(pid, &status, 0) == -1)) {
-    rc = errno;
-    goto done;
-  }
+    int status;
+    if (UNLIKELY(waitpid(pid, &status, 0) == -1)) {
+      rc = errno;
+      goto done;
+    }
 
-  // decode its exit status
-  if (WIFEXITED(status)) {
-    t->exit_status = WEXITSTATUS(status);
-  } else if (WIFSIGNALED(status)) {
-    t->exit_status = 128 + WTERMSIG(status);
-  } else {
-    t->exit_status = -1;
+    // was this a seccomp event?
+    if (status >> 8 == (SIGTRAP | (PTRACE_EVENT_SECCOMP << 8))) {
+
+      // retrieve the syscall number
+      static const size_t RAX_OFFSET =
+          offsetof(struct user, regs) +
+          offsetof(struct user_regs_struct, orig_rax);
+      long nr = ptrace(PTRACE_PEEKUSER, pid, RAX_OFFSET, NULL);
+      DEBUG("saw syscall %ld from the child\n", nr);
+
+      // resume the child
+      DEBUG("resuming the child...\n");
+      if (UNLIKELY(ptrace(PTRACE_CONT, pid, NULL, NULL) != 0)) {
+        rc = errno;
+        DEBUG("failed to continue the child: %d\n", rc);
+        goto done;
+      }
+
+      continue;
+    }
+
+    // if not, this was an exit
+
+    // decode its exit status
+    if (WIFEXITED(status)) {
+      t->exit_status = WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+      t->exit_status = 128 + WTERMSIG(status);
+    } else {
+      t->exit_status = -1;
+    }
+
+    break;
   }
 
   *trace = t;
