@@ -1,11 +1,18 @@
 #include "../../libxcache/src/macros.h"
 #include <errno.h>
 #include <getopt.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <xcache/xcache.h>
+
+/// allow recording new process executions into the database?
+static bool enable_record = true;
+
+/// allow replaying past process executions from the database?
+static bool enable_replay = true;
 
 /// parse command line arguments and return the index of the first argument not
 /// intended for us
@@ -15,6 +22,10 @@ static int parse_args(int argc, char **argv) {
     static const struct option opts[] = {
         // clang-format off
         {"debug", no_argument, 0, 'd'},
+        {"disable-record", no_argument, 0, 130},
+        {"disable-replay", no_argument, 0, 131},
+        {"enable-record", no_argument, 0, 132},
+        {"enable-replay", no_argument, 0, 133},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0},
         // clang-format on
@@ -30,6 +41,22 @@ static int parse_args(int argc, char **argv) {
 
     case 'd': // --debug
       xc_set_debug(stderr);
+      break;
+
+    case 130: // --disable-record
+      enable_record = false;
+      break;
+
+    case 131: // --disable-replay
+      enable_replay = false;
+      break;
+
+    case 132: // --enable-record
+      enable_record = true;
+      break;
+
+    case 133: // --enable-replay
+      enable_replay = true;
       break;
 
     case 'h': // --help
@@ -72,23 +99,38 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
+  int rc = 0;
+
   // construct the process to record/replay
   xc_proc_t *proc = NULL;
-  int rc = make_process(&proc, argc - arg0, argv + arg0);
+  rc = make_process(&proc, argc - arg0, argv + arg0);
   if (UNLIKELY(rc != 0)) {
     fprintf(stderr, "failed to create process: %s\n", strerror(rc));
-    return EXIT_FAILURE;
+    goto done;
   }
 
-  // TODO: attempt to record or replay the process
+  if (enable_replay) {
+    // TODO: detect if the child can be replayed
+
+  }
+
+  if (enable_record) {
+#if 0 // TODO
+  // record child execution
+  xc_trace_t *trace = NULL;
+  rc = xc_trace_record(&trace, proc);
+  if (UNLIKELY(rc != 0)) {
+    fprintf(stderr, "failed to record process: %s\n", strerror(rc));
+    goto done;
+  }
+#endif
+  }
+
+  // else fall back on pass through execution
   rc = xc_proc_exec(proc);
 
+done:
   xc_proc_free(proc);
 
-  if (UNLIKELY(rc != 0)) {
-    fprintf(stderr, "process execution failed: %s\n", strerror(rc));
-    return EXIT_FAILURE;
-  }
-
-  return EXIT_SUCCESS;
+  return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

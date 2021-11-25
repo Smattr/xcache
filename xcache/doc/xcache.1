@@ -23,6 +23,22 @@ compiler.
 .RS
 Enable debugging output. Debugging messages will be printed to stderr.
 .RE
+.PP
+\fB--[enable|disable]-record\fR
+.RS
+Switch process recording capability on or off. By default this is enabled.
+\fB--disable-record\fR causes Xcache to operate on its backing database in
+read-only mode.
+.RE
+.PP
+\fB--[enable|disable]-replay\fR
+.RS
+Switch process replaying capability on or off. By default this is enabled.
+\fB--disable-replay\fR causes Xcache to operate on its backing database in
+write-only mode. When used together with \fB--disable-record\fR this causes
+Xcache to operate in pass-through mode where the traced process is simply
+executed.
+.RE
 .SH AUTHOR
 All comments, questions and complaints should be directed to Matthew Fernandez
 <matthew.fernandez@gmail.com>.
