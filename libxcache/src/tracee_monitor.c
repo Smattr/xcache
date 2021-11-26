@@ -16,10 +16,6 @@
 #include <sys/types.h>
 #include <sys/user.h>
 #include <sys/wait.h>
-#include <unistd.h>
-
-// XXX: there is no Glibc wrapper for this
-static int pidfd_open(pid_t pid) { return syscall(__NR_pidfd_open, pid, 0); }
 
 static int init(tracee_t *tracee) {
 
@@ -82,19 +78,6 @@ static int init(tracee_t *tracee) {
 
   // we no longer need the message channel
   channel_close(&tracee->msg);
-
-  // get a descriptor for the child we can use in `select` calls
-  {
-    int pidfd = pidfd_open(tracee->pid);
-    if (UNLIKELY(pidfd == -1)) {
-      rc = errno;
-      goto done;
-    }
-    tracee->pidfd = pidfd;
-  }
-  rc = set_nonblock(tracee->pidfd);
-  if (UNLIKELY(rc != 0))
-    goto done;
 
 done:
   return rc;
