@@ -148,6 +148,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
   while (true) {
 
     // poll the child for a relevant event
+    DEBUG("polling the child...");
     assert(is_nonblocking(tracee->out[0]));
     assert(is_nonblocking(tracee->err[0]));
     assert(is_nonblocking(tracee->pidfd));
@@ -170,6 +171,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
       // is this an entry indicating stdout data available?
       if (fds[i].fd == tracee->out[0]) {
+        DEBUG("child has stdout data");
         rc = drain(STDOUT_FILENO, tracee->out[0]);
         if (UNLIKELY(rc != 0))
           goto done;
@@ -177,6 +179,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
       // is this an entry indicating stderr data available?
       if (fds[i].fd == tracee->err[0]) {
+        DEBUG("child has stderr data");
         rc = drain(STDERR_FILENO, tracee->err[0]);
         if (UNLIKELY(rc != 0))
           goto done;
@@ -184,6 +187,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
       // is this an entry indicating a child PID event?
       if (fds[i].fd == tracee->pidfd) {
+        DEBUG("child has a PID event");
 
         siginfo_t status;
         static const int options = WEXITED | WSTOPPED | WNOHANG;
