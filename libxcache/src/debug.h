@@ -12,5 +12,6 @@ extern FILE *debug;
     if (UNLIKELY(debug != NULL)) {                                             \
       fprintf(debug, "xcache: [DEBUG] ");                                      \
       fprintf(debug, args);                                                    \
+      fprintf(debug, "\n");                                                    \
     }                                                                          \
   } while (0)

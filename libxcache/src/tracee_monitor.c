@@ -26,10 +26,10 @@ static int init(tracee_t *tracee) {
   int rc = 0;
 
   // wait for a signal of failure from the child
-  DEBUG("waiting on signal from child...\n");
+  DEBUG("waiting on signal from child...");
   {
     int r = channel_read(&tracee->msg, &rc);
-    DEBUG("channel read of %d, rc = %d from the child\n", r, rc);
+    DEBUG("channel read of %d, rc = %d from the child", r, rc);
     if (UNLIKELY(r != 0)) {
       rc = r;
       goto done;
@@ -39,18 +39,18 @@ static int init(tracee_t *tracee) {
   }
 
   // wait for the child to SIGSTOP itself
-  DEBUG("waiting for the child to SIGSTOP itself...\n");
+  DEBUG("waiting for the child to SIGSTOP itself...");
   {
     int status;
     if (UNLIKELY(waitpid(tracee->pid, &status, 0) == -1)) {
       rc = errno;
-      DEBUG("failed to wait on SIGSTOP from the child: %d\n", rc);
+      DEBUG("failed to wait on SIGSTOP from the child: %d", rc);
       goto done;
     }
   }
 
   // set our tracer preferences
-  DEBUG("setting ptrace preferences...\n");
+  DEBUG("setting ptrace preferences...");
   {
     static const int opts = PTRACE_O_TRACESECCOMP;
     if (UNLIKELY(ptrace(PTRACE_SETOPTIONS, tracee->pid, NULL, 0, opts) != 0)) {
@@ -60,18 +60,18 @@ static int init(tracee_t *tracee) {
   }
 
   // resume the child
-  DEBUG("resuming the child...\n");
+  DEBUG("resuming the child...");
   if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
     rc = errno;
-    DEBUG("failed to continue the child: %d\n", rc);
+    DEBUG("failed to continue the child: %d", rc);
     goto done;
   }
 
   // wait for a signal of failure from the child in case they fail exec
-  DEBUG("waiting on signal from child...\n");
+  DEBUG("waiting on signal from child...");
   {
     int r = channel_read(&tracee->msg, &rc);
-    DEBUG("channel read of %d, rc = %d from the child\n", r, rc);
+    DEBUG("channel read of %d, rc = %d from the child", r, rc);
     if (UNLIKELY(r != 0)) {
       rc = r;
       goto done;
@@ -208,13 +208,13 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
               offsetof(struct user, regs) +
               offsetof(struct user_regs_struct, orig_rax);
           long nr = ptrace(PTRACE_PEEKUSER, tracee->pid, RAX_OFFSET, NULL);
-          DEBUG("saw syscall %ld from the child\n", nr);
+          DEBUG("saw syscall %ld from the child", nr);
 
           // resume the child
-          DEBUG("resuming the child...\n");
+          DEBUG("resuming the child...");
           if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
             rc = errno;
-            DEBUG("failed to continue the child: %d\n", rc);
+            DEBUG("failed to continue the child: %d", rc);
             goto done;
           }
 
