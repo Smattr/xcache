@@ -9,6 +9,12 @@
 #include <unistd.h>
 #include <xcache/proc.h>
 
+static int set_cloexec(int fd) {
+  int flags = fcntl(fd, F_GETFD, 0);
+  flags |= O_CLOEXEC;
+  return fcntl(fd, F_SETFD, flags);
+}
+
 int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
 
   assert(tracee != NULL);
@@ -25,20 +31,12 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
 
   // set close-on-exec on the read ends of the pipes, so the tracee does not
   // need to worry about closing them
-  {
-    int flags = fcntl(tracee->out[0], F_GETFD, 0);
-    flags |= O_CLOEXEC;
-    rc = fcntl(tracee->out[0], F_SETFD, flags);
-    if (UNLIKELY(rc != 0))
-      goto done;
-  }
-  {
-    int flags = fcntl(tracee->err[0], F_GETFD, 0);
-    flags |= O_CLOEXEC;
-    rc = fcntl(tracee->err[0], F_SETFD, flags);
-    if (UNLIKELY(rc != 0))
-      goto done;
-  }
+  rc = set_cloexec(tracee->out[0]);
+  if (UNLIKELY(rc != 0))
+    goto done;
+  rc = set_cloexec(tracee->err[0]);
+  if (UNLIKELY(rc != 0))
+    goto done;
 
   // setup a channel for the child to signal exec failure to the parent
   rc = channel_open(&tracee->msg);
