@@ -3,6 +3,7 @@
 #include "macros.h"
 #include "trace.h"
 #include "tracee.h"
+#include "util.h"
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
@@ -75,6 +76,19 @@ static int init(tracee_t *tracee) {
 
   // we no longer need the message channel
   channel_close(&tracee->msg);
+
+  // get a descriptor for the child we can use in `select` calls
+  {
+    int pidfd = pidfd_open(tracee->pid, 0);
+    if (UNLIKELY(pidfd == -1)) {
+      rc = errno;
+      goto done;
+    }
+    tracee->pidfd = pidfd;
+  }
+  rc = set_nonblock(tracee->pidfd);
+  if (UNLIKELY(rc != 0))
+    goto done;
 
 done:
   return rc;

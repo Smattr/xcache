@@ -12,6 +12,11 @@ void tracee_deinit(tracee_t *tracee) {
 
   // TODO what to do if the tracee is still live (pid > 0)?
 
+  if (tracee->pidfd > 0) {
+    (void)close(tracee->pidfd);
+    tracee->pidfd = 0;
+  }
+
   for (size_t i = 0; i < sizeof(tracee->out) / sizeof(tracee->out[0]); ++i) {
     if (tracee->out[i] > 0) {
       (void)close(tracee->out[i]);

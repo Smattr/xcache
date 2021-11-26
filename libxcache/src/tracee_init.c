@@ -1,6 +1,7 @@
 #include "channel.h"
 #include "macros.h"
 #include "tracee.h"
+#include "util.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -13,14 +14,6 @@ static int set_cloexec(int fd) {
   int flags = fcntl(fd, F_GETFD, 0);
   flags |= O_CLOEXEC;
   if (UNLIKELY(fcntl(fd, F_SETFD, flags) != 0))
-    return errno;
-  return 0;
-}
-
-static int set_nonblock(int fd) {
-  int flags = fcntl(fd, F_GETFL, 0);
-  flags |= O_NONBLOCK;
-  if (UNLIKELY(fcntl(fd, F_SETFL, flags) != 0))
     return errno;
   return 0;
 }

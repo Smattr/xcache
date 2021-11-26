@@ -13,6 +13,7 @@ add_library(libxcache
   src/proc.h
   src/trace.h
   src/tracee.h
+  src/util.h
 
   src/channel_close.c
   src/channel_open.c
