@@ -15,6 +15,9 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 
+// XXX: there is no Glibc wrapper for this
+static int pidfd_open(pid_t pid) { return syscall(__NR_pidfd_open, pid, 0); }
+
 static int init(tracee_t *tracee) {
 
   int rc = 0;
@@ -79,7 +82,7 @@ static int init(tracee_t *tracee) {
 
   // get a descriptor for the child we can use in `select` calls
   {
-    int pidfd = pidfd_open(tracee->pid, 0);
+    int pidfd = pidfd_open(tracee->pid);
     if (UNLIKELY(pidfd == -1)) {
       rc = errno;
       goto done;
