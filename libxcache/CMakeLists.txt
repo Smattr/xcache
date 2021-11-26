@@ -12,6 +12,7 @@ add_library(libxcache
   src/macros.h
   src/proc.h
   src/trace.h
+  src/tracee.h
 
   src/channel_close.c
   src/channel_open.c
@@ -29,6 +30,10 @@ add_library(libxcache
   src/trace_record.c
   src/trace_replay.c
   src/trace_is_valid.c
+  src/tracee_deinit.c
+  src/tracee_exec.c
+  src/tracee_init.c
+  src/tracee_monitor.c
 )
 
 target_include_directories(libxcache
