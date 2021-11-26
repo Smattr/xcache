@@ -52,7 +52,7 @@ static int exec(tracee_t *tracee) {
   }
 
   // replace our streams with pipes to the parent
-  if (UNLIKELY(dup2(tracee->out[0], STDOUT_FILENO) == -1))
+  if (UNLIKELY(dup2(tracee->out[1], STDOUT_FILENO) == -1))
     return errno;
   if (!DEBUGGING && UNLIKELY(dup2(tracee->err[1], STDERR_FILENO) == -1))
     return errno;
