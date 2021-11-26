@@ -167,6 +167,9 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
     for (size_t i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i) {
 
+      if (fds[i].revents & POLLERR)
+        DEBUG("error condition on fd %d", fds[i].fd);
+
       // skip if nothing was available to read from this entry
       if (!(fds[i].revents & POLLIN))
         continue;
