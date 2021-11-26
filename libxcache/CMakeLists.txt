@@ -35,6 +35,7 @@ add_library(libxcache
   src/tracee_exec.c
   src/tracee_init.c
   src/tracee_monitor.c
+  src/tracee_tee.c
 )
 
 target_include_directories(libxcache
@@ -44,6 +45,9 @@ target_include_directories(libxcache
   PRIVATE
     src
 )
+
+find_package(Threads REQUIRED)
+target_link_libraries(libxcache ${CMAKE_THREAD_LIBS_INIT})
 
 set_target_properties(libxcache PROPERTIES PREFIX "")
 

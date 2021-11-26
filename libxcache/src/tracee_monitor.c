@@ -6,11 +6,11 @@
 #include "util.h"
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <poll.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -100,40 +100,6 @@ done:
   return rc;
 }
 
-static int drain(int to, int from) {
-  while (true) {
-    char buffer[BUFSIZ];
-    ssize_t r = read(from, buffer, sizeof(buffer));
-    if (r < 0) {
-      if (errno == EINTR)
-        continue;
-      if (errno == EAGAIN || errno == EWOULDBLOCK)
-        return 0;
-      return errno;
-    }
-    if (r == 0)
-      return 0;
-
-    size_t offset = 0;
-    while (r > 0) {
-      ssize_t w = write(to, &buffer[offset], (size_t)r);
-      if (w < 0) {
-        if (errno == EINTR)
-          continue;
-        return errno;
-      }
-      offset += (size_t)w;
-      r -= (size_t)w;
-    }
-  }
-  return 0;
-}
-
-static __attribute__((unused)) bool is_nonblocking(int fd) {
-  int flags = fcntl(fd, F_GETFL, 0);
-  return !!(flags & O_NONBLOCK);
-}
-
 int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
   assert(trace != NULL);
@@ -141,100 +107,105 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
   assert(tracee->pid > 0 && "tracee not started");
 
   int rc = 0;
+  bool tee_created = false;
+  pthread_t tee;
 
   rc = init(tracee);
   if (UNLIKELY(rc != 0))
     goto done;
 
+  // create a background thread to handle the tracee’s output streams
+  rc = pthread_create(&tee, NULL, tracee_tee, tracee);
+  if (UNLIKELY(rc != 0))
+    goto done;
+  tee_created = true;
+
   // monitor the child
   while (true) {
 
-    // poll the child for a relevant event
-    DEBUG("polling the child...");
-    assert(is_nonblocking(tracee->out[0]));
-    assert(is_nonblocking(tracee->err[0]));
-    assert(is_nonblocking(tracee->pidfd));
-    struct pollfd fds[] = {
-        {.fd = tracee->out[0], .events = POLLIN},
-        {.fd = tracee->err[0], .events = POLLIN},
-        {.fd = tracee->pidfd, .events = POLLIN},
-    };
-    nfds_t nfds = sizeof(fds) / sizeof(fds[0]);
-    if (UNLIKELY(poll(fds, nfds, -1) == -1)) {
+    DEBUG("waiting on the child...");
+    int status;
+    if (UNLIKELY(waitpid(tracee->pid, &status, 0) == -1)) {
       rc = errno;
       goto done;
     }
 
-    for (size_t i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i) {
+    // was this an exit?
+    if (WIFEXITED(status)) {
+      DEBUG("child exited");
+      trace->exit_status = WEXITSTATUS(status);
+      goto done; // success
+    }
 
-      if (fds[i].revents & POLLERR)
-        DEBUG("error condition on fd %d", fds[i].fd);
+    // was this a tracing event?
+    if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP) {
 
-      // skip if nothing was available to read from this entry
-      if (!(fds[i].revents & POLLIN))
-        continue;
+      switch (status >> 8) {
 
-      // is this an entry indicating stdout data available?
-      if (fds[i].fd == tracee->out[0]) {
-        DEBUG("child has stdout data");
-        rc = drain(STDOUT_FILENO, tracee->out[0]);
-        if (UNLIKELY(rc != 0))
-          goto done;
+      // `fork` alike
+      case SIGTRAP | (PTRACE_EVENT_FORK << 8):
+      case SIGTRAP | (PTRACE_EVENT_VFORK << 8):
+      case SIGTRAP | (PTRACE_EVENT_CLONE << 8):
+        break;
+
+      // `exec alike
+      case SIGTRAP | (PTRACE_EVENT_EXEC << 8):
+        break;
+
+      // seccomp event
+      case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
+        break;
+
+      default:
+        DEBUG("warning: unhandled SIGTRAP stop %d", status);
       }
 
-      // is this an entry indicating stderr data available?
-      if (fds[i].fd == tracee->err[0]) {
-        DEBUG("child has stderr data");
-        rc = drain(STDERR_FILENO, tracee->err[0]);
-        if (UNLIKELY(rc != 0))
-          goto done;
+      // retrieve the syscall number
+      static const size_t RAX_OFFSET =
+          offsetof(struct user, regs) +
+          offsetof(struct user_regs_struct, orig_rax);
+      long nr = ptrace(PTRACE_PEEKUSER, tracee->pid, RAX_OFFSET, NULL);
+      DEBUG("saw syscall %ld from the child", nr);
+
+      // resume the child
+      DEBUG("resuming the child...");
+      if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
+        rc = errno;
+        DEBUG("failed to continue the child: %d", rc);
+        goto done;
       }
 
-      // is this an entry indicating a child PID event?
-      if (fds[i].fd == tracee->pidfd) {
-        DEBUG("child has a PID event");
+      continue;
+    }
 
-        siginfo_t status;
-        static const int options = WEXITED | WSTOPPED | WNOHANG;
-        if (UNLIKELY(waitid(P_PID, tracee->pid, &status, options) == -1)) {
-          rc = errno;
-          goto done;
-        }
+    // was the child stopped by a signal?
+    if (WIFSTOPPED(status)) {
+      DEBUG("child stopped by signal %d", WSTOPSIG(status));
 
-        // was this an exit?
-        if (status.si_code == CLD_EXITED) {
-          trace->exit_status = status.si_status;
-          goto done; // success
-        }
-
-        assert(status.si_code == CLD_TRAPPED && "TODO");
-
-        // was this a seccomp event?
-        if (status.si_status >> 8 == (SIGTRAP | (PTRACE_EVENT_SECCOMP << 8))) {
-
-          // retrieve the syscall number
-          static const size_t RAX_OFFSET =
-              offsetof(struct user, regs) +
-              offsetof(struct user_regs_struct, orig_rax);
-          long nr = ptrace(PTRACE_PEEKUSER, tracee->pid, RAX_OFFSET, NULL);
-          DEBUG("saw syscall %ld from the child", nr);
-
-          // resume the child
-          DEBUG("resuming the child...");
-          if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
-            rc = errno;
-            DEBUG("failed to continue the child: %d", rc);
-            goto done;
-          }
-
-          continue;
-        }
-
-        // TODO
+      // resume the child
+      DEBUG("resuming the child...");
+      if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
+        rc = errno;
+        DEBUG("failed to continue the child: %d", rc);
+        goto done;
       }
     }
+
+    // TODO
   }
 
 done:
+  // FIXME: handle the tee thread being blocked on a poll
+  if (tee_created) {
+    void *r;
+    int err = pthread_join(tee, &r);
+    if (err != 0) {
+      if (rc == 0)
+        rc = err;
+    } else if (rc == 0) {
+      rc = (int)(intptr_t)r;
+    }
+  }
+
   return rc;
 }

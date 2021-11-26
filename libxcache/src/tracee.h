@@ -50,6 +50,16 @@ INTERNAL _Noreturn void tracee_exec(tracee_t *tracee);
 /// \return 0 on success or errno on failure
 INTERNAL int tracee_monitor(xc_trace_t *trace, tracee_t *tracee);
 
+/// run a loop reading and processing a tracee’s stdout, stderr
+///
+/// This is written in a style to match the entry point `pthread_create`
+/// expects. The argument type is actually `tracee_t*` and the return type is
+/// `int`.
+///
+/// \param arg Tracee on which to operate
+/// \return 0 on success or an errno on failure
+INTERNAL void *tracee_tee(void *arg);
+
 /// clear fields of a tracee and deallocate underlying resources
 ///
 /// Idempotent; it is OK to call this multiple times on the same tracee.
