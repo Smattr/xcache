@@ -107,6 +107,8 @@ static int drain(int to, int from) {
     if (r < 0) {
       if (errno == EINTR)
         continue;
+      if (errno == EAGAIN || errno == EWOULDBLOCK)
+        return 0;
       return errno;
     }
     if (r == 0)
