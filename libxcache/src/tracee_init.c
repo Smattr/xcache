@@ -12,7 +12,9 @@
 static int set_cloexec(int fd) {
   int flags = fcntl(fd, F_GETFD, 0);
   flags |= O_CLOEXEC;
-  return fcntl(fd, F_SETFD, flags);
+  if (UNLIKELY(fcntl(fd, F_SETFD, flags) != 0))
+    return errno;
+  return 0;
 }
 
 int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
