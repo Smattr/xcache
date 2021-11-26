@@ -6,6 +6,7 @@
 #include "util.h"
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -126,6 +127,11 @@ static int drain(int to, int from) {
   return 0;
 }
 
+static __attribute__((unused)) bool is_nonblocking(int fd) {
+  int flags = fcntl(fd, F_GETFL, 0);
+  return !!(flags & O_NONBLOCK);
+}
+
 int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
   assert(trace != NULL);
@@ -142,6 +148,9 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
   while (true) {
 
     // poll the child for a relevant event
+    assert(is_nonblocking(tracee->out[0]));
+    assert(is_nonblocking(tracee->err[0]));
+    assert(is_nonblocking(tracee->pidfd));
     struct pollfd fds[] = {
         {.fd = tracee->out[0], .events = POLLIN},
         {.fd = tracee->err[0], .events = POLLIN},
