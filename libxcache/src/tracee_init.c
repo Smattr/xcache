@@ -26,6 +26,8 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
   int rc = 0;
   memset(tracee, 0, sizeof(*tracee));
 
+  tracee->proc = proc;
+
   // setup pipes for stdout, stderr
   if (UNLIKELY(pipe(tracee->out) != 0) || UNLIKELY(pipe(tracee->err) != 0)) {
     rc = errno;
