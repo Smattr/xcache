@@ -17,6 +17,14 @@ static int set_cloexec(int fd) {
   return 0;
 }
 
+static int set_nonblock(int fd) {
+  int flags = fcntl(fd, F_GETFL, 0);
+  flags |= O_NONBLOCK;
+  if (UNLIKELY(fcntl(fd, F_SETFL, flags) != 0))
+    return errno;
+  return 0;
+}
+
 int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
 
   assert(tracee != NULL);
@@ -37,6 +45,14 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
   if (UNLIKELY(rc != 0))
     goto done;
   rc = set_cloexec(tracee->err[0]);
+  if (UNLIKELY(rc != 0))
+    goto done;
+
+  // set the read ends of pipes non-blocking
+  rc = set_nonblock(tracee->out[0]);
+  if (UNLIKELY(rc != 0))
+    goto done;
+  rc = set_nonblock(tracee->err[0]);
   if (UNLIKELY(rc != 0))
     goto done;
 
