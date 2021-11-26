@@ -45,5 +45,7 @@ INTERNAL int channel_read(channel_t *channel, int *data);
 
 /// destroy a channel
 ///
+/// Idempotent; OK to call multiple times on the same channel.
+///
 /// \param channel Channel to close
 INTERNAL void channel_close(channel_t *channel);
