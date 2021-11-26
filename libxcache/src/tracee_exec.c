@@ -19,7 +19,8 @@
 #include <unistd.h>
 #include <xcache/proc.h>
 
-// flip this to true when debugging tricky child startup failures
+/// Flip this to true when debugging tricky child startup failures. Note this
+/// will skip duping stderr, so will make tracing possibly incorrect.
 enum { DEBUGGING = false };
 
 #define DEBUG_(args...)                                                        \
