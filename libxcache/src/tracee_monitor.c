@@ -6,6 +6,7 @@
 #include "util.h"
 #include <assert.h>
 #include <errno.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -14,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/user.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 // XXX: there is no Glibc wrapper for this
 static int pidfd_open(pid_t pid) { return syscall(__NR_pidfd_open, pid, 0); }
@@ -97,6 +99,33 @@ done:
   return rc;
 }
 
+static int drain(int to, int from) {
+  while (true) {
+    char buffer[BUFSIZ];
+    ssize_t r = read(from, buffer, sizeof(buffer));
+    if (r < 0) {
+      if (errno == EINTR)
+        continue;
+      return errno;
+    }
+    if (r == 0)
+      return 0;
+
+    size_t offset = 0;
+    while (r > 0) {
+      ssize_t w = write(to, &buffer[offset], (size_t)r);
+      if (w < 0) {
+        if (errno == EINTR)
+          continue;
+        return errno;
+      }
+      offset += (size_t)w;
+      r -= (size_t)w;
+    }
+  }
+  return 0;
+}
+
 int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
   assert(trace != NULL);
@@ -112,45 +141,80 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
   // monitor the child
   while (true) {
 
-    int status;
-    if (UNLIKELY(waitpid(tracee->pid, &status, 0) == -1)) {
+    // poll the child for a relevant event
+    struct pollfd fds[] = {
+        {.fd = tracee->out[0], .events = POLLIN},
+        {.fd = tracee->err[0], .events = POLLIN},
+        {.fd = tracee->pidfd, .events = POLLIN},
+    };
+    nfds_t nfds = sizeof(fds) / sizeof(fds[0]);
+    if (UNLIKELY(poll(fds, nfds, -1) == -1)) {
       rc = errno;
       goto done;
     }
 
-    // was this a seccomp event?
-    if (status >> 8 == (SIGTRAP | (PTRACE_EVENT_SECCOMP << 8))) {
+    for (size_t i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i) {
 
-      // retrieve the syscall number
-      static const size_t RAX_OFFSET =
-          offsetof(struct user, regs) +
-          offsetof(struct user_regs_struct, orig_rax);
-      long nr = ptrace(PTRACE_PEEKUSER, tracee->pid, RAX_OFFSET, NULL);
-      DEBUG("saw syscall %ld from the child\n", nr);
+      // skip if nothing was available to read from this entry
+      if (!(fds[i].revents & POLLIN))
+        continue;
 
-      // resume the child
-      DEBUG("resuming the child...\n");
-      if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
-        rc = errno;
-        DEBUG("failed to continue the child: %d\n", rc);
-        goto done;
+      // is this an entry indicating stdout data available?
+      if (fds[i].fd == tracee->out[0]) {
+        rc = drain(STDOUT_FILENO, tracee->out[0]);
+        if (UNLIKELY(rc != 0))
+          goto done;
       }
 
-      continue;
+      // is this an entry indicating stderr data available?
+      if (fds[i].fd == tracee->err[0]) {
+        rc = drain(STDERR_FILENO, tracee->err[0]);
+        if (UNLIKELY(rc != 0))
+          goto done;
+      }
+
+      // is this an entry indicating a child PID event?
+      if (fds[i].fd == tracee->pidfd) {
+
+        siginfo_t status;
+        static const int options = WEXITED | WSTOPPED | WNOHANG;
+        if (UNLIKELY(waitid(P_PID, tracee->pid, &status, options) == -1)) {
+          rc = errno;
+          goto done;
+        }
+
+        // was this an exit?
+        if (status.si_code == CLD_EXITED) {
+          trace->exit_status = status.si_status;
+          goto done; // success
+        }
+
+        assert(status.si_code == CLD_TRAPPED && "TODO");
+
+        // was this a seccomp event?
+        if (status.si_status >> 8 == (SIGTRAP | (PTRACE_EVENT_SECCOMP << 8))) {
+
+          // retrieve the syscall number
+          static const size_t RAX_OFFSET =
+              offsetof(struct user, regs) +
+              offsetof(struct user_regs_struct, orig_rax);
+          long nr = ptrace(PTRACE_PEEKUSER, tracee->pid, RAX_OFFSET, NULL);
+          DEBUG("saw syscall %ld from the child\n", nr);
+
+          // resume the child
+          DEBUG("resuming the child...\n");
+          if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
+            rc = errno;
+            DEBUG("failed to continue the child: %d\n", rc);
+            goto done;
+          }
+
+          continue;
+        }
+
+        // TODO
+      }
     }
-
-    // if not, this was an exit
-
-    // decode its exit status
-    if (WIFEXITED(status)) {
-      trace->exit_status = WEXITSTATUS(status);
-    } else if (WIFSIGNALED(status)) {
-      trace->exit_status = 128 + WTERMSIG(status);
-    } else {
-      trace->exit_status = -1;
-    }
-
-    break;
   }
 
 done:
