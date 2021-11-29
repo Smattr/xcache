@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <xcache/proc.h>
 
@@ -24,58 +25,55 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
   assert(proc != NULL);
 
   int rc = 0;
-  tracee_t t = {0};
+  memset(tracee, 0, sizeof(*tracee));
 
-  t.proc = proc;
+  tracee->proc = proc;
 
   // setup pipes for stdout, stderr
-  if (UNLIKELY(pipe(t.out) != 0) || UNLIKELY(pipe(t.err) != 0)) {
+  if (UNLIKELY(pipe(tracee->out) != 0) || UNLIKELY(pipe(tracee->err) != 0)) {
     rc = errno;
     goto done;
   }
 
   // set close-on-exec on the read ends of the pipes, so the tracee does not
   // need to worry about closing them
-  rc = set_cloexec(t.out[0]);
+  rc = set_cloexec(tracee->out[0]);
   if (UNLIKELY(rc != 0))
     goto done;
-  rc = set_cloexec(t.err[0]);
+  rc = set_cloexec(tracee->err[0]);
   if (UNLIKELY(rc != 0))
     goto done;
 
   // set the read ends of pipes non-blocking
-  rc = set_nonblock(t.out[0]);
+  rc = set_nonblock(tracee->out[0]);
   if (UNLIKELY(rc != 0))
     goto done;
-  rc = set_nonblock(t.err[0]);
+  rc = set_nonblock(tracee->err[0]);
   if (UNLIKELY(rc != 0))
     goto done;
 
   // setup a buffer for stdout
-  t.out_content = open_memstream(&t.out_base, &t.out_len);
-  if (UNLIKELY(t.out_content == NULL)) {
+  tracee->out_content = open_memstream(&tracee->out_base, &tracee->out_len);
+  if (UNLIKELY(tracee->out_content == NULL)) {
     rc = errno;
     goto done;
   }
 
   // setup a buffer for stderr
-  t.err_content = open_memstream(&t.err_base, &t.err_len);
-  if (UNLIKELY(t.err_content == NULL)) {
+  tracee->err_content = open_memstream(&tracee->err_base, &tracee->err_len);
+  if (UNLIKELY(tracee->err_content == NULL)) {
     rc = errno;
     goto done;
   }
 
   // setup a channel for the child to signal exec failure to the parent
-  rc = channel_open(&t.msg);
+  rc = channel_open(&tracee->msg);
   if (UNLIKELY(rc != 0))
     goto done;
 
 done:
-  if (UNLIKELY(rc != 0)) {
-    tracee_deinit(&t);
-  } else {
-    *tracee = t;
-  }
+  if (UNLIKELY(rc != 0))
+    tracee_deinit(tracee);
 
   return rc;
 }
