@@ -7,6 +7,8 @@
 #include <poll.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 static __attribute__((unused)) bool is_nonblocking(int fd) {
@@ -14,33 +16,68 @@ static __attribute__((unused)) bool is_nonblocking(int fd) {
   return !!(flags & O_NONBLOCK);
 }
 
-static int drain(int to, int from) {
+/// return code for something that can have either hard or soft failures
+typedef struct {
+  int soft_rc;
+  int hard_rc;
+} rc_t;
+
+static rc_t drain(int to, FILE *to_buffer, int from) {
   while (true) {
     char buffer[BUFSIZ];
+
+    // read data from our pipe shared with the child
     ssize_t r = read(from, buffer, sizeof(buffer));
     if (r < 0) {
       if (errno == EINTR)
         continue;
       if (errno == EAGAIN || errno == EWOULDBLOCK)
-        return 0;
-      return errno;
+        return (rc_t){0};
+      return (rc_t){.hard_rc = errno};
     }
     if (r == 0)
-      return 0;
+      return (rc_t){0};
 
-    size_t offset = 0;
-    while (r > 0) {
-      ssize_t w = write(to, &buffer[offset], (size_t)r);
+    size_t size = (size_t)r;
+
+    // write the data to our own stdout/stderr
+    for (size_t offset = 0; offset < size; ) {
+      ssize_t w = write(to, &buffer[offset], size - offset);
       if (w < 0) {
         if (errno == EINTR)
           continue;
-        return errno;
+        return (rc_t){.hard_rc = errno};
       }
       offset += (size_t)w;
-      r -= (size_t)w;
+    }
+
+    // write the data to our in-memory buffer for saving later
+    if (LIKELY(to_buffer != NULL)) {
+      size_t written = fwrite(buffer, sizeof(buffer[0]), size, to_buffer);
+      if (UNLIKELY(written != size))
+        return (rc_t){.soft_rc = ENOMEM};
     }
   }
   UNREACHABLE();
+}
+
+static void discard_buffers(tracee_t *tracee) {
+
+  // discard and deallocate stdout buffer
+  if (tracee->out_content != NULL)
+    (void)fclose(tracee->out_content);
+  tracee->out_content = NULL;
+  free(tracee->out_base);
+  tracee->out_base = NULL;
+  tracee->out_len = 0;
+
+  // discard and deallocate stderr buffer
+  if (tracee->err_content != NULL)
+    (void)fclose(tracee->err_content);
+  tracee->err_content = NULL;
+  free(tracee->err_base);
+  tracee->err_base = NULL;
+  tracee->err_len = 0;
 }
 
 void *tracee_tee(void *arg) {
@@ -49,6 +86,10 @@ void *tracee_tee(void *arg) {
 
   int rc = 0;
   tracee_t *tracee = arg;
+
+  // an error that should not stop us processing the child’s streams, but will
+  // eventually result in overall failure
+  int soft_rc = 0;
 
   while (tracee->out[0] > 0 && tracee->err[0] > 0) {
 
@@ -77,16 +118,24 @@ void *tracee_tee(void *arg) {
 
       // is there data available to read?
       if (fds[i].revents & POLLIN) {
+        rc_t r = {0};
         if (fds[i].fd == tracee->out[0]) {
           DEBUG("child has stdout data");
-          rc = drain(STDOUT_FILENO, fds[i].fd);
+          r = drain(STDOUT_FILENO, tracee->out_content, fds[i].fd);
         } else {
           assert(fds[i].fd == tracee->err[0]);
           DEBUG("child has stderr data");
-          rc = drain(STDERR_FILENO, fds[i].fd);
+          r = drain(STDERR_FILENO, tracee->err_content, fds[i].fd);
         }
-        if (UNLIKELY(rc != 0))
+
+        if (UNLIKELY(r.soft_rc != 0)) {
+          discard_buffers(tracee);
+          if (soft_rc == 0)
+            soft_rc = r.soft_rc;
+        } else if (UNLIKELY(r.hard_rc != 0)) {
+          rc = r.hard_rc;
           goto done;
+        }
       }
 
       // did the tracee close their end of the pipe?
@@ -106,5 +155,8 @@ void *tracee_tee(void *arg) {
   }
 
 done:
+  if (rc == 0 && UNLIKELY(soft_rc != 0))
+    rc = soft_rc;
+
   return (void *)(intptr_t)rc;
 }

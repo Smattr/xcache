@@ -2,6 +2,8 @@
 
 #include "channel.h"
 #include "macros.h"
+#include <stddef.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <xcache/proc.h>
 #include <xcache/trace.h>
@@ -20,6 +22,16 @@ typedef struct {
 
   /// pipe for stderr
   int err[2];
+
+  /// in-memory buffer of bytes written to stdout
+  FILE *out_content;
+  char *out_base;
+  size_t out_len;
+
+  /// in-memory buffer of bytes written to stderr
+  FILE *err_content;
+  char *err_base;
+  size_t err_len;
 
   /// pipe for signalling any failure of the tracee to the tracer
   channel_t msg;

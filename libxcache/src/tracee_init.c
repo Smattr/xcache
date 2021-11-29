@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <xcache/proc.h>
@@ -50,6 +51,20 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
   rc = set_nonblock(tracee->err[0]);
   if (UNLIKELY(rc != 0))
     goto done;
+
+  // setup a buffer for stdout
+  tracee->out_content = open_memstream(&tracee->out_base, &tracee->out_len);
+  if (UNLIKELY(tracee->out_content == NULL)) {
+    rc = errno;
+    goto done;
+  }
+
+  // setup a buffer for stderr
+  tracee->err_content = open_memstream(&tracee->err_base, &tracee->err_len);
+  if (UNLIKELY(tracee->err_content == NULL)) {
+    rc = errno;
+    goto done;
+  }
 
   // setup a channel for the child to signal exec failure to the parent
   rc = channel_open(&tracee->msg);
