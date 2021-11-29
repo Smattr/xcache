@@ -48,7 +48,8 @@ static int init(tracee_t *tracee) {
   // set our tracer preferences
   DEBUG("setting ptrace preferences...");
   {
-    static const int opts = PTRACE_O_TRACESECCOMP;
+    static const int opts = PTRACE_O_TRACESECCOMP | PTRACE_O_TRACECLONE |
+                            PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK;
     if (UNLIKELY(ptrace(PTRACE_SETOPTIONS, tracee->pid, NULL, 0, opts) != 0)) {
       rc = errno;
       goto done;
@@ -129,7 +130,20 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
       case SIGTRAP | (PTRACE_EVENT_FORK << 8):
       case SIGTRAP | (PTRACE_EVENT_VFORK << 8):
       case SIGTRAP | (PTRACE_EVENT_CLONE << 8):
-        break;
+        // The target called fork (or a cousin of). Unless I have missed
+        // something in the ptrace docs, the only way to also trace forked
+        // children is to set PTRACE_O_FORK and friends on the root process.
+        // Unfortunately the result of this is that we get two events that tell
+        // us the same thing: a SIGTRAP in the parent on fork (this case) and a
+        // SIGSTOP in the child before execution (handled below). It is simpler
+        // to just ignore the SIGTRAP in the parent and start tracking the child
+        // when we receive its initial SIGSTOP.
+        if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
+          rc = errno;
+          DEBUG("failed to continue the child: %d", rc);
+          goto done;
+        }
+        continue;
 
       // seccomp event
       case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
