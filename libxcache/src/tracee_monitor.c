@@ -131,13 +131,17 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
       case SIGTRAP | (PTRACE_EVENT_CLONE << 8):
         break;
 
-      // `exec alike
-      case SIGTRAP | (PTRACE_EVENT_EXEC << 8):
-        break;
-
       // seccomp event
       case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
         break;
+
+      // ptrace events corresponding to options that we never set and hence
+      // should never receive
+      case SIGTRAP | (PTRACE_EVENT_EXEC << 8):
+      case SIGTRAP | (PTRACE_EVENT_EXIT << 8):
+      case SIGTRAP | (PTRACE_EVENT_VFORK_DONE << 8):
+        DEBUG("unexpected ptrace event %d", status);
+        UNREACHABLE();
 
       default:
         DEBUG("warning: unhandled SIGTRAP stop %d", status);
