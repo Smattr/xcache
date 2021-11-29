@@ -40,7 +40,7 @@ static int drain(int to, int from) {
       r -= (size_t)w;
     }
   }
-  return 0;
+  UNREACHABLE();
 }
 
 void *tracee_tee(void *arg) {
