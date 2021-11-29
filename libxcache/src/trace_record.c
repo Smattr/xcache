@@ -48,8 +48,10 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   }
 
   // are we the child (tracee)?
-  if (tracee.pid == 0)
+  if (tracee.pid == 0) {
     tracee_exec(&tracee);
+    UNREACHABLE();
+  }
 
   // we are the parent (tracer)
 
