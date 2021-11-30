@@ -76,12 +76,62 @@ static int exec(tracee_t *tracee) {
   // load a seccomp filter that intercepts relevant syscalls
   static struct sock_filter filter[] = {
       BPF_STMT(BPF_LD + BPF_W + BPF_ABS, offsetof(struct seccomp_data, nr)),
-  // TODO: flip this to an allow list instead of a deny list
-#ifdef __NR_exec
-      BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_exec, 0, 1),
-      BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_TRACE),
+
+#define TRACE(syscall)                                                         \
+  BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_##syscall, 0, 1),                   \
+      BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_TRACE)
+
+#define IGNORE(syscall)                                                        \
+  BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_##syscall, 0, 1),                   \
+      BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW)
+
+      IGNORE(close),
+      IGNORE(read),
+      IGNORE(write),
+      IGNORE(execve),
+      IGNORE(fstat),
+      IGNORE(poll),
+      IGNORE(lseek),
+      IGNORE(mmap),
+      IGNORE(mprotect),
+      IGNORE(munmap),
+      IGNORE(brk),
+      IGNORE(rt_sigaction),
+      IGNORE(rt_sigprocmask),
+      IGNORE(rt_sigreturn),
+      IGNORE(fcntl),
+      IGNORE(ptrace),
+#ifdef __NR_set_tid_address
+      IGNORE(set_tid_address),
 #endif
+#ifdef __NR_set_robust_list
+      IGNORE(set_robust_list),
+#endif
+#ifdef __NR_get_robust_list
+      IGNORE(get_robust_list),
+#endif
+      IGNORE(splice),
+      IGNORE(tee),
+      IGNORE(pipe),
+#ifdef __NR_pipe2
+      IGNORE(pipe2),
+#endif
+#ifdef __NR_prlimit64
+      IGNORE(prlimit64),
+#endif
+
+      TRACE(open),
+      TRACE(openat),
+      TRACE(access),
+      TRACE(getcwd),
+#ifdef __NR_arch_prctl
+      TRACE(arch_prctl),
+#endif
+
       BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW),
+
+#undef IGNORE
+#undef TRACE
   };
   static const struct sock_fprog prog = {
       .filter = filter,
