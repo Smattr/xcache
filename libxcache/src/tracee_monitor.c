@@ -130,6 +130,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
       case SIGTRAP | (PTRACE_EVENT_FORK << 8):
       case SIGTRAP | (PTRACE_EVENT_VFORK << 8):
       case SIGTRAP | (PTRACE_EVENT_CLONE << 8):
+        DEBUG("target called fork");
         // The target called fork (or a cousin of). Unless I have missed
         // something in the ptrace docs, the only way to also trace forked
         // children is to set PTRACE_O_FORK and friends on the root process.
@@ -147,6 +148,12 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
       // seccomp event
       case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
+        DEBUG("saw seccomp stop");
+        break;
+
+      // vanilla SIGTRAP
+      case SIGTRAP:
+        DEBUG("saw normal SIGTRAP stop");
         break;
 
       // ptrace events corresponding to options that we never set and hence
