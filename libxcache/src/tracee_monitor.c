@@ -50,7 +50,7 @@ static int init(tracee_t *tracee) {
   {
     static const int opts = PTRACE_O_TRACESECCOMP | PTRACE_O_TRACECLONE |
                             PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK;
-    if (UNLIKELY(ptrace(PTRACE_SETOPTIONS, tracee->pid, NULL, 0, opts) != 0)) {
+    if (UNLIKELY(ptrace(PTRACE_SETOPTIONS, tracee->pid, NULL, opts) != 0)) {
       rc = errno;
       goto done;
     }
