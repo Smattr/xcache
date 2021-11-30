@@ -1,4 +1,5 @@
 add_library(libxcache
+  include/xcache/db.h
   include/xcache/debug.h
   include/xcache/hash.h
   include/xcache/proc.h

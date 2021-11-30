@@ -6,6 +6,7 @@
 #define XCACHE_API
 #endif
 
+#include <xcache/db.h>
 #include <xcache/debug.h>
 #include <xcache/hash.h>
 #include <xcache/proc.h>
