@@ -197,9 +197,12 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         DEBUG("failed to continue the child: %d", rc);
         goto done;
       }
+
+      continue;
     }
 
-    // TODO
+    DEBUG("unhandled child stop");
+    UNREACHABLE();
   }
 
 done:
