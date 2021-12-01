@@ -39,12 +39,17 @@ add_library(libxcache
   src/tracee_tee.c
 )
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(Sqlite REQUIRED sqlite3)
+target_link_libraries(libxcache ${Sqlite_LINK_LIBRARIES})
+
 target_include_directories(libxcache
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
   PRIVATE
     src
+    ${Sqlite_INCLUDE_DIRS}
 )
 
 find_package(Threads REQUIRED)
