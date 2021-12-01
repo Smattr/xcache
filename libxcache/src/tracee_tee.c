@@ -41,7 +41,7 @@ static rc_t drain(int to, FILE *to_buffer, int from) {
     size_t size = (size_t)r;
 
     // write the data to our own stdout/stderr
-    for (size_t offset = 0; offset < size; ) {
+    for (size_t offset = 0; offset < size;) {
       ssize_t w = write(to, &buffer[offset], size - offset);
       if (w < 0) {
         if (errno == EINTR)
