@@ -6,11 +6,13 @@ add_library(libxcache
   include/xcache/trace.h
   include/xcache/xcache.h
 
+  src/db.h
   src/channel.h
   src/copy_file.h
   src/debug.h
   src/make_hash.h
   src/macros.h
+  src/path.h
   src/proc.h
   src/trace.h
   src/tracee.h
@@ -21,10 +23,13 @@ add_library(libxcache
   src/channel_read.c
   src/channel_write.c
   src/copy_file.c
+  src/db_open.c
+  src/db_close.c
   src/debug.c
   src/hash_data.c
   src/hash_file.c
   src/make_hash.c
+  src/path_join.c
   src/proc_exec.c
   src/proc_free.c
   src/proc_new.c
