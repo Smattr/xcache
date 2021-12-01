@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <xcache/filem.h>
 #include <xcache/proc.h>
 #include <xcache/trace.h>
 
@@ -23,15 +24,13 @@ typedef struct {
   /// pipe for stderr
   int err[2];
 
-  /// in-memory buffer of bytes written to stdout
-  FILE *out_content;
-  char *out_base;
-  size_t out_len;
+  /// bytes written to stdout
+  FILE *out_f;
+  char *out_path;
 
-  /// in-memory buffer of bytes written to stderr
-  FILE *err_content;
-  char *err_base;
-  size_t err_len;
+  /// bytes written to stderr
+  FILE *err_f;
+  char *err_path;
 
   /// pipe for signalling any failure of the tracee to the tracer
   channel_t msg;
@@ -41,8 +40,10 @@ typedef struct {
 ///
 /// \param tracee [out] Initialised tracee on success
 /// \param proc Process about to be traced
+/// \param filem File manager for creating output artifacts
 /// \return 0 on success or an errno on failure
-INTERNAL int tracee_init(tracee_t *tracee, const xc_proc_t *proc);
+INTERNAL int tracee_init(tracee_t *tracee, const xc_proc_t *proc,
+                         xc_filem_t *filem);
 
 /// become the given subprocess
 ///

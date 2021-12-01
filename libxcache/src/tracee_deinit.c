@@ -25,21 +25,23 @@ void tracee_deinit(tracee_t *tracee) {
     tracee->err[i] = 0;
   }
 
-  if (tracee->out_content != NULL)
-    (void)fclose(tracee->out_content);
-  tracee->out_content = NULL;
+  if (tracee->out_f != NULL)
+    (void)fclose(tracee->out_f);
+  tracee->out_f = NULL;
 
-  free(tracee->out_base);
-  tracee->out_base = NULL;
-  tracee->out_len = 0;
+  if (tracee->out_path != NULL)
+    (void)unlink(tracee->out_path);
+  free(tracee->out_path);
+  tracee->out_path = NULL;
 
-  if (tracee->err_content != NULL)
-    (void)fclose(tracee->err_content);
-  tracee->err_content = NULL;
+  if (tracee->err_f != NULL)
+    (void)fclose(tracee->err_f);
+  tracee->err_f = NULL;
 
-  free(tracee->err_base);
-  tracee->err_base = NULL;
-  tracee->err_len = 0;
+  if (tracee->err_path != NULL)
+    (void)unlink(tracee->err_path);
+  free(tracee->err_path);
+  tracee->err_path = NULL;
 
   channel_close(&tracee->msg);
 }

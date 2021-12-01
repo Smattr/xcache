@@ -8,7 +8,8 @@
 #include <unistd.h>
 #include <xcache/trace.h>
 
-int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
+int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc,
+                    xc_filem_t *filem) {
 
   if (UNLIKELY(trace == NULL))
     return EINVAL;
@@ -31,7 +32,7 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc) {
   tracee_t tracee = {0};
   xc_trace_t *t = NULL;
 
-  rc = tracee_init(&tracee, proc);
+  rc = tracee_init(&tracee, proc, filem);
   if (UNLIKELY(rc != 0))
     goto done;
 

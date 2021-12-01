@@ -63,21 +63,23 @@ static rc_t drain(int to, FILE *to_buffer, int from) {
 
 static void discard_buffers(tracee_t *tracee) {
 
-  // discard and deallocate stdout buffer
-  if (tracee->out_content != NULL)
-    (void)fclose(tracee->out_content);
-  tracee->out_content = NULL;
-  free(tracee->out_base);
-  tracee->out_base = NULL;
-  tracee->out_len = 0;
+  // discard and deallocate stdout sink
+  if (tracee->out_f != NULL)
+    (void)fclose(tracee->out_f);
+  tracee->out_f = NULL;
+  if (tracee->out_path != NULL)
+    (void)unlink(tracee->out_path);
+  free(tracee->out_path);
+  tracee->out_path = NULL;
 
-  // discard and deallocate stderr buffer
-  if (tracee->err_content != NULL)
-    (void)fclose(tracee->err_content);
-  tracee->err_content = NULL;
-  free(tracee->err_base);
-  tracee->err_base = NULL;
-  tracee->err_len = 0;
+  // discard and deallocate stderr sink
+  if (tracee->err_f != NULL)
+    (void)fclose(tracee->err_f);
+  tracee->err_f = NULL;
+  if (tracee->err_path != NULL)
+    (void)unlink(tracee->err_path);
+  free(tracee->err_path);
+  tracee->err_path = NULL;
 }
 
 void *tracee_tee(void *arg) {
@@ -121,11 +123,11 @@ void *tracee_tee(void *arg) {
         rc_t r = {0};
         if (fds[i].fd == tracee->out[0]) {
           DEBUG("child has stdout data");
-          r = drain(STDOUT_FILENO, tracee->out_content, fds[i].fd);
+          r = drain(STDOUT_FILENO, tracee->out_f, fds[i].fd);
         } else {
           assert(fds[i].fd == tracee->err[0]);
           DEBUG("child has stderr data");
-          r = drain(STDERR_FILENO, tracee->err_content, fds[i].fd);
+          r = drain(STDERR_FILENO, tracee->err_f, fds[i].fd);
         }
 
         if (UNLIKELY(r.soft_rc != 0)) {

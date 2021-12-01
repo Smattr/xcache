@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <xcache/filem.h>
 #include <xcache/proc.h>
 
 static int set_cloexec(int fd) {
@@ -19,7 +20,7 @@ static int set_cloexec(int fd) {
   return 0;
 }
 
-int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
+int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_filem_t *filem) {
 
   assert(tracee != NULL);
   assert(proc != NULL);
@@ -52,19 +53,15 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc) {
   if (UNLIKELY(rc != 0))
     goto done;
 
-  // setup a buffer for stdout
-  tracee->out_content = open_memstream(&tracee->out_base, &tracee->out_len);
-  if (UNLIKELY(tracee->out_content == NULL)) {
-    rc = errno;
+  // setup a file to save stdout
+  rc = filem->mkfile(filem, &tracee->out_f, &tracee->out_path);
+  if (UNLIKELY(rc != 0))
     goto done;
-  }
 
-  // setup a buffer for stderr
-  tracee->err_content = open_memstream(&tracee->err_base, &tracee->err_len);
-  if (UNLIKELY(tracee->err_content == NULL)) {
-    rc = errno;
+  // setup a file to save stderr
+  rc = filem->mkfile(filem, &tracee->err_f, &tracee->err_path);
+  if (UNLIKELY(rc != 0))
     goto done;
-  }
 
   // setup a channel for the child to signal exec failure to the parent
   rc = channel_open(&tracee->msg);
