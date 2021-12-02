@@ -25,6 +25,7 @@ add_library(libxcache
   src/channel_read.c
   src/channel_write.c
   src/copy_file.c
+  src/db_make_file.c
   src/db_open.c
   src/db_close.c
   src/debug.c
