@@ -1,6 +1,7 @@
 #include "db.h"
 #include "macros.h"
 #include "path.h"
+#include "sqlite_error_to_errno.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <sqlite3.h>
@@ -69,8 +70,7 @@ int xc_db_open(xc_db_t **db, const char *path, int flags) {
                                 : SQLITE_OPEN_READONLY;
     int r = sqlite3_open_v2(db_path, &d->db, mode, NULL);
     if (UNLIKELY(r != SQLITE_OK)) {
-      // TODO: translate Sqlite errors into errno
-      rc = ENOTSUP;
+      rc = sqlite_error_to_errno(r);
       goto done;
     }
   }

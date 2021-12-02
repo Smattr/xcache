@@ -15,6 +15,7 @@ add_library(libxcache
   src/macros.h
   src/path.h
   src/proc.h
+  src/sqlite_error_to_errno.h
   src/trace.h
   src/tracee.h
   src/util.h
@@ -36,6 +37,7 @@ add_library(libxcache
   src/proc_free.c
   src/proc_new.c
   src/set_debug.c
+  src/sqlite_error_to_errno.c
   src/trace_record.c
   src/trace_replay.c
   src/trace_is_valid.c
