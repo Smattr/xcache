@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xcache/db_t.h>
 #include <xcache/proc.h>
 #include <xcache/trace.h>
 
@@ -10,9 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/// a database of process traces
-typedef struct xc_db xc_db_t;
 
 /// open a new or existing Xcache trace database
 ///
