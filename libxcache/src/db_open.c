@@ -75,7 +75,33 @@ int xc_db_open(xc_db_t **db, const char *path, int flags) {
     }
   }
 
+  // create database structure
+  if (!d->read_only) {
+    static const char CREATE[] =
+      "create table if not exists trace ("
+      "    id integer primary key autoincrement,"
+      "    cwd text not null,"
+      "    argv text not null);"
+
+      "create table if not exists input ("
+      "    fk_trace integer references trace(id),"
+      "    path text not null,"
+      "    hash integer);"
+
+      "create table if not exists output ("
+      "    fk_trace integer references trace(id),"
+      "    path text not null,"
+      "    contents text not null);";
+
+    int r = sqlite3_exec(d->db, CREATE, NULL, NULL, NULL);
+    if (UNLIKELY(r != SQLITE_OK)) {
+      rc = sqlite_error_to_errno(r);
+      goto done;
+    }
+  }
+
 done:
+  // TODO: if we created the DB above but then failed, delete it
   if (UNLIKELY(rc != 0)) {
     xc_db_close(d);
   } else {
