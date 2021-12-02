@@ -5,6 +5,9 @@
 
 struct xc_db {
 
+  /// path to directory hosting the database’s artifacts
+  char *root;
+
   /// handle to the underlying database
   sqlite3 *db;
 

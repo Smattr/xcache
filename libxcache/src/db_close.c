@@ -11,5 +11,8 @@ void xc_db_close(xc_db_t *db) {
   (void)sqlite3_close(db->db);
   db->db = NULL;
 
+  free(db->root);
+  db->root = NULL;
+
   free(db);
 }

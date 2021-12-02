@@ -6,6 +6,7 @@
 #include <sqlite3.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -27,6 +28,13 @@ int xc_db_open(xc_db_t **db, const char *path, int flags) {
 
   xc_db_t *d = calloc(1, sizeof(*d));
   if (UNLIKELY(d == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
+  // save the root for later file construction
+  d->root = strdup(path);
+  if (UNLIKELY(d->root == NULL)) {
     rc = ENOMEM;
     goto done;
   }
