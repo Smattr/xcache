@@ -7,6 +7,7 @@ add_library(libxcache
   include/xcache/trace.h
   include/xcache/xcache.h
 
+  src/argv_serialise.h
   src/db.h
   src/channel.h
   src/copy_file.h
@@ -20,6 +21,7 @@ add_library(libxcache
   src/tracee.h
   src/util.h
 
+  src/argv_serialise.c
   src/channel_close.c
   src/channel_open.c
   src/channel_read.c
