@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <xcache/db_t.h>
 #include <xcache/trace.h>
 
-int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc,
-                    xc_filem_t *filem) {
+int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc, xc_db_t *db) {
 
   if (UNLIKELY(trace == NULL))
     return EINVAL;
@@ -28,11 +28,14 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc,
       return EINVAL;
   }
 
+  if (UNLIKELY(db == NULL))
+    return EINVAL;
+
   int rc = 0;
   tracee_t tracee = {0};
   xc_trace_t *t = NULL;
 
-  rc = tracee_init(&tracee, proc, filem);
+  rc = tracee_init(&tracee, proc, db);
   if (UNLIKELY(rc != 0))
     goto done;
 

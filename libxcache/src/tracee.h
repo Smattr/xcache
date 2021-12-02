@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <xcache/filem.h>
+#include <xcache/db_t.h>
 #include <xcache/proc.h>
 #include <xcache/trace.h>
 
@@ -40,10 +40,9 @@ typedef struct {
 ///
 /// \param tracee [out] Initialised tracee on success
 /// \param proc Process about to be traced
-/// \param filem File manager for creating output artifacts
+/// \param db Database in which to host output artifacts
 /// \return 0 on success or an errno on failure
-INTERNAL int tracee_init(tracee_t *tracee, const xc_proc_t *proc,
-                         xc_filem_t *filem);
+INTERNAL int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_db_t *db);
 
 /// become the given subprocess
 ///

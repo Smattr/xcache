@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
-#include <xcache/filem.h>
+#include <xcache/db_t.h>
 #include <xcache/proc.h>
 
 #ifndef XCACHE_API
@@ -25,10 +25,10 @@ typedef struct xc_trace xc_trace_t;
 ///
 /// \param trace [out] Trace of the process’ inputs and outputs
 /// \param proc Process to run
-/// \param filem File manager for creating output artifacts
+/// \param db Database in which to host output artifacts
 /// \return 0 on success or an errno on failure
 XCACHE_API int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc,
-                               xc_filem_t *filem);
+                               xc_db_t *db);
 
 /// check whether a trace is not stale
 ///

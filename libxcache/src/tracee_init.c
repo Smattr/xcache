@@ -1,4 +1,5 @@
 #include "channel.h"
+#include "db.h"
 #include "macros.h"
 #include "tracee.h"
 #include "util.h"
@@ -9,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <xcache/filem.h>
+#include <xcache/db_t.h>
 #include <xcache/proc.h>
 
 static int set_cloexec(int fd) {
@@ -20,10 +21,11 @@ static int set_cloexec(int fd) {
   return 0;
 }
 
-int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_filem_t *filem) {
+int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_db_t *db) {
 
   assert(tracee != NULL);
   assert(proc != NULL);
+  assert(db != NULL);
 
   int rc = 0;
   memset(tracee, 0, sizeof(*tracee));
@@ -54,12 +56,12 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_filem_t *filem) {
     goto done;
 
   // setup a file to save stdout
-  rc = filem->mkfile(filem, &tracee->out_f, &tracee->out_path);
+  rc = db_make_file(db, &tracee->out_f, &tracee->out_path);
   if (UNLIKELY(rc != 0))
     goto done;
 
   // setup a file to save stderr
-  rc = filem->mkfile(filem, &tracee->err_f, &tracee->err_path);
+  rc = db_make_file(db, &tracee->err_f, &tracee->err_path);
   if (UNLIKELY(rc != 0))
     goto done;
 
