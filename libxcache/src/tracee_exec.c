@@ -1,4 +1,3 @@
-#include "channel.h"
 #include "debug.h"
 #include "macros.h"
 #include "tracee.h"
@@ -31,13 +30,12 @@ enum { DEBUGGING = false };
     }                                                                          \
   } while (0)
 
-// The tracee’s use of the message pipe is coordinated with the tracer. That is,
-// the interleaving of the tracee’s writes to `tracee->msg` with other
-// operations below needs to line up with the tracer’s actions in
-// `tracee_monitor` with respect to what the tracer is expecting the tracee to
-// do. If this is mismatched, it will result in a deadlock where the tracer is
-// waiting for the tracee to do some action A while the tracee is waiting for
-// the tracer to acknowledge some different action B.
+// The tracee’s actions are coordinated with the tracer. That is, the
+// interleaving of what the tracee does below needs to line up with the tracer’s
+// actions in `tracee_monitor` with respect to what the tracer is expecting the
+// tracee to do. If this is mismatched, it will result in a deadlock where the
+// tracer is waiting for the tracee to do some action A while the tracee is
+// waiting for the tracer to acknowledge some different action B.
 
 static int exec(tracee_t *tracee) {
 
@@ -143,15 +141,6 @@ static int exec(tracee_t *tracee) {
     return r;
   }
 
-  // signal to out parent that we passed phase 1 of our setup
-  {
-    int r = channel_write(&tracee->msg, 0);
-    if (UNLIKELY(r != 0)) {
-      DEBUG_("failed to notify parent of phase 1 completion: %d", r);
-      // ignore as there is nothing else we can do
-    }
-  }
-
   // give our parent an opportunity to attach to us
   {
     int r = raise(SIGSTOP);
@@ -173,8 +162,9 @@ void tracee_exec(tracee_t *tracee) {
 
   int rc = exec(tracee);
 
-  // we failed, so signal this to the parent
-  (void)channel_write(&tracee->msg, rc);
+  // we should only reach here on failure
+  assert(rc != 0);
 
-  exit(EXIT_FAILURE);
+  // we failed, so signal this to the parent
+  exit(rc);
 }

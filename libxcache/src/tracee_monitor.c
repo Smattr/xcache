@@ -1,4 +1,3 @@
-#include "channel.h"
 #include "debug.h"
 #include "macros.h"
 #include "trace.h"
@@ -21,19 +20,6 @@ static int init(tracee_t *tracee) {
 
   int rc = 0;
 
-  // wait for a signal of failure from the child
-  DEBUG("waiting on signal from child...");
-  {
-    int r = channel_read(&tracee->msg, &rc);
-    DEBUG("channel read of %d, rc = %d from the child", r, rc);
-    if (UNLIKELY(r != 0)) {
-      rc = r;
-      goto done;
-    }
-    if (UNLIKELY(rc != 0))
-      goto done;
-  }
-
   // wait for the child to SIGSTOP itself
   DEBUG("waiting for the child to SIGSTOP itself...");
   {
@@ -41,6 +27,22 @@ static int init(tracee_t *tracee) {
     if (UNLIKELY(waitpid(tracee->pid, &status, 0) == -1)) {
       rc = errno;
       DEBUG("failed to wait on SIGSTOP from the child: %d", rc);
+      goto done;
+    }
+    if (UNLIKELY(WIFEXITED(status))) {
+      rc = WEXITSTATUS(status);
+      DEBUG("child prematurely exited with %d", rc);
+      goto done;
+    }
+    else if (LIKELY(WIFSTOPPED(status))) {
+      if (UNLIKELY(WSTOPSIG(status) != SIGSTOP)) {
+        rc = status;
+        DEBUG("non-SIGSTOP signal from child: %d", WSTOPSIG(status));
+        goto done;
+      }
+    } else {
+      rc = status;
+      DEBUG("unrecognized exit from child: %d", status);
       goto done;
     }
   }
@@ -63,22 +65,6 @@ static int init(tracee_t *tracee) {
     DEBUG("failed to continue the child: %d", rc);
     goto done;
   }
-
-  // wait for a signal of failure from the child in case they fail exec
-  DEBUG("waiting on signal from child...");
-  {
-    int r = channel_read(&tracee->msg, &rc);
-    DEBUG("channel read of %d, rc = %d from the child", r, rc);
-    if (UNLIKELY(r != 0)) {
-      rc = r;
-      goto done;
-    }
-    if (UNLIKELY(rc != 0))
-      goto done;
-  }
-
-  // we no longer need the message channel
-  channel_close(&tracee->msg);
 
 done:
   return rc;
