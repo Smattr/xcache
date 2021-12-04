@@ -1,4 +1,3 @@
-#include "channel.h"
 #include "db.h"
 #include "macros.h"
 #include "tracee.h"
@@ -62,11 +61,6 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_db_t *db) {
 
   // setup a file to save stderr
   rc = db_make_file(db, &tracee->err_f, &tracee->err_path);
-  if (UNLIKELY(rc != 0))
-    goto done;
-
-  // setup a channel for the child to signal exec failure to the parent
-  rc = channel_open(&tracee->msg);
   if (UNLIKELY(rc != 0))
     goto done;
 

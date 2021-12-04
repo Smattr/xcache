@@ -1,6 +1,5 @@
 #pragma once
 
-#include "channel.h"
 #include "macros.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -31,9 +30,6 @@ typedef struct {
   /// bytes written to stderr
   FILE *err_f;
   char *err_path;
-
-  /// pipe for signalling any failure of the tracee to the tracer
-  channel_t msg;
 } tracee_t;
 
 /// initialise a tracee

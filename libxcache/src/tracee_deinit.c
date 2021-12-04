@@ -1,4 +1,3 @@
-#include "channel.h"
 #include "tracee.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +41,4 @@ void tracee_deinit(tracee_t *tracee) {
     (void)unlink(tracee->err_path);
   free(tracee->err_path);
   tracee->err_path = NULL;
-
-  channel_close(&tracee->msg);
 }

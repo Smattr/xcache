@@ -9,7 +9,6 @@ add_library(libxcache
 
   src/argv_serialise.h
   src/db.h
-  src/channel.h
   src/copy_file.h
   src/debug.h
   src/make_hash.h
@@ -22,10 +21,6 @@ add_library(libxcache
   src/util.h
 
   src/argv_serialise.c
-  src/channel_close.c
-  src/channel_open.c
-  src/channel_read.c
-  src/channel_write.c
   src/copy_file.c
   src/db_make_file.c
   src/db_open.c
