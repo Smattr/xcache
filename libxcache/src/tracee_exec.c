@@ -64,6 +64,15 @@ static int exec(tracee_t *tracee) {
     return r;
   }
 
+  // give our parent an opportunity to attach to us
+  {
+    int r = raise(SIGSTOP);
+    if (UNLIKELY(r != 0)) {
+      DEBUG_("failed to SIGSTOP ourselves: %d", r);
+      // ignore as there is nothing else we can do
+    }
+  }
+
   // set no-new-privs so we can install a seccomp filter without CAP_SYS_ADMIN
   if (UNLIKELY(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1)) {
     int r = errno;
@@ -74,10 +83,6 @@ static int exec(tracee_t *tracee) {
   // load a seccomp filter that intercepts relevant syscalls
   static struct sock_filter filter[] = {
       BPF_STMT(BPF_LD + BPF_W + BPF_ABS, offsetof(struct seccomp_data, nr)),
-
-#define TRACE(syscall)                                                         \
-  BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_##syscall, 0, 1),                   \
-      BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_TRACE)
 
 #define IGNORE(syscall)                                                        \
   BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_##syscall, 0, 1),                   \
@@ -118,18 +123,9 @@ static int exec(tracee_t *tracee) {
       IGNORE(prlimit64),
 #endif
 
-      TRACE(open),
-      TRACE(openat),
-      TRACE(access),
-      TRACE(getcwd),
-#ifdef __NR_arch_prctl
-      TRACE(arch_prctl),
-#endif
-
-      BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW),
+      BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_TRACE),
 
 #undef IGNORE
-#undef TRACE
   };
   static const struct sock_fprog prog = {
       .filter = filter,
@@ -139,15 +135,6 @@ static int exec(tracee_t *tracee) {
     int r = errno;
     DEBUG_("failed to install seccomp filter: %d", r);
     return r;
-  }
-
-  // give our parent an opportunity to attach to us
-  {
-    int r = raise(SIGSTOP);
-    if (UNLIKELY(r != 0)) {
-      DEBUG_("failed to SIGSTOP ourselves: %d", r);
-      // ignore as there is nothing else we can do
-    }
   }
 
   return xc_proc_exec(tracee->proc);
