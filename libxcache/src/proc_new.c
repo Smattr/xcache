@@ -24,6 +24,9 @@ int xc_proc_new(xc_proc_t **proc, int argc, char **argv, const char *cwd) {
   if (UNLIKELY(cwd == NULL))
     return EINVAL;
 
+  if (UNLIKELY(cwd[0] != '/'))
+    return EINVAL;
+
   int rc = ENOMEM;
 
   xc_proc_t *p = calloc(1, sizeof(*p));
