@@ -74,6 +74,9 @@ INTERNAL void *tracee_tee(void *arg);
 /// \return 0 on success or an errno on failure
 INTERNAL int witness_syscall(tracee_t *tracee);
 
+/// witness a specific syscall
+INTERNAL int witness_chdir(tracee_t *tracee, int result, const char *path);
+
 /// clear fields of a tracee and deallocate underlying resources
 ///
 /// Idempotent; it is OK to call this multiple times on the same tracee.
