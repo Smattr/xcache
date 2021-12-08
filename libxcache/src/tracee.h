@@ -1,6 +1,7 @@
 #pragma once
 
 #include "macros.h"
+#include "trace.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -33,6 +34,9 @@ typedef struct {
   /// bytes written to stderr
   FILE *err_f;
   char *err_path;
+
+  /// trace being built up
+  xc_trace_t trace;
 } tracee_t;
 
 /// initialise a tracee

@@ -1,3 +1,4 @@
+#include "trace.h"
 #include "tracee.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,8 @@ void tracee_deinit(tracee_t *tracee) {
 
   if (tracee == NULL)
     return;
+
+  trace_deinit(&tracee->trace);
 
   tracee->proc = NULL;
 

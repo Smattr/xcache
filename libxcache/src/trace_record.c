@@ -4,6 +4,7 @@
 #include "tracee.h"
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <xcache/db_t.h>
@@ -68,9 +69,14 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc, xc_db_t *db) {
   rc = tracee_monitor(t, &tracee);
 
 done:
-  tracee_deinit(&tracee);
-  if (UNLIKELY(rc != 0))
+  if (UNLIKELY(rc != 0)) {
     free(t);
+  } else {
+    // steal the completed trace out of the tracee
+    *t = tracee.trace;
+    memset(&tracee.trace, 0, sizeof(tracee.trace));
+  }
+  tracee_deinit(&tracee);
 
   return rc;
 }
