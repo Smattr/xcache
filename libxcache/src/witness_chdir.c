@@ -1,5 +1,6 @@
 #include "debug.h"
 #include "macros.h"
+#include "path.h"
 #include "tracee.h"
 #include <assert.h>
 #include <errno.h>
@@ -31,14 +32,9 @@ int witness_chdir(tracee_t *tracee, int result, const char *path) {
   }
 
   // otherwise, create an absolute path
-  bool needs_slash = tracee->cwd[strlen(tracee->cwd) - 1] != '/';
-  size_t len = strlen(tracee->cwd) + strlen(path) + 1;
-  if (needs_slash)
-    ++len;
-  char *p = malloc(len);
+  char *p = path_join(tracee->cwd, path);
   if (UNLIKELY(p == NULL))
     return ENOMEM;
-  snprintf(p, len, "%s%s%s", tracee->cwd, needs_slash ? "/" : "", path);
 
   // update the tracee’s cwd
   free(tracee->cwd);
