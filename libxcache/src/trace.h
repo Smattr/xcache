@@ -6,7 +6,7 @@
 /// a file read by a process
 typedef struct {
   /// absolute path to the file
-  const char *path;
+  char *path;
   /// hash of the file’s content
   xc_hash_t hash;
 } read_file;
@@ -14,9 +14,9 @@ typedef struct {
 /// a file written by a process
 typedef struct {
   /// absolute path to the file
-  const char *path;
+  char *path;
   /// path to a file containing the content written
-  const char *content_path;
+  char *content_path;
 } written_file;
 
 struct xc_trace {
