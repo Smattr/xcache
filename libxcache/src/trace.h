@@ -11,6 +11,7 @@ typedef struct {
   char *path;
   /// hash of the file’s content
   xc_hash_t hash;
+  /// TODO: capture ENOENT and EPERM/EACCES
 } read_file;
 
 /// a file written by a process

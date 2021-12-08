@@ -136,6 +136,11 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
       case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
         DEBUG("saw seccomp stop");
 
+        // TODO: we actually need to witness execve _here_ instead of on syscall
+        // because, on successful execve, the input path to the syscall is in an
+        // address space that does not exist anymore. Thankfully we do not care
+        // whether execve succeeds or fails, so this should be doable.
+
         // resume the child
         DEBUG("resuming the child...");
         if (UNLIKELY(ptrace(PTRACE_SYSCALL, tracee->pid, NULL, NULL) != 0)) {
