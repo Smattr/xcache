@@ -48,6 +48,11 @@ XCACHE_API bool xc_trace_is_valid(const xc_trace_t *trace);
 /// \return An errno on failure
 XCACHE_API int xc_trace_replay(const xc_trace_t *trace);
 
+/// clean up and deallocate a previously created trace
+///
+/// \param trace Trace to deallocate
+XCACHE_API void xc_trace_free(xc_trace_t *trace);
+
 #ifdef __cplusplus
 }
 #endif
