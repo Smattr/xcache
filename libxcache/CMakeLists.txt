@@ -13,6 +13,7 @@ add_library(libxcache
   src/debug.h
   src/make_hash.h
   src/macros.h
+  src/page_size.h
   src/path.h
   src/proc.h
   src/sqlite_error_to_errno.h
@@ -29,6 +30,7 @@ add_library(libxcache
   src/hash_data.c
   src/hash_file.c
   src/make_hash.c
+  src/page_size.c
   src/path_join.c
   src/proc_exec.c
   src/proc_free.c

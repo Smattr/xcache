@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "page_size.h"
 #include "tracee.h"
 #include <assert.h>
 #include <errno.h>
@@ -34,14 +35,13 @@ static int peek_string(char **out, pid_t pid, size_t offset) {
   size_t size = 0;
   while (true) {
 
-    // FIXME: determine this dynamically
-    static const uintptr_t page_size = 4096;
+    const uintptr_t pagesize = (uintptr_t)page_size();
 
     // we are going to read some data from the tracee, but we want to follow the
     // advice of `man process_vm_readv` and not cross page boundaries
     char chunk[BUFSIZ];
-    uintptr_t limit = base - base % page_size + page_size;
-    size_t len = limit == 0 ? page_size - base % page_size : limit - base;
+    uintptr_t limit = base - base % pagesize + pagesize;
+    size_t len = limit == 0 ? pagesize - base % pagesize : limit - base;
     if (limit > sizeof(chunk))
       limit = sizeof(chunk);
 
