@@ -43,6 +43,7 @@ add_library(libxcache
   src/tracee_init.c
   src/tracee_monitor.c
   src/tracee_tee.c
+  src/witness_syscall.c
 )
 
 find_package(PkgConfig REQUIRED)

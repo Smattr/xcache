@@ -68,6 +68,12 @@ INTERNAL int tracee_monitor(xc_trace_t *trace, tracee_t *tracee);
 /// \return 0 on success or an errno on failure
 INTERNAL void *tracee_tee(void *arg);
 
+/// process the observation of a syscall exit
+///
+/// \param tracee Tracee that is stopped at syscall exit
+/// \return 0 on success or an errno on failure
+INTERNAL int witness_syscall(tracee_t *tracee);
+
 /// clear fields of a tracee and deallocate underlying resources
 ///
 /// Idempotent; it is OK to call this multiple times on the same tracee.

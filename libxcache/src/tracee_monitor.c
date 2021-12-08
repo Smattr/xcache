@@ -163,12 +163,9 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         DEBUG("warning: unhandled SIGTRAP stop %d", status);
       }
 
-      // retrieve the syscall number
-      static const size_t RAX_OFFSET =
-          offsetof(struct user, regs) +
-          offsetof(struct user_regs_struct, orig_rax);
-      long nr = ptrace(PTRACE_PEEKUSER, tracee->pid, RAX_OFFSET, NULL);
-      DEBUG("saw syscall %ld from the child", nr);
+      rc = witness_syscall(tracee);
+      if (UNLIKELY(rc != 0))
+        goto done;
 
       // resume the child
       DEBUG("resuming the child...");
