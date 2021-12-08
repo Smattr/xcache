@@ -41,4 +41,7 @@ void tracee_deinit(tracee_t *tracee) {
     (void)unlink(tracee->err_path);
   free(tracee->err_path);
   tracee->err_path = NULL;
+
+  free(tracee->cwd);
+  tracee->cwd = NULL;
 }

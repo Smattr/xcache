@@ -17,6 +17,9 @@ typedef struct {
   /// identifier of the subprocess (only > 0 if it is running)
   pid_t pid;
 
+  /// current working directory of the process
+  char *cwd;
+
   /// pipe for stdout
   int out[2];
 

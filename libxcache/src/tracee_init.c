@@ -1,5 +1,6 @@
 #include "db.h"
 #include "macros.h"
+#include "proc.h"
 #include "tracee.h"
 #include "util.h"
 #include <assert.h>
@@ -30,6 +31,13 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_db_t *db) {
   memset(tracee, 0, sizeof(*tracee));
 
   tracee->proc = proc;
+
+  // copy the process’ cwd, assuming we will start in this directory
+  tracee->cwd = strdup(proc->cwd);
+  if (UNLIKELY(tracee->cwd == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
 
   // setup pipes for stdout, stderr
   if (UNLIKELY(pipe(tracee->out) != 0) || UNLIKELY(pipe(tracee->err) != 0)) {
