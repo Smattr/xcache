@@ -135,7 +135,16 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
       // seccomp event
       case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
         DEBUG("saw seccomp stop");
-        break;
+
+        // resume the child
+        DEBUG("resuming the child...");
+        if (UNLIKELY(ptrace(PTRACE_SYSCALL, tracee->pid, NULL, NULL) != 0)) {
+          rc = errno;
+          DEBUG("failed to continue the child: %d", rc);
+          goto done;
+        }
+
+        continue;
 
       // vanilla SIGTRAP
       case SIGTRAP:
