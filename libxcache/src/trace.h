@@ -1,7 +1,9 @@
 #pragma once
 
+#include "macros.h"
 #include <stddef.h>
 #include <xcache/hash.h>
+#include <xcache/trace.h>
 
 /// a file read by a process
 typedef struct {
@@ -32,3 +34,6 @@ struct xc_trace {
   /// status the process returned on exit
   int exit_status;
 };
+
+/// clean up and deallocate the members of a trace
+INTERNAL void trace_deinit(xc_trace_t *trace);
