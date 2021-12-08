@@ -35,5 +35,12 @@ struct xc_trace {
   int exit_status;
 };
 
+/// append an entry to the read files list
+///
+/// \param trace Trace to operate on
+/// \param f Entry to append
+/// \return 0 on success or an errno on failure
+INTERNAL int trace_append_read(xc_trace_t *trace, read_file f);
+
 /// clean up and deallocate the members of a trace
 INTERNAL void trace_deinit(xc_trace_t *trace);

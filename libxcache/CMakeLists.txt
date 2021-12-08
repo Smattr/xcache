@@ -37,6 +37,7 @@ add_library(libxcache
   src/proc_new.c
   src/set_debug.c
   src/sqlite_error_to_errno.c
+  src/trace_append_read.c
   src/trace_deinit.c
   src/trace_free.c
   src/trace_record.c
