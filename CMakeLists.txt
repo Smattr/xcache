@@ -13,6 +13,14 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--as-needed")
 endif()
 
+find_program(CLANG_FORMAT clang-format)
+if(CLANG_FORMAT)
+  add_custom_target(format
+    COMMAND find libxcache xcache tests \\\( -name "*.c" -or -name "*.h" \\\)
+      -exec ${CLANG_FORMAT} -i --style=file {} \\\;
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
 add_subdirectory(libxcache)
 add_subdirectory(tests)
 add_subdirectory(xcache)
