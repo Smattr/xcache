@@ -72,6 +72,14 @@ INTERNAL int tracee_monitor(xc_trace_t *trace, tracee_t *tracee);
 /// \return 0 on success or an errno on failure
 INTERNAL void *tracee_tee(void *arg);
 
+/// restart a stopped tracee
+///
+/// It is assumed the tracee is in ``ptrace-stop`` when this function is called.
+///
+/// \param tracee Tracee to resume
+/// \return 0 on success or an errno on failure
+INTERNAL int tracee_resume(tracee_t *tracee);
+
 /// process the observation of a syscall exit
 ///
 /// \param tracee Tracee that is stopped at syscall exit

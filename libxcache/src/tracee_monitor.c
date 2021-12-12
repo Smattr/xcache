@@ -59,12 +59,9 @@ static int init(tracee_t *tracee) {
   }
 
   // resume the child
-  DEBUG("resuming the child...");
-  if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
-    rc = errno;
-    DEBUG("failed to continue the child: %d", rc);
+  rc = tracee_resume(tracee);
+  if (UNLIKELY(rc != 0))
     goto done;
-  }
 
 done:
   return rc;
@@ -125,11 +122,10 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         // SIGSTOP in the child before execution (handled below). It is simpler
         // to just ignore the SIGTRAP in the parent and start tracking the child
         // when we receive its initial SIGSTOP.
-        if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
-          rc = errno;
-          DEBUG("failed to continue the child: %d", rc);
+        rc = tracee_resume(tracee);
+        if (UNLIKELY(rc != 0))
           goto done;
-        }
+
         continue;
 
       // seccomp event
@@ -173,12 +169,9 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         goto done;
 
       // resume the child
-      DEBUG("resuming the child...");
-      if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
-        rc = errno;
-        DEBUG("failed to continue the child: %d", rc);
+      rc = tracee_resume(tracee);
+      if (UNLIKELY(rc != 0))
         goto done;
-      }
 
       continue;
     }
@@ -188,12 +181,9 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
       DEBUG("child stopped by signal %d", WSTOPSIG(status));
 
       // resume the child
-      DEBUG("resuming the child...");
-      if (UNLIKELY(ptrace(PTRACE_CONT, tracee->pid, NULL, NULL) != 0)) {
-        rc = errno;
-        DEBUG("failed to continue the child: %d", rc);
+      rc = tracee_resume(tracee);
+      if (UNLIKELY(rc != 0))
         goto done;
-      }
 
       continue;
     }
