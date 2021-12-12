@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int witness_chdir(tracee_t *tracee, int result, const char *path) {
+int see_chdir(tracee_t *tracee, int result, const char *path) {
 
   assert(tracee != NULL);
   assert(path != NULL);

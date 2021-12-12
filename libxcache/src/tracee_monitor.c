@@ -155,7 +155,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         DEBUG("warning: unhandled SIGTRAP stop %d", status);
       }
 
-      rc = witness_syscall(tracee);
+      rc = syscall_end(tracee);
       if (UNLIKELY(rc != 0))
         goto done;
 

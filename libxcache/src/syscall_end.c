@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <sys/syscall.h>
 
-int witness_syscall(tracee_t *tracee) {
+int syscall_end(tracee_t *tracee) {
 
   assert(tracee != NULL);
 
@@ -27,7 +27,7 @@ int witness_syscall(tracee_t *tracee) {
     if (UNLIKELY(rc != 0))
       return rc;
 
-    rc = witness_chdir(tracee, ret, path);
+    rc = see_chdir(tracee, ret, path);
 
     free(path);
     return rc;

@@ -88,7 +88,7 @@ INTERNAL int tracee_resume(tracee_t *tracee);
 /// \return 0 on success or an errno on failure
 INTERNAL int tracee_resume_to_syscall(tracee_t *tracee);
 
-/// do any booking required for seccomp (mid-syscall) stop
+/// do any book-keeping required for seccomp (mid-syscall) stop
 ///
 /// It is assumed a `PTRACE_EVENT_SECCOMP` has just been observed from the
 /// tracee.
@@ -97,14 +97,14 @@ INTERNAL int tracee_resume_to_syscall(tracee_t *tracee);
 /// \return 0 on success or an errno on failure
 INTERNAL int syscall_middle(tracee_t *tracee);
 
-/// process the observation of a syscall exit
+/// do any book-keeping required for syscall exit
 ///
 /// \param tracee Tracee that is stopped at syscall exit
 /// \return 0 on success or an errno on failure
-INTERNAL int witness_syscall(tracee_t *tracee);
+INTERNAL int syscall_end(tracee_t *tracee);
 
 /// witness a specific syscall
-INTERNAL int witness_chdir(tracee_t *tracee, int result, const char *path);
+INTERNAL int see_chdir(tracee_t *tracee, int result, const char *path);
 INTERNAL int see_execve(tracee_t *tracee, const char *filename);
 
 /// clear fields of a tracee and deallocate underlying resources

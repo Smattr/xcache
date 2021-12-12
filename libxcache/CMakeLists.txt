@@ -37,9 +37,11 @@ add_library(libxcache
   src/proc_exec.c
   src/proc_free.c
   src/proc_new.c
+  src/see_chdir.c
   src/see_execve.c
   src/set_debug.c
   src/sqlite_error_to_errno.c
+  src/syscall_end.c
   src/syscall_middle.c
   src/trace_append_read.c
   src/trace_deinit.c
@@ -54,8 +56,6 @@ add_library(libxcache
   src/tracee_resume.c
   src/tracee_resume_to_syscall.c
   src/tracee_tee.c
-  src/witness_chdir.c
-  src/witness_syscall.c
 )
 
 find_package(PkgConfig REQUIRED)
