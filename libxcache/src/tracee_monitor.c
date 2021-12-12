@@ -138,12 +138,9 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         // whether execve succeeds or fails, so this should be doable.
 
         // resume the child
-        DEBUG("resuming the child...");
-        if (UNLIKELY(ptrace(PTRACE_SYSCALL, tracee->pid, NULL, NULL) != 0)) {
-          rc = errno;
-          DEBUG("failed to continue the child: %d", rc);
+        rc = tracee_resume_to_syscall(tracee);
+        if (UNLIKELY(rc != 0))
           goto done;
-        }
 
         continue;
 
