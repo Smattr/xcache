@@ -37,8 +37,10 @@ add_library(libxcache
   src/proc_exec.c
   src/proc_free.c
   src/proc_new.c
+  src/see_execve.c
   src/set_debug.c
   src/sqlite_error_to_errno.c
+  src/syscall_middle.c
   src/trace_append_read.c
   src/trace_deinit.c
   src/trace_free.c

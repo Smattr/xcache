@@ -91,7 +91,6 @@ static int exec(tracee_t *tracee) {
       IGNORE(close),
       IGNORE(read),
       IGNORE(write),
-      IGNORE(execve),
       IGNORE(fstat),
       IGNORE(poll),
       IGNORE(lseek),
