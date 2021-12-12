@@ -1,6 +1,6 @@
+#include "peek.h"
 #include "macros.h"
 #include "page_size.h"
-#include "peek.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>

@@ -33,8 +33,7 @@ static int init(tracee_t *tracee) {
       rc = WEXITSTATUS(status);
       DEBUG("child prematurely exited with %d", rc);
       goto done;
-    }
-    else if (LIKELY(WIFSTOPPED(status))) {
+    } else if (LIKELY(WIFSTOPPED(status))) {
       if (UNLIKELY(WSTOPSIG(status) != SIGSTOP)) {
         rc = status;
         DEBUG("non-SIGSTOP signal from child: %d", WSTOPSIG(status));
