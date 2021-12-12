@@ -10,8 +10,10 @@ extern FILE *debug;
 #define DEBUG(args...)                                                         \
   do {                                                                         \
     if (UNLIKELY(debug != NULL)) {                                             \
+      flockfile(debug);                                                        \
       fprintf(debug, "xcache:%s:%d: [DEBUG] ", __FILE__, __LINE__);            \
       fprintf(debug, args);                                                    \
       fprintf(debug, "\n");                                                    \
+      funlockfile(debug);                                                      \
     }                                                                          \
   } while (0)
