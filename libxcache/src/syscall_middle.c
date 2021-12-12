@@ -39,7 +39,7 @@ int syscall_middle(tracee_t *tracee) {
     if (UNLIKELY(rc != 0))
       goto done;
 
-    break;;
+    break;
   }
 #endif
 
