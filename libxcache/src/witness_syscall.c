@@ -11,7 +11,7 @@ int witness_syscall(tracee_t *tracee) {
   assert(tracee != NULL);
 
   // retrieve the syscall number
-  long nr = peek_reg(tracee->pid, REG(orig_rax));
+  long nr = peek_syscall_no(tracee->pid);
 
   // retrieve the result of the syscall
   long ret = peek_reg(tracee->pid, REG(rax));
