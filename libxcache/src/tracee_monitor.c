@@ -50,8 +50,9 @@ static int init(tracee_t *tracee) {
   // set our tracer preferences
   DEBUG("setting ptrace preferences...");
   {
-    static const int opts = PTRACE_O_TRACESECCOMP | PTRACE_O_TRACECLONE |
-                            PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK;
+    static const int opts = PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACESECCOMP |
+                            PTRACE_O_TRACECLONE | PTRACE_O_TRACEFORK |
+                            PTRACE_O_TRACEVFORK;
     if (UNLIKELY(ptrace(PTRACE_SETOPTIONS, tracee->pid, NULL, opts) != 0)) {
       rc = errno;
       goto done;
@@ -89,7 +90,7 @@ static event_t get_event(int status) {
   case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
     return EV_SECCOMP;
 
-  case SIGTRAP:
+  case SIGTRAP | 0x80:
     return EV_SYSCALL;
 
   // ptrace events corresponding to options that we never set and hence should
@@ -145,8 +146,8 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
       goto done; // success
     }
 
-    // was this a tracing event?
-    if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP) {
+    // was this a signal/tracing event?
+    if (WIFSTOPPED(status)) {
 
       switch (get_event(status)) {
 
@@ -160,11 +161,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         // SIGSTOP in the child before execution (handled below). It is simpler
         // to just ignore the SIGTRAP in the parent and start tracking the child
         // when we receive its initial SIGSTOP.
-        rc = tracee_resume(tracee);
-        if (UNLIKELY(rc != 0))
-          goto done;
-
-        continue;
+        break;
 
       case EV_SECCOMP:
         DEBUG("saw seccomp stop");
@@ -173,29 +170,22 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         if (UNLIKELY(rc != 0))
           goto done;
 
+        // `syscall_middle` will have resumed the child
         continue;
 
-      // vanilla SIGTRAP
       case EV_SYSCALL:
-        DEBUG("saw normal SIGTRAP stop");
+        DEBUG("saw normal syscall stop");
+
+        rc = syscall_end(tracee);
+        if (UNLIKELY(rc != 0))
+          goto done;
+
+        break;
+
+      case EV_SIGNAL:
+        DEBUG("child stopped by signal %d", WSTOPSIG(status));
         break;
       }
-
-      rc = syscall_end(tracee);
-      if (UNLIKELY(rc != 0))
-        goto done;
-
-      // resume the child
-      rc = tracee_resume(tracee);
-      if (UNLIKELY(rc != 0))
-        goto done;
-
-      continue;
-    }
-
-    // was the child stopped by a signal?
-    if (WIFSTOPPED(status)) {
-      DEBUG("child stopped by signal %d", WSTOPSIG(status));
 
       // resume the child
       rc = tracee_resume(tracee);
