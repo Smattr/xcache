@@ -21,7 +21,6 @@ int syscall_middle(tracee_t *tracee) {
   // syscall exit the callee’s address space is gone, making it impossible to
   // read the (string) syscall argument. Conveniently, our handling of `execve`
   // does not depend on the syscall result.
-#ifdef __NR_execve
   case __NR_execve: {
 
     // retrieve the path
@@ -41,7 +40,6 @@ int syscall_middle(tracee_t *tracee) {
 
     break;
   }
-#endif
 
   // any other syscalls we either do not care about or handle at syscall exit
   default:
