@@ -88,9 +88,9 @@ static int exec(tracee_t *tracee) {
   BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_##syscall, 0, 1),                   \
       BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW)
 
-      IGNORE(close),
       IGNORE(read),
       IGNORE(write),
+      IGNORE(close),
       IGNORE(fstat),
       IGNORE(poll),
       IGNORE(lseek),
@@ -101,8 +101,24 @@ static int exec(tracee_t *tracee) {
       IGNORE(rt_sigaction),
       IGNORE(rt_sigprocmask),
       IGNORE(rt_sigreturn),
+#ifdef __NR_pread64
+      IGNORE(pread64),
+#endif
+#ifdef __NR_pwrite64
+      IGNORE(pwrite64),
+#endif
+      IGNORE(readv),
+      IGNORE(writev),
+      IGNORE(pipe),
+      IGNORE(select),
+      IGNORE(sched_yield),
+      IGNORE(mremap),
+      IGNORE(msync),
+      IGNORE(mincore),
+      IGNORE(madvise),
       IGNORE(fcntl),
       IGNORE(ptrace),
+      IGNORE(kill),
 #ifdef __NR_set_tid_address
       IGNORE(set_tid_address),
 #endif
