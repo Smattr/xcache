@@ -137,6 +137,26 @@ static int exec(tracee_t *tracee) {
 #ifdef __NR_prlimit64
       IGNORE(prlimit64),
 #endif
+      IGNORE(exit_group),
+#ifdef __NR_epoll_wait
+      IGNORE(epoll_wait),
+#endif
+#ifdef __NR_epoll_ctl
+      IGNORE(epoll_ctl),
+#endif
+      IGNORE(tgkill),
+#ifdef __NR_vserver
+      IGNORE(vserver), // unimplemented
+#endif
+#ifdef __NR_mbind
+      IGNORE(mbind),
+#endif
+#ifdef __NR_set_mempolicy
+      IGNORE(set_mempolicy),
+#endif
+#ifdef __NR_get_mempolicy
+      IGNORE(get_mempolicy),
+#endif
 
       BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_TRACE),
 
