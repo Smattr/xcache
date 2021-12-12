@@ -104,6 +104,7 @@ INTERNAL int syscall_middle(tracee_t *tracee);
 INTERNAL int syscall_end(tracee_t *tracee);
 
 /// witness a specific syscall
+INTERNAL int see_access(tracee_t *tracee, const char *pathname);
 INTERNAL int see_chdir(tracee_t *tracee, int result, const char *path);
 INTERNAL int see_execve(tracee_t *tracee, const char *filename);
 

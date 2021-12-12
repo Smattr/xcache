@@ -37,6 +37,7 @@ add_library(libxcache
   src/proc_exec.c
   src/proc_free.c
   src/proc_new.c
+  src/see_access.c
   src/see_chdir.c
   src/see_execve.c
   src/set_debug.c

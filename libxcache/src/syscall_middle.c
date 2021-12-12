@@ -17,6 +17,28 @@ int syscall_middle(tracee_t *tracee) {
 
   switch (nr) {
 
+  // `access` can be handled either here or on syscall exit, so we may as well
+  // handle it here for efficiency
+  case __NR_access: {
+
+    // retrieve the path
+    char *path = NULL;
+    rc = peek_string(&path, tracee->pid, REG(rdi));
+    if (UNLIKELY(rc != 0))
+      goto done;
+
+    rc = see_access(tracee, path);
+    free(path);
+    if (UNLIKELY(rc != 0))
+      goto done;
+
+    rc = tracee_resume(tracee);
+    if (UNLIKELY(rc != 0))
+      goto done;
+
+    break;
+  }
+
   // We need to handle `execve` here rather than at syscall exit because at
   // syscall exit the callee’s address space is gone, making it impossible to
   // read the (string) syscall argument. Conveniently, our handling of `execve`
