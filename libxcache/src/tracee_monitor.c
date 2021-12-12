@@ -67,6 +67,47 @@ done:
   return rc;
 }
 
+/// possible events the tracer can see
+typedef enum {
+  EV_FORK,    // `fork` or a cousin thereof
+  EV_SECCOMP, // seccomp (mid-syscall) stop
+  EV_SYSCALL, // ptrace syscall end stop
+  EV_SIGNAL,  // signal delivery stop
+} event_t;
+
+static event_t get_event(int status) {
+
+  assert(WIFSTOPPED(status));
+
+  switch (status >> 8) {
+
+  case SIGTRAP | (PTRACE_EVENT_FORK << 8):
+  case SIGTRAP | (PTRACE_EVENT_VFORK << 8):
+  case SIGTRAP | (PTRACE_EVENT_CLONE << 8):
+    return EV_FORK;
+
+  case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
+    return EV_SECCOMP;
+
+  case SIGTRAP:
+    return EV_SYSCALL;
+
+  // ptrace events corresponding to options that we never set and hence should
+  // never receive
+  case SIGTRAP | (PTRACE_EVENT_EXEC << 8):
+  case SIGTRAP | (PTRACE_EVENT_EXIT << 8):
+  case SIGTRAP | (PTRACE_EVENT_VFORK_DONE << 8):
+    DEBUG("unexpected ptrace event %d", status);
+    UNREACHABLE();
+
+    // otherwise, this was a signal
+  default:
+    break;
+  }
+
+  return EV_SIGNAL;
+}
+
 int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
   assert(trace != NULL);
@@ -107,12 +148,9 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
     // was this a tracing event?
     if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP) {
 
-      switch (status >> 8) {
+      switch (get_event(status)) {
 
-      // `fork` alike
-      case SIGTRAP | (PTRACE_EVENT_FORK << 8):
-      case SIGTRAP | (PTRACE_EVENT_VFORK << 8):
-      case SIGTRAP | (PTRACE_EVENT_CLONE << 8):
+      case EV_FORK:
         DEBUG("target called fork");
         // The target called fork (or a cousin of). Unless I have missed
         // something in the ptrace docs, the only way to also trace forked
@@ -128,8 +166,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
         continue;
 
-      // seccomp event
-      case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
+      case EV_SECCOMP:
         DEBUG("saw seccomp stop");
 
         rc = syscall_middle(tracee);
@@ -139,20 +176,9 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         continue;
 
       // vanilla SIGTRAP
-      case SIGTRAP:
+      case EV_SYSCALL:
         DEBUG("saw normal SIGTRAP stop");
         break;
-
-      // ptrace events corresponding to options that we never set and hence
-      // should never receive
-      case SIGTRAP | (PTRACE_EVENT_EXEC << 8):
-      case SIGTRAP | (PTRACE_EVENT_EXIT << 8):
-      case SIGTRAP | (PTRACE_EVENT_VFORK_DONE << 8):
-        DEBUG("unexpected ptrace event %d", status);
-        UNREACHABLE();
-
-      default:
-        DEBUG("warning: unhandled SIGTRAP stop %d", status);
       }
 
       rc = syscall_end(tracee);
