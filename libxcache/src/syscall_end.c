@@ -18,7 +18,6 @@ int syscall_end(tracee_t *tracee) {
 
   switch (nr) {
 
-#ifdef __NR_chdir
   case __NR_chdir: {
 
     // retrieve the path
@@ -32,7 +31,6 @@ int syscall_end(tracee_t *tracee) {
     free(path);
     return rc;
   }
-#endif
 
   default:
     DEBUG("unrecognised syscall %ld", nr);
