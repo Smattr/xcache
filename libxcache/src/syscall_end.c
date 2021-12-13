@@ -32,6 +32,26 @@ int syscall_end(tracee_t *tracee) {
     return rc;
   }
 
+  case __NR_openat: {
+
+    // retrieve the FD
+    int fd = peek_reg(tracee->pid, REG(rdi));
+
+    // retrieve the path
+    char *path = NULL;
+    int rc = peek_string(&path, tracee->pid, REG(rsi));
+    if (UNLIKELY(rc != 0))
+      return rc;
+
+    // retrieve the flags
+    int flags = peek_reg(tracee->pid, REG(rdx));
+
+    rc = see_openat(tracee, ret, fd, path, flags);
+
+    free(path);
+    return rc;
+  }
+
   default:
     DEBUG("unrecognised syscall %ld", nr);
   }
