@@ -105,9 +105,9 @@ INTERNAL int syscall_end(tracee_t *tracee);
 
 /// witness a specific syscall
 INTERNAL int see_access(tracee_t *tracee, const char *pathname);
-INTERNAL int see_chdir(tracee_t *tracee, int result, const char *path);
+INTERNAL int see_chdir(tracee_t *tracee, long result, const char *path);
 INTERNAL int see_execve(tracee_t *tracee, const char *filename);
-INTERNAL int see_openat(tracee_t *tracee, int result, int dirfd,
+INTERNAL int see_openat(tracee_t *tracee, long result, int dirfd,
                         const char *pathname, int flags);
 
 /// clear fields of a tracee and deallocate underlying resources

@@ -24,18 +24,18 @@ static int other_flags(int flags) {
   return flags & ~(O_WRONLY | O_RDWR | O_RDONLY);
 }
 
-int see_openat(tracee_t *tracee, int result, int dirfd, const char *pathname,
+int see_openat(tracee_t *tracee, long result, int dirfd, const char *pathname,
                int flags) {
 
   assert(tracee != NULL);
   assert(pathname != NULL);
 
   if (dirfd == AT_FDCWD) {
-    DEBUG("PID %d called openat(AT_FDCWD, \"%s\", %s | %d), ret %d",
+    DEBUG("PID %d called openat(AT_FDCWD, \"%s\", %s | %d), ret %ld",
           (int)tracee->pid, pathname, flag_name(flags), other_flags(flags),
           result);
   } else {
-    DEBUG("PID %d called openat(%d, \"%s\", %s | %d), ret %d", (int)tracee->pid,
+    DEBUG("PID %d called openat(%d, \"%s\", %s | %d), ret %ld", (int)tracee->pid,
           dirfd, pathname, flag_name(flags), other_flags(flags), result);
   }
 

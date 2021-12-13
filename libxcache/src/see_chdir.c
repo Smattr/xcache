@@ -9,12 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-int see_chdir(tracee_t *tracee, int result, const char *path) {
+int see_chdir(tracee_t *tracee, long result, const char *path) {
 
   assert(tracee != NULL);
   assert(path != NULL);
 
-  DEBUG("PID %d called chdir(\"%s\"), ret %d", (int)tracee->pid, path, result);
+  DEBUG("PID %d called chdir(\"%s\"), ret %ld", (int)tracee->pid, path, result);
 
   // if this failed, then ignore it
   // TODO: should we consider a failed chdir a read?
