@@ -34,8 +34,9 @@ int see_openat(tracee_t *tracee, long result, int dirfd, const char *pathname,
           (int)tracee->pid, pathname, flag_name(flags), other_flags(flags),
           result);
   } else {
-    DEBUG("PID %d called openat(%d, \"%s\", %s | %d), ret %ld", (int)tracee->pid,
-          dirfd, pathname, flag_name(flags), other_flags(flags), result);
+    DEBUG("PID %d called openat(%d, \"%s\", %s | %d), ret %ld",
+          (int)tracee->pid, dirfd, pathname, flag_name(flags),
+          other_flags(flags), result);
   }
 
   // TODO: should a failed openat be considered a read?
