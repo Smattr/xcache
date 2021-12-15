@@ -1,16 +1,15 @@
 #include "debug.h"
+#include "fs_set.h"
 #include "macros.h"
 #include "path.h"
 #include "tracee.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <xcache/hash.h>
 
 static const char *flag_name(int flags) {
   if (flags & O_WRONLY)
@@ -66,27 +65,14 @@ int see_openat(tracee_t *tracee, long result, int dirfd, const char *pathname,
   } else {
     // O_RDONLY
 
-    // derive a hash of this file
-    xc_hash_t h = 0;
-    int r = xc_hash_file(&h, abs);
-    bool exists = r != ENOENT;
-    bool allowed = r != EACCES && r != EPERM;
-    // TODO: do we need to care about the path being a directory?
-    if (UNLIKELY(exists && allowed && r != 0)) {
-      rc = r;
-      goto done;
-    }
-
-    // append this to our collection of read files
-    read_file f = {.path = abs, .hash = h};
-    rc = trace_append_read(&tracee->trace, f);
+    // record a read for this file
+    rc = fs_set_add_read(&tracee->trace.io, abs);
     if (UNLIKELY(rc != 0))
       goto done;
   }
 
 done:
-  if (UNLIKELY(rc != 0))
-    free(abs);
+  free(abs);
 
   return rc;
 }

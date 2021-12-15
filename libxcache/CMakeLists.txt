@@ -47,7 +47,6 @@ add_library(libxcache
   src/sqlite_error_to_errno.c
   src/syscall_end.c
   src/syscall_middle.c
-  src/trace_append_read.c
   src/trace_deinit.c
   src/trace_free.c
   src/trace_record.c

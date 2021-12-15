@@ -1,13 +1,12 @@
 #include "debug.h"
+#include "fs_set.h"
 #include "macros.h"
 #include "path.h"
 #include "tracee.h"
 #include <assert.h>
 #include <errno.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <xcache/hash.h>
 
 int see_access(tracee_t *tracee, const char *pathname) {
 
@@ -30,26 +29,13 @@ int see_access(tracee_t *tracee, const char *pathname) {
     goto done;
   }
 
-  // derive a hash of this (possible) file
-  xc_hash_t h = 0;
-  int r = xc_hash_file(&h, abs);
-  bool exists = r != ENOENT;
-  bool allowed = r != EACCES && r != EPERM;
-  // TODO: do we need to care about the path being a directory?
-  if (UNLIKELY(exists && allowed && r != 0)) {
-    rc = r;
-    goto done;
-  }
-
-  // append this to our collection of read files
-  read_file f = {.path = abs, .hash = h};
-  rc = trace_append_read(&tracee->trace, f);
+  // record a read for this file
+  rc = fs_set_add_read(&tracee->trace.io, abs);
   if (UNLIKELY(rc != 0))
     goto done;
 
 done:
-  if (UNLIKELY(rc != 0))
-    free(abs);
+  free(abs);
 
   return rc;
 }
