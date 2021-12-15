@@ -56,4 +56,4 @@ INTERNAL int fs_set_add_write(fs_set_t *set, const char *path);
 /// clear a set and deallocate any contained entries
 ///
 /// \param set Set to operate on
-INTERNAL void fs_set_free(fs_set_t *set);
+INTERNAL void fs_set_deinit(fs_set_t *set);

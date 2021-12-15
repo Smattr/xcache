@@ -8,5 +8,5 @@ void trace_deinit(xc_trace_t *trace) {
 
   assert(trace != NULL);
 
-  fs_set_free(&trace->io);
+  fs_set_deinit(&trace->io);
 }

@@ -117,7 +117,7 @@ int fs_set_add_write(fs_set_t *set, const char *path) {
   return 0;
 }
 
-void fs_set_free(fs_set_t *set) {
+void fs_set_deinit(fs_set_t *set) {
 
   assert(set != NULL);
 
