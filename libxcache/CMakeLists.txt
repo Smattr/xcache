@@ -11,6 +11,7 @@ add_library(libxcache
   src/db.h
   src/copy_file.h
   src/debug.h
+  src/fs_set.h
   src/make_hash.h
   src/macros.h
   src/page_size.h
@@ -28,6 +29,7 @@ add_library(libxcache
   src/db_open.c
   src/db_close.c
   src/debug.c
+  src/fs_set.c
   src/hash_data.c
   src/hash_file.c
   src/make_hash.c
