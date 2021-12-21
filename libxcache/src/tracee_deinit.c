@@ -45,6 +45,13 @@ void tracee_deinit(tracee_t *tracee) {
   free(tracee->err_path);
   tracee->err_path = NULL;
 
+  while (tracee->fds != NULL) {
+    open_file_t *of = tracee->fds;
+    tracee->fds = of->next;
+    free(of->path);
+    free(of);
+  }
+
   free(tracee->cwd);
   tracee->cwd = NULL;
 }

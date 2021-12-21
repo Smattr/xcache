@@ -9,6 +9,13 @@
 #include <xcache/proc.h>
 #include <xcache/trace.h>
 
+/// a currently open file
+typedef struct open_file {
+  int handle;
+  char *path;
+  struct open_file *next;
+} open_file_t;
+
 /// encapsulation of a subprocess being traced
 typedef struct {
 
@@ -20,6 +27,10 @@ typedef struct {
 
   /// current working directory of the process
   char *cwd;
+
+  /// Open files (for resolving things like `openat`). This list may contain
+  /// false positives as we do not intercept `close`.
+  open_file_t *fds;
 
   /// pipe for stdout
   int out[2];
