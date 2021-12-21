@@ -103,7 +103,11 @@ INTERNAL int syscall_middle(tracee_t *tracee);
 /// \return 0 on success or an errno on failure
 INTERNAL int syscall_end(tracee_t *tracee);
 
-/// witness a specific syscall
+/// witness a syscall midway through
+INTERNAL int see_openat_middle(tracee_t *tracee, int dirfd,
+                               const char *pathname);
+
+/// witness the completion of a specific syscall
 INTERNAL int see_access(tracee_t *tracee, const char *pathname);
 INTERNAL int see_chdir(tracee_t *tracee, long result, const char *path);
 INTERNAL int see_execve(tracee_t *tracee, const char *filename);

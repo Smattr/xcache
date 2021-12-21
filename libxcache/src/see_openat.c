@@ -39,8 +39,10 @@ int see_openat(tracee_t *tracee, long result, int dirfd, const char *pathname,
           other_flags(flags), result);
   }
 
-  // TODO: should a failed openat be considered a read?
-  assert(result >= 0 && "TODO");
+  // if this syscall failed, we can ignore it because at most it counted as a
+  // read intent which was handled during `syscall_middle`
+  if (result < 0)
+    return 0;
 
   int rc = 0;
 
@@ -63,13 +65,6 @@ int see_openat(tracee_t *tracee, long result, int dirfd, const char *pathname,
     assert(0 && "TODO");
   } else if (flags & O_RDWR) {
     assert(0 && "TODO");
-  } else {
-    // O_RDONLY
-
-    // record a read for this file
-    rc = fs_set_add_read(&tracee->trace.io, abs);
-    if (UNLIKELY(rc != 0))
-      goto done;
   }
 
 done:

@@ -43,6 +43,7 @@ add_library(libxcache
   src/see_chdir.c
   src/see_execve.c
   src/see_openat.c
+  src/see_openat_middle.c
   src/set_debug.c
   src/sqlite_error_to_errno.c
   src/syscall_end.c

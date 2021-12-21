@@ -3,8 +3,12 @@
 #include "peek.h"
 #include "tracee.h"
 #include <assert.h>
+#include <fcntl.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
 
 int syscall_middle(tracee_t *tracee) {
 
@@ -57,6 +61,39 @@ int syscall_middle(tracee_t *tracee) {
       goto done;
 
     rc = tracee_resume(tracee);
+    if (UNLIKELY(rc != 0))
+      goto done;
+
+    break;
+  }
+
+  // Handle a read `openat` here because we do not care whether it succeeds or
+  // fails. Either counts as a read attempt.
+  case __NR_openat: {
+
+    // retrieve the flags first to see if we need to continue
+    int flags = peek_reg(tracee->pid, REG(rdx));
+    bool is_read = (flags & O_RDWR) == O_RDWR || (flags & O_WRONLY) != O_WRONLY;
+
+    if (is_read) {
+      // retrieve the FD
+      int fd = peek_reg(tracee->pid, REG(rdi));
+
+      // retrieve the path
+      char *path = NULL;
+      rc = peek_string(&path, tracee->pid, REG(rsi));
+      // FIXME: what happens if the tracee made a bad openat call?
+      if (UNLIKELY(rc != 0))
+        return rc;
+
+      rc = see_openat_middle(tracee, fd, path);
+      if (UNLIKELY(rc != 0))
+        goto done;
+    }
+
+    // resume the tracee, but we need to again intercept at syscall end to pick
+    // up the newly allocated FD if the syscall was successful
+    rc = tracee_resume_to_syscall(tracee);
     if (UNLIKELY(rc != 0))
       goto done;
 
