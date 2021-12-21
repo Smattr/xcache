@@ -70,10 +70,11 @@ int see_openat(tracee_t *tracee, long result, int dirfd, const char *pathname,
     goto done;
   }
 
-  if (flags & O_WRONLY) {
-    assert(0 && "TODO");
-  } else if (flags & O_RDWR) {
-    assert(0 && "TODO");
+  // reads were noted during `syscall_middle`, but we need to note writes now
+  if ((flags & O_WRONLY) || (flags & O_RDWR)) {
+    rc = fs_set_add_write(&tracee->trace.io, abs);
+    if (UNLIKELY(rc != 0))
+      goto done;
   }
 
 done:
