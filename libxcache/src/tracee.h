@@ -117,6 +117,7 @@ INTERNAL int syscall_end(tracee_t *tracee);
 /// witness a syscall midway through
 INTERNAL int see_openat_middle(tracee_t *tracee, int dirfd,
                                const char *pathname);
+INTERNAL int see_newfstatat(tracee_t *tracee, int dirfd, const char *pathname);
 
 /// witness the completion of a specific syscall
 INTERNAL int see_access(tracee_t *tracee, const char *pathname);

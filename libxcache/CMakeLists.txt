@@ -42,6 +42,7 @@ add_library(libxcache
   src/see_access.c
   src/see_chdir.c
   src/see_execve.c
+  src/see_newfstatat.c
   src/see_openat.c
   src/see_openat_middle.c
   src/set_debug.c

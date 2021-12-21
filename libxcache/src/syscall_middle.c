@@ -100,6 +100,29 @@ int syscall_middle(tracee_t *tracee) {
     break;
   }
 
+  // newfstatat counts as a read
+  case __NR_newfstatat: {
+
+    // retrieve the FD
+    int fd = peek_reg(tracee->pid, REG(rdi));
+
+    // retrieve the path
+    char *path = NULL;
+    rc = peek_string(&path, tracee->pid, REG(rsi));
+    if (UNLIKELY(rc != 0))
+      return rc;
+
+    rc = see_newfstatat(tracee, fd, path);
+    if (UNLIKELY(rc != 0))
+      goto done;
+
+    rc = tracee_resume(tracee);
+    if (UNLIKELY(rc != 0))
+      goto done;
+
+    break;
+  }
+
   // any other syscalls we either do not care about or handle at syscall exit
   default:
     DEBUG("ignored seccomp stop for syscall %ld", nr);
