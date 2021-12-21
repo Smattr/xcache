@@ -54,7 +54,16 @@ int see_openat(tracee_t *tracee, long result, int dirfd, const char *pathname,
   } else if (dirfd == AT_FDCWD) {
     abs = path_join(tracee->cwd, pathname);
   } else {
-    assert(0 && "TODO");
+
+    // find the handle this is relative to
+    open_file_t *of = tracee->fds;
+    while (of != NULL && of->handle != dirfd)
+      of = of->next;
+    assert(
+        of != NULL &&
+        "tracee successfully opened something relative to a non-existent FD");
+
+    abs = path_join(of->path, pathname);
   }
   if (UNLIKELY(abs == NULL)) {
     rc = ENOMEM;
