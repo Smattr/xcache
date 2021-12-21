@@ -77,6 +77,29 @@ int see_openat(tracee_t *tracee, long result, int dirfd, const char *pathname,
       goto done;
   }
 
+  // save this handle in case some future operation does `openat` with respect
+  // to it
+  for (open_file_t **of = &tracee->fds; ; of = &(*of)->next) {
+    if (*of == NULL) {
+      open_file_t *new = calloc(1, sizeof(*new));
+      if (UNLIKELY(new != NULL))
+        goto done;
+      new->handle = result;
+      new->path = abs;
+      abs = NULL;
+      new->next = tracee->fds;
+      tracee->fds = new;
+      break;
+    }
+    if ((*of)->handle == result) {
+      // this handle must have been previously closed and is now recycled
+      free((*of)->path);
+      (*of)->path = abs;
+      abs = NULL;
+      break;
+    }
+  }
+
 done:
   free(abs);
 
