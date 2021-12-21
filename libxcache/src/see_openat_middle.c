@@ -39,9 +39,10 @@ int see_openat_middle(tracee_t *tracee, int dirfd, const char *pathname) {
     open_file_t *of = tracee->fds;
     while (of != NULL && of->handle != dirfd)
       of = of->next;
-    assert(
-        of != NULL &&
-        "tracee successfully opened something relative to a non-existent FD");
+
+    // was this `openat` call passed an invalid handle?
+    if (of == NULL)
+      goto done;
 
     abs = path_join(of->path, pathname);
   }
