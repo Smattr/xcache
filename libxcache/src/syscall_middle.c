@@ -31,7 +31,9 @@ int syscall_middle(tracee_t *tracee) {
     if (UNLIKELY(rc != 0))
       goto done;
 
-    rc = see_access(tracee, path);
+    DEBUG("PID %d called access(\"%s\")", (int)tracee->pid, path);
+
+    rc = see_read(tracee, AT_FDCWD, path);
     free(path);
     if (UNLIKELY(rc != 0))
       goto done;
@@ -55,12 +57,41 @@ int syscall_middle(tracee_t *tracee) {
     if (UNLIKELY(rc != 0))
       goto done;
 
-    rc = see_execve(tracee, path);
+    DEBUG("PID %d called execve(\"%s\")", (int)tracee->pid, path);
+
+    rc = see_read(tracee, AT_FDCWD, path);
     free(path);
     if (UNLIKELY(rc != 0))
       goto done;
 
     rc = tracee_resume(tracee);
+    if (UNLIKELY(rc != 0))
+      goto done;
+
+    break;
+  }
+
+  // treat a `chdir` attempt as a read
+  case __NR_chdir: {
+
+    // retrieve the path
+    char *path = NULL;
+    rc = peek_string(&path, tracee->pid, REG(rdi));
+    if (UNLIKELY(rc != 0))
+      goto done;
+
+    DEBUG("PID %d called chdir(\"%s\")", (int)tracee->pid, path);
+
+#if 0 // TODO
+    rc = see_read(tracee, AT_FDCWD, path);
+#endif
+    free(path);
+    if (UNLIKELY(rc != 0))
+      goto done;
+
+    // we need to see the other side of `chdir` to potentially update
+    // `tracee->cwd`
+    rc = tracee_resume_to_syscall(tracee);
     if (UNLIKELY(rc != 0))
       goto done;
 
@@ -84,9 +115,19 @@ int syscall_middle(tracee_t *tracee) {
       rc = peek_string(&path, tracee->pid, REG(rsi));
       // FIXME: what happens if the tracee made a bad openat call?
       if (UNLIKELY(rc != 0))
-        return rc;
+        goto done;
 
-      rc = see_openat_middle(tracee, fd, path);
+      if (fd == AT_FDCWD) {
+        DEBUG("PID %d called openat(AT_FDCWD, \"%s\", …)", (int)tracee->pid,
+              path);
+      } else {
+        DEBUG("PID %d called openat(%d, \"%s\", …)", (int)tracee->pid, fd,
+              path);
+      }
+
+      // TODO: handle the tracee passing an invalid fd
+
+      rc = see_read(tracee, fd, path);
       free(path);
       if (UNLIKELY(rc != 0))
         goto done;
@@ -111,9 +152,17 @@ int syscall_middle(tracee_t *tracee) {
     char *path = NULL;
     rc = peek_string(&path, tracee->pid, REG(rsi));
     if (UNLIKELY(rc != 0))
-      return rc;
+      goto done;
 
-    rc = see_newfstatat(tracee, fd, path);
+    if (fd == AT_FDCWD) {
+      DEBUG("PID %d called newfstatat(AT_FDCWD, \"%s\", …)", (int)tracee->pid,
+            path);
+    } else {
+      DEBUG("PID %d called newfstatat(%d, \"%s\", …)", (int)tracee->pid, fd,
+            path);
+    }
+
+    rc = see_read(tracee, fd, path);
     free(path);
     if (UNLIKELY(rc != 0))
       goto done;

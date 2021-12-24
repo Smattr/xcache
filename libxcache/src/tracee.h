@@ -114,17 +114,24 @@ INTERNAL int syscall_middle(tracee_t *tracee);
 /// \return 0 on success or an errno on failure
 INTERNAL int syscall_end(tracee_t *tracee);
 
-/// witness a syscall midway through
-INTERNAL int see_openat_middle(tracee_t *tracee, int dirfd,
-                               const char *pathname);
-INTERNAL int see_newfstatat(tracee_t *tracee, int dirfd, const char *pathname);
+/// observe a read or write intent to a given path
+///
+/// \param tracee Process that executed the observed operation
+/// \param dirfd openat-style relative-to handle
+/// \param pathname Path read or writte
+/// \return 0 on success or an errno on failure
+INTERNAL int see_read(tracee_t *tracee, int dirfd, const char *pathname);
+INTERNAL int see_write(tracee_t *tracee, int dirfd, const char *pathname);
 
-/// witness the completion of a specific syscall
-INTERNAL int see_access(tracee_t *tracee, const char *pathname);
-INTERNAL int see_chdir(tracee_t *tracee, long result, const char *path);
-INTERNAL int see_execve(tracee_t *tracee, const char *filename);
-INTERNAL int see_openat(tracee_t *tracee, long result, int dirfd,
-                        const char *pathname, int flags);
+/// observe successful open of a new file
+///
+/// \param tracee Tracee being monitored
+/// \param result Handle to newly opened file
+/// \param dirfd openat-style relative-to handle
+/// \param pathname Path opened
+/// \return 0 on success or an errno on failure
+INTERNAL int see_open(tracee_t *tracee, long result, int dirfd,
+                      const char *pathname);
 
 /// clear fields of a tracee and deallocate underlying resources
 ///
