@@ -8,9 +8,6 @@ struct xc_db {
 
   /// path to directory hosting the database’s artifacts
   char *root;
-
-  /// was the database opened read-only?
-  unsigned read_only : 1;
 };
 
 /// create a file for capturing a trace output into
