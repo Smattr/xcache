@@ -18,7 +18,6 @@ add_library(libxcache
   src/path.h
   src/peek.h
   src/proc.h
-  src/sqlite_error_to_errno.h
   src/trace.h
   src/tracee.h
   src/util.h
@@ -46,7 +45,6 @@ add_library(libxcache
   src/see_openat.c
   src/see_openat_middle.c
   src/set_debug.c
-  src/sqlite_error_to_errno.c
   src/syscall_end.c
   src/syscall_middle.c
   src/trace_deinit.c
@@ -63,17 +61,12 @@ add_library(libxcache
   src/tracee_tee.c
 )
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(Sqlite REQUIRED sqlite3)
-target_link_libraries(libxcache ${Sqlite_LINK_LIBRARIES})
-
 target_include_directories(libxcache
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
   PRIVATE
     src
-    ${Sqlite_INCLUDE_DIRS}
 )
 
 find_package(Threads REQUIRED)
