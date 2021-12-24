@@ -87,6 +87,7 @@ int syscall_middle(tracee_t *tracee) {
         return rc;
 
       rc = see_openat_middle(tracee, fd, path);
+      free(path);
       if (UNLIKELY(rc != 0))
         goto done;
     }
