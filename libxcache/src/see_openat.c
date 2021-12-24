@@ -82,8 +82,10 @@ int see_openat(tracee_t *tracee, long result, int dirfd, const char *pathname,
   for (open_file_t **of = &tracee->fds; ; of = &(*of)->next) {
     if (*of == NULL) {
       open_file_t *new = calloc(1, sizeof(*new));
-      if (UNLIKELY(new != NULL))
+      if (UNLIKELY(new == NULL)) {
+        rc = ENOMEM;
         goto done;
+      }
       new->handle = result;
       new->path = abs;
       abs = NULL;
