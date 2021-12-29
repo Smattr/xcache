@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "macros.h"
 #include "path.h"
 #include "tracee.h"
@@ -8,6 +9,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 static char *make_absolute(tracee_t *tracee, int dirfd, const char *pathname) {
 
@@ -38,6 +40,17 @@ int see_read(tracee_t *tracee, int dirfd, const char *pathname) {
   assert(tracee != NULL);
   assert(pathname != NULL);
 
+  // Ignore reads to std handles. Note this is only valid as long as we do not
+  // support `dup2`.
+  if (pathname[0] != '/') {
+    if (dirfd == STDIN_FILENO || dirfd == STDOUT_FILENO || dirfd == STDERR_FILENO) {
+      DEBUG("ignoring read relative to std fd %d", dirfd);
+      return 0;
+    }
+  }
+
+  // TODO: check dirfd is valid and bail if not
+
   int rc = 0;
 
   // turn the path into something absolute
@@ -65,6 +78,15 @@ int see_write(tracee_t *tracee, int dirfd, const char *pathname) {
 
   assert(tracee != NULL);
   assert(pathname != NULL);
+
+  // Ignore writes to std handles. Note this is only valid as long as we do not
+  // support `dup2`.
+  if (pathname[0] != '/') {
+    if (dirfd == STDIN_FILENO || dirfd == STDOUT_FILENO || dirfd == STDERR_FILENO) {
+      DEBUG("ignoring read relative to std fd %d", dirfd);
+      return 0;
+    }
+  }
 
   int rc = 0;
 
