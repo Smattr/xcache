@@ -3,7 +3,6 @@
 #include "fs_set.h"
 #include "trace.h"
 #include <errno.h>
-#include <stdlib.h>
 #include <xcache/trace.h>
 
 int xc_trace_replay(const xc_trace_t *trace) {
@@ -30,5 +29,5 @@ int xc_trace_replay(const xc_trace_t *trace) {
       return rc;
   }
 
-  exit(EXIT_SUCCESS);
+  return 0;
 }

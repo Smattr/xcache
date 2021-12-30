@@ -150,7 +150,7 @@ static int replay(const xc_db_t *db, const xc_proc_t *proc) {
     goto done;
   }
 
-  // try to replay it (on success, `xc_trace_replay` does not return)
+  // try to replay it
   rc = xc_trace_replay(trace);
   if (UNLIKELY(rc != 0))
     goto done;
@@ -201,6 +201,10 @@ int main(int argc, char **argv) {
       fprintf(stderr, "trace replay failed: %s\n", strerror(rc));
       goto done;
     }
+
+    // if the replay was successful, we are done
+    if (rc == 0)
+      goto done;
   }
 
   if (enable_record) {
