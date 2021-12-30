@@ -24,9 +24,11 @@ add_library(libxcache
 
   src/argv_serialise.c
   src/copy_file.c
+  src/db_load.c
   src/db_make_file.c
   src/db_open.c
   src/db_close.c
+  src/db_save.c
   src/debug.c
   src/fs_set.c
   src/hash_data.c

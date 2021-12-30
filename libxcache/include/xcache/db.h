@@ -19,9 +19,20 @@ extern "C" {
 /// \return 0 on success or an errno on failure
 XCACHE_API int xc_db_open(xc_db_t **db, const char *path);
 
+/// lookup a previously recorded trace
+///
+/// \param db Database to operate on
+/// \param question Process to look for
+/// \param answer [out] Found trace on success
+/// \return 0 on success or an errno on failure
 XCACHE_API int xc_db_load(xc_db_t *db, const xc_proc_t *question,
                           xc_trace_t **answer);
 
+/// store a recorded trace
+///
+/// \param db Database to operate on
+/// \param observation Recorded trace of a process
+/// \return 0 on success or an errno on failure
 XCACHE_API int xc_db_save(xc_db_t *db, const xc_trace_t *observation);
 
 /// close an open trace database
