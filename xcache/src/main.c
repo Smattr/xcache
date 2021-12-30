@@ -140,25 +140,34 @@ int main(int argc, char **argv) {
   // parse command line arguments
   int arg0 = parse_args(argc, argv);
 
+  xc_proc_t *proc = NULL;
+  xc_db_t *db = NULL;
+  int rc = -1;
+
   // did the caller give us too few arguments?
   if (UNLIKELY(arg0 >= argc)) {
     fprintf(stderr, "no program provided for xcache to run\n");
-    return EXIT_FAILURE;
+    goto done;
   }
 
-  int rc = 0;
-
   // construct the process to record/replay
-  xc_proc_t *proc = NULL;
   rc = make_process(&proc, argc - arg0, argv + arg0);
   if (UNLIKELY(rc != 0)) {
     fprintf(stderr, "failed to create process: %s\n", strerror(rc));
     goto done;
   }
 
+  // open the database, if relevant
+  if (enable_replay || enable_record) {
+    rc = xc_db_open(&db, cache_dir);
+    if (UNLIKELY(rc != 0)) {
+      fprintf(stderr, "failed to open database: %s\n", strerror(rc));
+      goto done;
+    }
+  }
+
   if (enable_replay) {
     // TODO: detect if the child can be replayed
-
   }
 
   if (enable_record) {
@@ -177,7 +186,9 @@ int main(int argc, char **argv) {
   rc = xc_proc_exec(proc);
 
 done:
+  xc_db_close(db);
   xc_proc_free(proc);
+  free(cache_dir);
 
   return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
