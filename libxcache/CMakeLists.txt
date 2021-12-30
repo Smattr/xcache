@@ -49,6 +49,7 @@ add_library(libxcache
   src/syscall_middle.c
   src/trace_deinit.c
   src/trace_free.c
+  src/trace_localise.c
   src/trace_record.c
   src/trace_replay.c
   src/trace_is_valid.c
