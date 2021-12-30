@@ -14,6 +14,7 @@ add_library(libxcache
   src/fs_set.h
   src/make_hash.h
   src/macros.h
+  src/pack.h
   src/page_size.h
   src/path.h
   src/peek.h
@@ -34,6 +35,7 @@ add_library(libxcache
   src/hash_data.c
   src/hash_file.c
   src/make_hash.c
+  src/pack.c
   src/page_size.c
   src/path_join.c
   src/peek.c
