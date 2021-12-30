@@ -92,7 +92,8 @@ int xc_db_load(const xc_db_t *db, const xc_proc_t *question,
   }
 
   // does the serialised query in the cache entry match?
-  if (in_size < buffer_size || memcmp(in_base, buffer_base, buffer_size) != 0) {
+  size_t proc_size = buffer_size - 1 /* for NUL */;
+  if (in_size < proc_size || memcmp(in_base, buffer_base, proc_size) != 0) {
     // hash collision
     rc = ENOENT;
     goto done;
