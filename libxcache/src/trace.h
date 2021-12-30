@@ -9,9 +9,6 @@ struct xc_trace {
 
   /// files accessed
   fs_set_t io;
-
-  /// status the process returned on exit
-  int exit_status;
 };
 
 /// localise a trace, making its content paths relative to a database root

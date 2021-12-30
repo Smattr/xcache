@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -141,7 +142,10 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
     // was this an exit?
     if (WIFEXITED(status)) {
       DEBUG("child exited");
-      trace->exit_status = WEXITSTATUS(status);
+      if (ERROR(WEXITSTATUS(status) != EXIT_SUCCESS)) {
+        rc = ECHILD;
+        goto done;
+      }
       goto done; // success
     }
 

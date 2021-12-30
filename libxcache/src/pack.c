@@ -115,42 +115,6 @@ static int pack_uint(FILE *f, uintmax_t value) {
   return write_u64(f, (uint64_t)value);
 }
 
-static int pack_int(FILE *f, intmax_t value) {
-
-  if (value >= 0)
-    return pack_uint(f, (uintmax_t)value);
-
-  if (value >= INTMAX_C(-1) - 0x17)
-    return write_u8(f, 0x20 + (uint8_t)(-(value + 1)));
-
-  if (value >= INTMAX_C(-1) - (intmax_t)UINT8_MAX) {
-    int r = write_u8(f, 0x38);
-    if (ERROR(r != 0))
-      return r;
-    return write_u8(f, (uint8_t)(-(value + 1)));
-  }
-
-  if (value >= INTMAX_C(-1) - (intmax_t)UINT16_MAX) {
-    int r = write_u8(f, 0x39);
-    if (ERROR(r != 0))
-      return r;
-    return write_u16(f, (uint16_t)(-(value + 1)));
-  }
-
-  if (value >= INTMAX_C(-1) - (intmax_t)UINT32_MAX) {
-    int r = write_u8(f, 0x3a);
-    if (ERROR(r != 0))
-      return r;
-    return write_u32(f, (uint32_t)(-(value + 1)));
-  }
-
-  assert(value >= INTMAX_C(-1) - (intmax_t)UINT64_MAX);
-  int r = write_u8(f, 0x3b);
-  if (ERROR(r != 0))
-    return r;
-  return write_u64(f, (uint64_t)(-(value + 1)));
-}
-
 static int pack_string(FILE *f, const char *value) {
 
   if (value == NULL)
@@ -284,13 +248,6 @@ int pack_trace(FILE *f, const xc_trace_t *trace) {
     if (ERROR(r != 0))
       return r;
     r = pack_string(f, fs->content_path);
-    if (ERROR(r != 0))
-      return r;
-  }
-
-  // serialise exit status
-  {
-    int r = pack_int(f, trace->exit_status);
     if (ERROR(r != 0))
       return r;
   }

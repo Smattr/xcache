@@ -30,5 +30,5 @@ int xc_trace_replay(const xc_trace_t *trace) {
       return rc;
   }
 
-  exit(trace->exit_status);
+  exit(EXIT_SUCCESS);
 }
