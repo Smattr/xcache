@@ -56,17 +56,14 @@ int see_read(tracee_t *tracee, int dirfd, const char *pathname) {
   // turn the path into something absolute
   char *abs = make_absolute(tracee, dirfd, pathname);
   if (UNLIKELY(abs == NULL)) {
-    printf("failed make_absolute\n");
     rc = ENOMEM;
     goto done;
   }
 
   // record a read for this file
   rc = fs_set_add_read(&tracee->trace.io, abs);
-  if (UNLIKELY(rc != 0)) {
-    printf("failed add read\n");
+  if (UNLIKELY(rc != 0))
     goto done;
-  }
 
 done:
   free(abs);
