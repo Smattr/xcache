@@ -21,41 +21,41 @@ static int parse_args(int argc, char **argv) {
   while (true) {
     static const struct option opts[] = {
         // clang-format off
-        {"debug", no_argument, 0, 'd'},
-        {"disable-record", no_argument, 0, 130},
-        {"disable-replay", no_argument, 0, 131},
-        {"enable-record", no_argument, 0, 132},
-        {"enable-replay", no_argument, 0, 133},
+        {"debug", no_argument, 0, 130},
+        {"disable-record", no_argument, 0, 131},
+        {"disable-replay", no_argument, 0, 132},
+        {"enable-record", no_argument, 0, 133},
+        {"enable-replay", no_argument, 0, 134},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0},
         // clang-format on
     };
 
     int index;
-    int c = getopt_long(argc, argv, "dh", opts, &index);
+    int c = getopt_long(argc, argv, "h", opts, &index);
 
     if (c == -1)
       break;
 
     switch (c) {
 
-    case 'd': // --debug
+    case 130: // --debug
       xc_set_debug(stderr);
       break;
 
-    case 130: // --disable-record
+    case 131: // --disable-record
       enable_record = false;
       break;
 
-    case 131: // --disable-replay
+    case 132: // --disable-replay
       enable_replay = false;
       break;
 
-    case 132: // --enable-record
+    case 133: // --enable-record
       enable_record = true;
       break;
 
-    case 133: // --enable-replay
+    case 134: // --enable-replay
       enable_replay = true;
       break;
 
