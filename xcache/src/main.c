@@ -1,4 +1,5 @@
 #include "../../libxcache/src/macros.h"
+#include <assert.h>
 #include <errno.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -135,6 +136,31 @@ static int make_process(xc_proc_t **proc, int argc, char **argv) {
   return rc;
 }
 
+static int try_replay(const xc_db_t *db, const xc_proc_t *proc) {
+
+  // try to find a prior trace in the cache
+  xc_trace_t *trace = NULL;
+  int rc = xc_db_load(db, proc, &trace);
+  if (rc != 0)
+    goto done;
+
+  // is the trace still viable?
+  if (!xc_trace_is_valid(trace)) {
+    rc = ENOENT;
+    goto done;
+  }
+
+  // try to replay it
+  rc = xc_trace_replay(trace);
+  if (UNLIKELY(rc != 0))
+    goto done;
+
+done:
+  xc_trace_free(trace);
+
+  return rc;
+}
+
 int main(int argc, char **argv) {
 
   // parse command line arguments
@@ -166,8 +192,15 @@ int main(int argc, char **argv) {
     }
   }
 
+  // try to find and replay a prior trace
   if (enable_replay) {
-    // TODO: detect if the child can be replayed
+    assert(db != NULL);
+
+    rc = try_replay(db, proc);
+    if (UNLIKELY(rc != 0 && rc != ENOENT)) {
+      fprintf(stderr, "trace replay failed: %s\n", strerror(rc));
+      goto done;
+    }
   }
 
   if (enable_record) {
