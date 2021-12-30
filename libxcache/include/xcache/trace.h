@@ -18,7 +18,7 @@ typedef struct xc_trace xc_trace_t;
 /// run the given process and monitor its behaviour
 ///
 /// This function calls `fork` to run the given process and then monitors it via
-/// `seccomp`.
+/// `seccomp` and `ptrace`.
 ///
 /// TODO: explain what happens to the child if we get a failure after it has
 /// started running and/or allow the caller to control this.
