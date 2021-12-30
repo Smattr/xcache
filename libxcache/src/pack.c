@@ -131,7 +131,7 @@ static int pack_string(FILE *f, const char *value) {
     int r = write_u8(f, 0x78);
     if (ERROR(r != 0))
       return r;
-    r = write_u16(f, (uint16_t)len);
+    r = write_u8(f, (uint8_t)len);
     if (ERROR(r != 0))
       return r;
 
