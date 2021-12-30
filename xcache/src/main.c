@@ -161,6 +161,25 @@ done:
   return rc;
 }
 
+static int record(xc_db_t *db, const xc_proc_t *proc) {
+
+  // try to run the process and record its trace
+  xc_trace_t *trace = NULL;
+  int rc = xc_trace_record(&trace, proc, db);
+  if (UNLIKELY(rc != 0))
+    goto done;
+
+  // save the trace for a future execution
+  rc = xc_db_save(db, proc, trace);
+  if (UNLIKELY(rc != 0))
+    goto done;
+
+done:
+  xc_trace_free(trace);
+
+  return rc;
+}
+
 int main(int argc, char **argv) {
 
   // parse command line arguments
@@ -208,15 +227,18 @@ int main(int argc, char **argv) {
   }
 
   if (enable_record) {
-#if 0 // TODO
-  // record child execution
-  xc_trace_t *trace = NULL;
-  rc = xc_trace_record(&trace, proc);
-  if (UNLIKELY(rc != 0)) {
-    fprintf(stderr, "failed to record process: %s\n", strerror(rc));
-    goto done;
-  }
-#endif
+    assert(db != NULL);
+
+    // record child execution
+    rc = record(db, proc);
+    if (UNLIKELY(rc != 0)) {
+      fprintf(stderr, "trace record failed: %s\n", strerror(rc));
+      goto done;
+    }
+
+    // if the record was successful, we are done
+    if (rc == 0)
+      goto done;
   }
 
   // else fall back on pass through execution
