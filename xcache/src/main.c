@@ -14,6 +14,26 @@ static bool enable_record = true;
 /// allow replaying past process executions from the database?
 static bool enable_replay = true;
 
+/// root for the cache database?
+static char *cache_dir;
+
+static char *xstrdup(const char *s) {
+  char *copy = strdup(s);
+  if (UNLIKELY(copy == NULL)) {
+    fprintf(stderr, "out of memory\n");
+    exit(EXIT_FAILURE);
+  }
+  return copy;
+}
+
+#define xasprintf(args...)                                                     \
+  do {                                                                         \
+    if (UNLIKELY(asprintf(args) < 0)) {                                        \
+      fprintf(stderr, "out of memory\n");                                      \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+  } while (0)
+
 /// parse command line arguments and return the index of the first argument not
 /// intended for us
 static int parse_args(int argc, char **argv) {
@@ -22,6 +42,7 @@ static int parse_args(int argc, char **argv) {
     static const struct option opts[] = {
         // clang-format off
         {"debug", no_argument, 0, 130},
+        {"dir", required_argument, 0, 'd'},
         {"disable-record", no_argument, 0, 131},
         {"disable-replay", no_argument, 0, 132},
         {"enable-record", no_argument, 0, 133},
@@ -32,7 +53,7 @@ static int parse_args(int argc, char **argv) {
     };
 
     int index;
-    int c = getopt_long(argc, argv, "h", opts, &index);
+    int c = getopt_long(argc, argv, "d:h", opts, &index);
 
     if (c == -1)
       break;
@@ -41,6 +62,11 @@ static int parse_args(int argc, char **argv) {
 
     case 130: // --debug
       xc_set_debug(stderr);
+      break;
+
+    case 'd': // --dir
+      free(cache_dir);
+      cache_dir = xstrdup(optarg);
       break;
 
     case 131: // --disable-record
@@ -68,6 +94,27 @@ static int parse_args(int argc, char **argv) {
     default:
       exit(EXIT_FAILURE);
     }
+  }
+
+  // if `--dir` was not given, use environment variables to decide
+  if (cache_dir == NULL) {
+    const char *XCACHE_DIR = getenv("XCACHE_DIR");
+    if (XCACHE_DIR != NULL)
+      cache_dir = xstrdup(XCACHE_DIR);
+  }
+  if (cache_dir == NULL) {
+    const char *XDG_CACHE_HOME = getenv("XDG_CACHE_HOME");
+    if (XDG_CACHE_HOME != NULL)
+      xasprintf(&cache_dir, "%s/xcache", XDG_CACHE_HOME);
+  }
+  if (cache_dir == NULL) {
+    const char *HOME = getenv("HOME");
+    if (HOME == NULL) {
+      fprintf(stderr, "--dir not provided and none of $XCACHE_DIR, "
+                      "$XDG_CACHE_HOME, $HOME set\n");
+      exit(EXIT_FAILURE);
+    }
+    xasprintf(&cache_dir, "%s/.xcache", HOME);
   }
 
   return optind;

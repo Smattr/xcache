@@ -24,6 +24,14 @@ compiler.
 Enable debugging output. Debugging messages will be printed to stderr.
 .RE
 .PP
+\fB--dir\fR \fIPATH\fR or \fB-d\fR \fIPATH\fR
+.RS
+Set directory in which to store or lookup cache results. If this option is not
+given, the contents of the environment variable \fB$XCACHE_DIR\fR is used. If
+\fB$XCACHE_DIR\fR is not set, the path \fB$XDG_CACHE_HOME/xcache\fR is used. If
+\fB$XDG_CACHE_HOME\fR is not set, the path \fB$HOME/.xcache\fR is used.
+.RE
+.PP
 \fB--[enable|disable]-record\fR
 .RS
 Switch process recording capability on or off. By default this is enabled.
