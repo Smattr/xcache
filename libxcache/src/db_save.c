@@ -13,7 +13,7 @@
 #include <xcache/proc.h>
 #include <xcache/trace.h>
 
-int xc_db_save(xc_db_t *db, const xc_proc_t *proc,
+int xc_db_save(const xc_db_t *db, const xc_proc_t *proc,
                const xc_trace_t *observation) {
 
   if (ERROR(db == NULL))

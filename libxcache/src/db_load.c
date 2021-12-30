@@ -5,7 +5,8 @@
 #include <xcache/proc.h>
 #include <xcache/trace.h>
 
-int xc_db_load(xc_db_t *db, const xc_proc_t *question, xc_trace_t **answer) {
+int xc_db_load(const xc_db_t *db, const xc_proc_t *question,
+               xc_trace_t **answer) {
 
   if (ERROR(db == NULL))
     return EINVAL;
