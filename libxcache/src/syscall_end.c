@@ -89,16 +89,16 @@ int syscall_end(tracee_t *tracee) {
 
     if (fd == AT_FDCWD) {
       DEBUG("PID %d called openat(AT_FDCWD, \"%s\", %s | %d), ret %ld",
-            (int)tracee->pid, path, flag_name(flags), other_flags(flags),
-            ret);
+            (int)tracee->pid, path, flag_name(flags), other_flags(flags), ret);
     } else {
       DEBUG("PID %d called openat(%d, \"%s\", %s | %d), ret %ld",
-            (int)tracee->pid, fd, path, flag_name(flags),
-            other_flags(flags), ret);
+            (int)tracee->pid, fd, path, flag_name(flags), other_flags(flags),
+            ret);
     }
 
     // does this count as a write intent?
-    bool is_write = (flags & O_RDWR) == O_RDWR || (flags & O_WRONLY) == O_WRONLY;
+    bool is_write =
+        (flags & O_RDWR) == O_RDWR || (flags & O_WRONLY) == O_WRONLY;
     if (is_write) {
       rc = see_write(tracee, fd, path);
       if (ERROR(rc != 0)) {

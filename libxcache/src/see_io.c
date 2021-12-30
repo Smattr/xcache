@@ -27,9 +27,8 @@ static char *make_absolute(tracee_t *tracee, int dirfd, const char *pathname) {
   open_file_t *of = tracee->fds;
   while (of != NULL && of->handle != dirfd)
     of = of->next;
-  assert(
-      of != NULL &&
-      "tracee successfully opened something relative to a non-existent FD");
+  assert(of != NULL &&
+         "tracee successfully opened something relative to a non-existent FD");
 
   return path_join(of->path, pathname);
 }
@@ -42,7 +41,8 @@ int see_read(tracee_t *tracee, int dirfd, const char *pathname) {
   // Ignore reads to std handles. Note this is only valid as long as we do not
   // support `dup2`.
   if (pathname[0] != '/') {
-    if (dirfd == STDIN_FILENO || dirfd == STDOUT_FILENO || dirfd == STDERR_FILENO) {
+    if (dirfd == STDIN_FILENO || dirfd == STDOUT_FILENO ||
+        dirfd == STDERR_FILENO) {
       DEBUG("ignoring read relative to std fd %d", dirfd);
       return 0;
     }
@@ -78,7 +78,8 @@ int see_write(tracee_t *tracee, int dirfd, const char *pathname) {
   // Ignore writes to std handles. Note this is only valid as long as we do not
   // support `dup2`.
   if (pathname[0] != '/') {
-    if (dirfd == STDIN_FILENO || dirfd == STDOUT_FILENO || dirfd == STDERR_FILENO) {
+    if (dirfd == STDIN_FILENO || dirfd == STDOUT_FILENO ||
+        dirfd == STDERR_FILENO) {
       DEBUG("ignoring read relative to std fd %d", dirfd);
       return 0;
     }
