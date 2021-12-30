@@ -1,6 +1,5 @@
 #include "db.h"
 #include "debug.h"
-#include "macros.h"
 #include "path.h"
 #include <assert.h>
 #include <errno.h>
@@ -14,7 +13,7 @@ int db_make_file(xc_db_t *db, FILE **fp, char **path) {
   assert(fp != NULL);
   assert(path != NULL);
 
-  int rc = 0;
+  int rc = -1;
   int fd = -1;
   FILE *f = NULL;
 
@@ -38,20 +37,24 @@ int db_make_file(xc_db_t *db, FILE **fp, char **path) {
     rc = errno;
     goto done;
   }
+  fd = -1;
 
+  // success
   *fp = f;
+  f = NULL;
   *path = template;
+  template = NULL;
+  rc = 0;
 
 done:
-  if (UNLIKELY(rc != 0)) {
-    if (f != NULL) {
-      (void)fclose(f);
-    } else if (fd >= 0) {
-      (void)close(fd);
-      (void)unlink(template);
-    }
-    free(template);
+  if (f != NULL)
+    (void)fclose(f);
+  if (fd >= 0) {
+    (void)close(fd);
+    assert(template != NULL);
+    (void)unlink(template);
   }
+  free(template);
 
   return rc;
 }
