@@ -23,5 +23,14 @@ struct xc_trace {
 INTERNAL int trace_localise(const xc_db_t *db, xc_trace_t **local,
                             const xc_trace_t *global);
 
+/// globalise a trace, making its content paths absolute
+///
+/// \param db Datbase whose root to use as a prefix for content paths
+/// \param [out] global Globalised trace on success
+/// \param local Trace to globalise
+/// \return 0 on success or an errno on failure
+INTERNAL int trace_globalise(const xc_db_t *db, xc_trace_t **global,
+                             const xc_trace_t *local);
+
 /// clean up and deallocate the members of a trace
 INTERNAL void trace_deinit(xc_trace_t *trace);
