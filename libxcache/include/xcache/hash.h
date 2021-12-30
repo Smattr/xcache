@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <xcache/proc.h>
 
 #ifndef XCACHE_API
 #define XCACHE_API __attribute__((visibility("default")))
@@ -29,6 +30,13 @@ XCACHE_API int xc_hash_data(xc_hash_t *hash, const void *data, size_t size);
 /// \param path File whose content to hash
 /// \return 0 on success or an errno on failure
 XCACHE_API int xc_hash_file(xc_hash_t *hash, const char *path);
+
+/// compute the has of a process
+///
+/// \param hash [out] On success, computed hash value
+/// \param proc Process to hash
+/// \return 0 on success or an errno on failure
+XCACHE_API int xc_hash_proc(xc_hash_t *hash, const xc_proc_t *proc);
 
 #ifdef __cplusplus
 }

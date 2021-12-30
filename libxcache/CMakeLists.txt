@@ -34,6 +34,7 @@ add_library(libxcache
   src/fs_set.c
   src/hash_data.c
   src/hash_file.c
+  src/hash_proc.c
   src/make_hash.c
   src/pack.c
   src/page_size.c
