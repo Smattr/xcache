@@ -1,16 +1,12 @@
 #include "db.h"
 #include "debug.h"
 #include "fs_set.h"
+#include "path.h"
 #include "trace.h"
 #include <errno.h>
 #include <stddef.h>
-#include <string.h>
 #include <xcache/db.h>
 #include <xcache/trace.h>
-
-static bool starts_with(const char *s, const char *prefix) {
-  return strlen(prefix) <= strlen(s) && strncmp(s, prefix, strlen(prefix)) == 0;
-}
 
 int xc_db_save(xc_db_t *db, const xc_trace_t *observation) {
 
@@ -27,7 +23,7 @@ int xc_db_save(xc_db_t *db, const xc_trace_t *observation) {
     if (fs->written) {
       if (ERROR(fs->content_path == NULL))
         return EINVAL;
-      if (ERROR(!starts_with(fs->content_path, db->root)))
+      if (ERROR(!path_is_relative_to(fs->content_path, db->root)))
         return EINVAL;
     }
   }

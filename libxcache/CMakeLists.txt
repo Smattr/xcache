@@ -37,6 +37,7 @@ add_library(libxcache
   src/make_hash.c
   src/pack.c
   src/page_size.c
+  src/path_is_relative_to.c
   src/path_join.c
   src/peek.c
   src/proc_exec.c
