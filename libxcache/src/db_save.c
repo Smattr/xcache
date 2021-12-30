@@ -6,11 +6,16 @@
 #include <errno.h>
 #include <stddef.h>
 #include <xcache/db.h>
+#include <xcache/proc.h>
 #include <xcache/trace.h>
 
-int xc_db_save(xc_db_t *db, const xc_trace_t *observation) {
+int xc_db_save(xc_db_t *db, const xc_proc_t *proc,
+               const xc_trace_t *observation) {
 
   if (ERROR(db == NULL))
+    return EINVAL;
+
+  if (ERROR(proc == NULL))
     return EINVAL;
 
   if (ERROR(observation == NULL))
