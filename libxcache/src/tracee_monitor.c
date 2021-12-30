@@ -24,17 +24,17 @@ static int init(tracee_t *tracee) {
   DEBUG("waiting for the child to SIGSTOP itself...");
   {
     int status;
-    if (UNLIKELY(waitpid(tracee->pid, &status, 0) == -1)) {
+    if (ERROR(waitpid(tracee->pid, &status, 0) == -1)) {
       rc = errno;
       DEBUG("failed to wait on SIGSTOP from the child: %d", rc);
       goto done;
     }
-    if (UNLIKELY(WIFEXITED(status))) {
+    if (ERROR(WIFEXITED(status))) {
       rc = WEXITSTATUS(status);
       DEBUG("child prematurely exited with %d", rc);
       goto done;
     } else if (LIKELY(WIFSTOPPED(status))) {
-      if (UNLIKELY(WSTOPSIG(status) != SIGSTOP)) {
+      if (ERROR(WSTOPSIG(status) != SIGSTOP)) {
         rc = status;
         DEBUG("non-SIGSTOP signal from child: %d", WSTOPSIG(status));
         goto done;
@@ -52,7 +52,7 @@ static int init(tracee_t *tracee) {
     static const int opts = PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACESECCOMP |
                             PTRACE_O_TRACECLONE | PTRACE_O_TRACEFORK |
                             PTRACE_O_TRACEVFORK;
-    if (UNLIKELY(ptrace(PTRACE_SETOPTIONS, tracee->pid, NULL, opts) != 0)) {
+    if (ERROR(ptrace(PTRACE_SETOPTIONS, tracee->pid, NULL, opts) != 0)) {
       rc = errno;
       goto done;
     }
@@ -60,7 +60,7 @@ static int init(tracee_t *tracee) {
 
   // resume the child
   rc = tracee_resume(tracee);
-  if (UNLIKELY(rc != 0))
+  if (ERROR(rc != 0))
     goto done;
 
 done:
@@ -119,12 +119,12 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
   pthread_t tee;
 
   rc = init(tracee);
-  if (UNLIKELY(rc != 0))
+  if (ERROR(rc != 0))
     goto done;
 
   // create a background thread to handle the tracee’s output streams
   rc = pthread_create(&tee, NULL, tracee_tee, tracee);
-  if (UNLIKELY(rc != 0))
+  if (ERROR(rc != 0))
     goto done;
   tee_created = true;
 
@@ -133,7 +133,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
     DEBUG("waiting on the child...");
     int status;
-    if (UNLIKELY(waitpid(tracee->pid, &status, 0) == -1)) {
+    if (ERROR(waitpid(tracee->pid, &status, 0) == -1)) {
       rc = errno;
       goto done;
     }
@@ -166,7 +166,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         DEBUG("saw seccomp stop");
 
         rc = syscall_middle(tracee);
-        if (UNLIKELY(rc != 0))
+        if (ERROR(rc != 0))
           goto done;
 
         // `syscall_middle` will have resumed the child
@@ -176,7 +176,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         DEBUG("saw normal syscall stop");
 
         rc = syscall_end(tracee);
-        if (UNLIKELY(rc != 0))
+        if (ERROR(rc != 0))
           goto done;
 
         break;
@@ -188,7 +188,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
 
       // resume the child
       rc = tracee_resume(tracee);
-      if (UNLIKELY(rc != 0))
+      if (ERROR(rc != 0))
         goto done;
 
       continue;

@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "macros.h"
 #include "proc.h"
 #include <errno.h>
@@ -7,46 +8,46 @@
 
 int xc_proc_new(xc_proc_t **proc, int argc, char **argv, const char *cwd) {
 
-  if (UNLIKELY(proc == NULL))
+  if (ERROR(proc == NULL))
     return EINVAL;
 
-  if (UNLIKELY(argc < 1))
+  if (ERROR(argc < 1))
     return EINVAL;
 
-  if (UNLIKELY(argv == NULL))
+  if (ERROR(argv == NULL))
     return EINVAL;
 
   for (int i = 0; i < argc; ++i) {
-    if (UNLIKELY(argv[i] == NULL))
+    if (ERROR(argv[i] == NULL))
       return EINVAL;
   }
 
-  if (UNLIKELY(cwd == NULL))
+  if (ERROR(cwd == NULL))
     return EINVAL;
 
-  if (UNLIKELY(cwd[0] != '/'))
+  if (ERROR(cwd[0] != '/'))
     return EINVAL;
 
   int rc = ENOMEM;
 
   xc_proc_t *p = calloc(1, sizeof(*p));
-  if (UNLIKELY(p == NULL))
+  if (ERROR(p == NULL))
     goto done;
 
   size_t ac = (size_t)argc;
   p->argv = calloc(ac + 1, sizeof(p->argv[0]));
-  if (UNLIKELY(p->argv == NULL))
+  if (ERROR(p->argv == NULL))
     goto done;
   p->argc = ac;
 
   for (size_t i = 0; i < ac; ++i) {
     p->argv[i] = strdup(argv[i]);
-    if (UNLIKELY(p->argv[i] == NULL))
+    if (ERROR(p->argv[i] == NULL))
       goto done;
   }
 
   p->cwd = strdup(cwd);
-  if (UNLIKELY(p->cwd == NULL))
+  if (ERROR(p->cwd == NULL))
     goto done;
 
   rc = 0;

@@ -1,4 +1,5 @@
 #include "db.h"
+#include "debug.h"
 #include "macros.h"
 #include "path.h"
 #include <assert.h>
@@ -19,21 +20,21 @@ int db_make_file(xc_db_t *db, FILE **fp, char **path) {
 
   // construct a template file path pointing into the database root
   char *template = path_join(db->root, "data.XXXXXX");
-  if (UNLIKELY(template == NULL)) {
+  if (ERROR(template == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   // create a file at a new unique path
   fd = mkstemp(template);
-  if (UNLIKELY(fd == -1)) {
+  if (ERROR(fd == -1)) {
     rc = errno;
     goto done;
   }
 
   // turn the descriptor into a file handle
   f = fdopen(fd, "r");
-  if (UNLIKELY(f == NULL)) {
+  if (ERROR(f == NULL)) {
     rc = errno;
     goto done;
   }

@@ -1,5 +1,4 @@
 #include "debug.h"
-#include "macros.h"
 #include "path.h"
 #include "tracee.h"
 #include <assert.h>
@@ -55,14 +54,14 @@ int see_read(tracee_t *tracee, int dirfd, const char *pathname) {
 
   // turn the path into something absolute
   char *abs = make_absolute(tracee, dirfd, pathname);
-  if (UNLIKELY(abs == NULL)) {
+  if (ERROR(abs == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   // record a read for this file
   rc = fs_set_add_read(&tracee->trace.io, abs);
-  if (UNLIKELY(rc != 0))
+  if (ERROR(rc != 0))
     goto done;
 
 done:
@@ -89,14 +88,14 @@ int see_write(tracee_t *tracee, int dirfd, const char *pathname) {
 
   // turn the path into something absolute
   char *abs = make_absolute(tracee, dirfd, pathname);
-  if (UNLIKELY(abs == NULL)) {
+  if (ERROR(abs == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   // record a write for this file
   rc = fs_set_add_write(&tracee->trace.io, abs);
-  if (UNLIKELY(rc != 0))
+  if (ERROR(rc != 0))
     goto done;
 
 done:
@@ -115,7 +114,7 @@ int see_open(tracee_t *tracee, long result, int dirfd, const char *pathname) {
 
   // turn the path into something absolute
   char *abs = make_absolute(tracee, dirfd, pathname);
-  if (UNLIKELY(abs == NULL)) {
+  if (ERROR(abs == NULL)) {
     rc = ENOMEM;
     goto done;
   }
@@ -125,7 +124,7 @@ int see_open(tracee_t *tracee, long result, int dirfd, const char *pathname) {
   for (open_file_t **of = &tracee->fds;; of = &(*of)->next) {
     if (*of == NULL) {
       open_file_t *new = calloc(1, sizeof(*new));
-      if (UNLIKELY(new == NULL)) {
+      if (ERROR(new == NULL)) {
         rc = ENOMEM;
         goto done;
       }

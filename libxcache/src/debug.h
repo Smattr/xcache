@@ -1,6 +1,8 @@
 #pragma once
 
 #include "macros.h"
+#include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 /// output stream for debugging information
@@ -17,3 +19,15 @@ extern FILE *debug;
       funlockfile(debug);                                                      \
     }                                                                          \
   } while (0)
+
+/// logging wrapper for error conditions
+#define ERROR(cond)                                                            \
+  ({                                                                           \
+    bool cond_ = (cond);                                                       \
+    if (UNLIKELY(cond_)) {                                                     \
+      int errno_ = errno;                                                      \
+      DEBUG("`%s` failed", #cond);                                             \
+      errno = errno_;                                                          \
+    }                                                                          \
+    cond_;                                                                     \
+  })

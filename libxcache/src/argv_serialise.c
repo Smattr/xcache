@@ -1,5 +1,5 @@
 #include "argv_serialise.h"
-#include "macros.h"
+#include "debug.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,7 +18,7 @@ char *argv_serialise(size_t argc, char **argv) {
 
   // allocate a buffer to serialise into
   char *r = malloc(sizeof(char) * len);
-  if (UNLIKELY(r == NULL))
+  if (ERROR(r == NULL))
     return NULL;
 
   // serialise, using Record Separator as a delimiter

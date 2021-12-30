@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "macros.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -9,10 +10,10 @@
 
 int xc_hash_file(xc_hash_t *hash, const char *path) {
 
-  if (UNLIKELY(hash == NULL))
+  if (ERROR(hash == NULL))
     return EINVAL;
 
-  if (path == NULL)
+  if (ERROR(path == NULL))
     return EINVAL;
 
   int rc = -1;
@@ -20,20 +21,20 @@ int xc_hash_file(xc_hash_t *hash, const char *path) {
   size_t size = 0;
 
   int fd = open(path, O_RDONLY);
-  if (UNLIKELY(fd < 0)) {
+  if (ERROR(fd < 0)) {
     rc = errno;
     goto done;
   }
 
   struct stat st;
-  if (UNLIKELY(fstat(fd, &st) != 0)) {
+  if (ERROR(fstat(fd, &st) != 0)) {
     rc = errno;
     goto done;
   }
   size = st.st_size;
 
   base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (UNLIKELY(base == MAP_FAILED)) {
+  if (ERROR(base == MAP_FAILED)) {
     rc = errno;
     goto done;
   }

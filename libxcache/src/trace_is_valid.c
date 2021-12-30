@@ -1,4 +1,4 @@
-#include "macros.h"
+#include "debug.h"
 #include "trace.h"
 #include <errno.h>
 #include <stdbool.h>
@@ -8,12 +8,12 @@
 
 bool xc_trace_is_valid(const xc_trace_t *trace) {
 
-  if (UNLIKELY(trace == NULL))
+  if (ERROR(trace == NULL))
     return false;
 
   for (size_t i = 0; i < trace->io.size; ++i) {
     if (trace->io.base[i].read) {
-      if (UNLIKELY(trace->io.base[i].path == NULL))
+      if (ERROR(trace->io.base[i].path == NULL))
         return false;
     }
   }
@@ -25,7 +25,7 @@ bool xc_trace_is_valid(const xc_trace_t *trace) {
     int rc = xc_hash_file(&hash, trace->io.base[i].path);
     bool exists = rc != ENOENT;
     bool accessible = rc != EACCES && rc != EPERM;
-    if (UNLIKELY(exists && accessible && rc != 0))
+    if (ERROR(exists && accessible && rc != 0))
       return false;
 
     if (exists != trace->io.base[i].existed)

@@ -1,4 +1,5 @@
 #include "copy_file.h"
+#include "debug.h"
 #include "macros.h"
 #include <assert.h>
 #include <errno.h>
@@ -11,10 +12,10 @@
 
 int copy_file(const char *src, const char *dst) {
 
-  if (src == NULL)
+  if (ERROR(src == NULL))
     return EINVAL;
 
-  if (dst == NULL)
+  if (ERROR(dst == NULL))
     return EINVAL;
 
   int in = -1;
@@ -23,21 +24,21 @@ int copy_file(const char *src, const char *dst) {
 
   // open the source file
   in = open(src, O_RDONLY);
-  if (in < 0) {
+  if (ERROR(in < 0)) {
     rc = errno;
     goto done;
   }
 
   // learn the size of the source file
   struct stat st;
-  if (fstat(in, &st) != 0) {
+  if (ERROR(fstat(in, &st) != 0)) {
     rc = errno;
     goto done;
   }
 
   // open the destination file
   out = open(dst, O_WRONLY);
-  if (out < 0) {
+  if (ERROR(out < 0)) {
     rc = errno;
     goto done;
   }
@@ -47,7 +48,7 @@ int copy_file(const char *src, const char *dst) {
   while (size > 0) {
 
     ssize_t bytes = sendfile(out, in, NULL, size);
-    if (bytes < 0) {
+    if (ERROR(bytes < 0)) {
       rc = errno;
       goto done;
     }

@@ -1,5 +1,4 @@
 #include "debug.h"
-#include "macros.h"
 #include "peek.h"
 #include "tracee.h"
 #include <assert.h>
@@ -28,18 +27,18 @@ int syscall_middle(tracee_t *tracee) {
     // retrieve the path
     char *path = NULL;
     rc = peek_string(&path, tracee->pid, REG(rdi));
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     DEBUG("PID %d called access(\"%s\")", (int)tracee->pid, path);
 
     rc = see_read(tracee, AT_FDCWD, path);
     free(path);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     rc = tracee_resume(tracee);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     break;
@@ -54,18 +53,18 @@ int syscall_middle(tracee_t *tracee) {
     // retrieve the path
     char *path = NULL;
     rc = peek_string(&path, tracee->pid, REG(rdi));
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     DEBUG("PID %d called execve(\"%s\")", (int)tracee->pid, path);
 
     rc = see_read(tracee, AT_FDCWD, path);
     free(path);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     rc = tracee_resume(tracee);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     break;
@@ -77,7 +76,7 @@ int syscall_middle(tracee_t *tracee) {
     // retrieve the path
     char *path = NULL;
     rc = peek_string(&path, tracee->pid, REG(rdi));
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     DEBUG("PID %d called chdir(\"%s\")", (int)tracee->pid, path);
@@ -86,13 +85,13 @@ int syscall_middle(tracee_t *tracee) {
     rc = see_read(tracee, AT_FDCWD, path);
 #endif
     free(path);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     // we need to see the other side of `chdir` to potentially update
     // `tracee->cwd`
     rc = tracee_resume_to_syscall(tracee);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     break;
@@ -114,7 +113,7 @@ int syscall_middle(tracee_t *tracee) {
       char *path = NULL;
       rc = peek_string(&path, tracee->pid, REG(rsi));
       // FIXME: what happens if the tracee made a bad openat call?
-      if (UNLIKELY(rc != 0))
+      if (ERROR(rc != 0))
         goto done;
 
       if (fd == AT_FDCWD) {
@@ -129,14 +128,14 @@ int syscall_middle(tracee_t *tracee) {
 
       rc = see_read(tracee, fd, path);
       free(path);
-      if (UNLIKELY(rc != 0))
+      if (ERROR(rc != 0))
         goto done;
     }
 
     // resume the tracee, but we need to again intercept at syscall end to pick
     // up the newly allocated FD if the syscall was successful
     rc = tracee_resume_to_syscall(tracee);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     break;
@@ -151,7 +150,7 @@ int syscall_middle(tracee_t *tracee) {
     // retrieve the path
     char *path = NULL;
     rc = peek_string(&path, tracee->pid, REG(rsi));
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     if (fd == AT_FDCWD) {
@@ -164,11 +163,11 @@ int syscall_middle(tracee_t *tracee) {
 
     rc = see_read(tracee, fd, path);
     free(path);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     rc = tracee_resume(tracee);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     break;
@@ -178,7 +177,7 @@ int syscall_middle(tracee_t *tracee) {
   default:
     DEBUG("ignored seccomp stop for syscall %ld", nr);
     rc = tracee_resume_to_syscall(tracee);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       goto done;
 
     break;

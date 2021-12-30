@@ -46,7 +46,7 @@ int syscall_end(tracee_t *tracee) {
     // retrieve the path
     char *path = NULL;
     int rc = peek_string(&path, tracee->pid, REG(rdi));
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       return rc;
 
     DEBUG("PID %d called chdir(\"%s\"), ret %ld", (int)tracee->pid, path, ret);
@@ -58,7 +58,7 @@ int syscall_end(tracee_t *tracee) {
     } else {
       cwd = path_join(tracee->cwd, path);
       free(path);
-      if (UNLIKELY(cwd == NULL))
+      if (ERROR(cwd == NULL))
         return ENOMEM;
     }
 
@@ -81,7 +81,7 @@ int syscall_end(tracee_t *tracee) {
     // retrieve the path
     char *path = NULL;
     int rc = peek_string(&path, tracee->pid, REG(rsi));
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       return rc;
 
     // retrieve the flags
@@ -101,7 +101,7 @@ int syscall_end(tracee_t *tracee) {
     bool is_write = (flags & O_RDWR) == O_RDWR || (flags & O_WRONLY) == O_WRONLY;
     if (is_write) {
       rc = see_write(tracee, fd, path);
-      if (UNLIKELY(rc != 0)) {
+      if (ERROR(rc != 0)) {
         free(path);
         return rc;
       }
@@ -110,7 +110,7 @@ int syscall_end(tracee_t *tracee) {
     // note the new file handle we need to learn
     rc = see_open(tracee, ret, fd, path);
     free(path);
-    if (UNLIKELY(rc != 0))
+    if (ERROR(rc != 0))
       return rc;
 
     return rc;

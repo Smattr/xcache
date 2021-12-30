@@ -1,4 +1,5 @@
 #include "peek.h"
+#include "debug.h"
 #include "macros.h"
 #include "page_size.h"
 #include <assert.h>
@@ -41,7 +42,7 @@ int peek_string(char **out, pid_t pid, size_t offset) {
     struct iovec theirs = {.iov_base = (void *)base, .iov_len = len};
     ;
     ssize_t r = process_vm_readv(pid, &ours, 1, &theirs, 1, 0);
-    if (UNLIKELY(r < 0)) {
+    if (ERROR(r < 0)) {
       rc = errno;
       goto done;
     }
@@ -51,7 +52,7 @@ int peek_string(char **out, pid_t pid, size_t offset) {
     assert(s <= sizeof(chunk));
     size_t new_size = size + s;
     char *p = realloc(result, new_size);
-    if (UNLIKELY(p == NULL)) {
+    if (ERROR(p == NULL)) {
       rc = ENOMEM;
       goto done;
     }

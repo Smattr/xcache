@@ -1,5 +1,5 @@
 #include "fs_set.h"
-#include "macros.h"
+#include "debug.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -15,7 +15,7 @@ static int maybe_expand(fs_set_t *set) {
   if (UNLIKELY(set->size == set->capacity)) {
     size_t c = set->capacity == 0 ? 128 : (set->capacity * 2);
     fs_t *base = realloc(set->base, sizeof(set->base[0]) * c);
-    if (UNLIKELY(base == NULL))
+    if (ERROR(base == NULL))
       return ENOMEM;
     set->base = base;
     set->capacity = c;
@@ -46,7 +46,7 @@ int fs_set_add_read(fs_set_t *set, const char *path) {
   // expand the set if necessary
   {
     int r = maybe_expand(set);
-    if (UNLIKELY(r != 0))
+    if (ERROR(r != 0))
       return r;
   }
 
@@ -65,7 +65,7 @@ int fs_set_add_read(fs_set_t *set, const char *path) {
   size_t index = set->size;
   memset(&set->base[index], 0, sizeof(set->base[index]));
   set->base[index].path = strdup(path);
-  if (UNLIKELY(set->base[index].path == NULL))
+  if (ERROR(set->base[index].path == NULL))
     return ENOMEM;
   set->base[index].read = true;
   set->base[index].existed = existed;
@@ -96,7 +96,7 @@ int fs_set_add_write(fs_set_t *set, const char *path) {
   // expand the set if necessary
   {
     int r = maybe_expand(set);
-    if (UNLIKELY(r != 0))
+    if (ERROR(r != 0))
       return r;
   }
 
@@ -109,7 +109,7 @@ int fs_set_add_write(fs_set_t *set, const char *path) {
   size_t index = set->size;
   memset(&set->base[index], 0, sizeof(set->base[index]));
   set->base[index].path = strdup(path);
-  if (UNLIKELY(set->base[index].path == NULL))
+  if (ERROR(set->base[index].path == NULL))
     return ENOMEM;
   set->base[index].written = true;
   ++set->size;

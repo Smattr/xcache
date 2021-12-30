@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "macros.h"
 #include "proc.h"
 #include "trace.h"
@@ -12,24 +13,24 @@
 
 int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc, xc_db_t *db) {
 
-  if (UNLIKELY(trace == NULL))
+  if (ERROR(trace == NULL))
     return EINVAL;
 
-  if (UNLIKELY(proc == NULL))
+  if (ERROR(proc == NULL))
     return EINVAL;
 
-  if (UNLIKELY(proc->argc == 0))
+  if (ERROR(proc->argc == 0))
     return EINVAL;
 
-  if (UNLIKELY(proc->argv == NULL))
+  if (ERROR(proc->argv == NULL))
     return EINVAL;
 
   for (size_t i = 0; i < proc->argc; ++i) {
-    if (UNLIKELY(proc->argv[i] == NULL))
+    if (ERROR(proc->argv[i] == NULL))
       return EINVAL;
   }
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
   int rc = 0;
@@ -37,17 +38,17 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc, xc_db_t *db) {
   xc_trace_t *t = NULL;
 
   rc = tracee_init(&tracee, proc, db);
-  if (UNLIKELY(rc != 0))
+  if (ERROR(rc != 0))
     goto done;
 
   t = calloc(1, sizeof(*t));
-  if (UNLIKELY(t == NULL)) {
+  if (ERROR(t == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   tracee.pid = fork();
-  if (UNLIKELY(tracee.pid == -1)) {
+  if (ERROR(tracee.pid == -1)) {
     rc = errno;
     goto done;
   }

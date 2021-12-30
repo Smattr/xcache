@@ -1,4 +1,4 @@
-#include "macros.h"
+#include "debug.h"
 #include "path.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -21,7 +21,7 @@ char *path_join(const char *a, const char *b) {
 
   size_t len = strlen(a) + (slash ? 1 : 0) + strlen(b) + 1;
   char *result = malloc(len);
-  if (UNLIKELY(result == NULL))
+  if (ERROR(result == NULL))
     return NULL;
 
   snprintf(result, len, "%s%s%s", a, slash ? "/" : "", b);

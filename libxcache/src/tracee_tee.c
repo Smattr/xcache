@@ -54,7 +54,7 @@ static rc_t drain(int to, FILE *to_buffer, int from) {
     // write the data to our in-memory buffer for saving later
     if (LIKELY(to_buffer != NULL)) {
       size_t written = fwrite(buffer, sizeof(buffer[0]), size, to_buffer);
-      if (UNLIKELY(written != size))
+      if (ERROR(written != size))
         return (rc_t){.soft_rc = ENOMEM};
     }
   }
@@ -104,7 +104,7 @@ void *tracee_tee(void *arg) {
         {.fd = tracee->err[0] > 0 ? tracee->err[0] : -1, .events = POLLIN},
     };
     nfds_t nfds = sizeof(fds) / sizeof(fds[0]);
-    if (UNLIKELY(poll(fds, nfds, -1) == -1)) {
+    if (ERROR(poll(fds, nfds, -1) == -1)) {
       rc = errno;
       goto done;
     }
@@ -130,11 +130,11 @@ void *tracee_tee(void *arg) {
           r = drain(STDERR_FILENO, tracee->err_f, fds[i].fd);
         }
 
-        if (UNLIKELY(r.soft_rc != 0)) {
+        if (ERROR(r.soft_rc != 0)) {
           discard_buffers(tracee);
           if (soft_rc == 0)
             soft_rc = r.soft_rc;
-        } else if (UNLIKELY(r.hard_rc != 0)) {
+        } else if (ERROR(r.hard_rc != 0)) {
           rc = r.hard_rc;
           goto done;
         }
