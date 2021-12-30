@@ -1,6 +1,5 @@
 #pragma once
 
-#include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <xcache/proc.h>
@@ -16,7 +15,6 @@ extern "C" {
 /// A content hash used by xcache for associative lookups. Users should not rely
 /// on the underlying type beyond it being a scalar.
 typedef uint64_t xc_hash_t;
-#define PRIxHASH PRIx64
 
 /// compute the hash of the given in-memory data
 ///

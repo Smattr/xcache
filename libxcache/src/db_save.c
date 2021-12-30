@@ -1,6 +1,7 @@
 #include "db.h"
 #include "debug.h"
 #include "fs_set.h"
+#include "hash.h"
 #include "pack.h"
 #include "path.h"
 #include "trace.h"

@@ -12,6 +12,7 @@ add_library(libxcache
   src/copy_file.h
   src/debug.h
   src/fs_set.h
+  src/hash.h
   src/make_hash.h
   src/macros.h
   src/pack.h

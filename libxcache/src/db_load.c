@@ -1,5 +1,6 @@
 #include "db.h"
 #include "debug.h"
+#include "hash.h"
 #include "pack.h"
 #include "path.h"
 #include <errno.h>
