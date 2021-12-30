@@ -3,6 +3,7 @@
 #include "hash.h"
 #include "pack.h"
 #include "path.h"
+#include "trace.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -35,6 +36,8 @@ int xc_db_load(const xc_db_t *db, const xc_proc_t *question,
   size_t in_size = 0;
   char *buffer_base = NULL;
   FILE *buffer = NULL;
+  xc_trace_t *t = NULL;
+  xc_trace_t *globalised = NULL;
   int rc = -1;
 
   // figure out from where to load this trace
@@ -68,10 +71,6 @@ int xc_db_load(const xc_db_t *db, const xc_proc_t *question,
     goto done;
   }
 
-  // we no longer need the filename
-  free(input);
-  input = NULL;
-
   // serialise the query
   size_t buffer_size = 0;
   buffer = open_memstream(&buffer_base, &buffer_size);
@@ -99,14 +98,28 @@ int xc_db_load(const xc_db_t *db, const xc_proc_t *question,
     goto done;
   }
 
-  // we no longer need the serialised query
-  free(buffer_base);
-  buffer_base = NULL;
+  // deserialise the trace that follows in the file
+  rc = unpack_trace(in_base + proc_size, in_size - proc_size, &t);
+  if (ERROR(rc != 0))
+    goto done;
 
-  // TODO: deserialise the trace
-  rc = ENOSYS;
+  // globalise the trace, so it can be replayed
+  rc = trace_globalise(db, &globalised, t);
+  if (ERROR(rc != 0))
+    goto done;
+
+  // success
+  *answer = globalised;
+  globalised = NULL;
+  rc = 0;
 
 done:
+  if (globalised != NULL)
+    trace_deinit(globalised);
+  free(globalised);
+  if (t != NULL)
+    trace_deinit(t);
+  free(t);
   if (buffer != NULL)
     (void)fclose(buffer);
   if (buffer_base != NULL)
