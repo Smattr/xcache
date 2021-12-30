@@ -1,15 +1,19 @@
 #include "pack.h"
 #include "debug.h"
+#include "fs_set.h"
 #include "proc.h"
+#include "trace.h"
 #include <assert.h>
 #include <endian.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <xcache/proc.h>
+#include <xcache/trace.h>
 
 // these serialisation functions could use any arbitrary encoding as long as the
 // decoding side matched, but for convenience we use CBOR
@@ -74,7 +78,83 @@ static int pack_array_length(FILE *f, size_t value) {
   return write_u64(f, (uint64_t)value);
 }
 
+static int pack_bool(FILE *f, bool value) {
+  return write_u8(f, value ? 0xf5 : 0xf4);
+}
+
+static int pack_uint(FILE *f, uintmax_t value) {
+
+  if (value <= 0x17)
+    return write_u8(f, 0x00 + (uint8_t)value);
+
+  if (value <= UINT8_MAX) {
+    int r = write_u8(f, 0x18);
+    if (ERROR(r != 0))
+      return r;
+    return write_u8(f, (uint8_t)value);
+  }
+
+  if (value <= UINT16_MAX) {
+    int r = write_u8(f, 0x19);
+    if (ERROR(r != 0))
+      return r;
+    return write_u16(f, (uint16_t)value);
+  }
+
+  if (value <= UINT32_MAX) {
+    int r = write_u8(f, 0x1a);
+    if (ERROR(r != 0))
+      return r;
+    return write_u32(f, (uint32_t)value);
+  }
+
+  assert(value <= UINT64_MAX);
+  int r = write_u8(f, 0x1b);
+  if (ERROR(r != 0))
+    return r;
+  return write_u64(f, (uint64_t)value);
+}
+
+static int pack_int(FILE *f, intmax_t value) {
+
+  if (value >= 0)
+    return pack_uint(f, (uintmax_t)value);
+
+  if (value >= INTMAX_C(-1) - 0x17)
+    return write_u8(f, 0x20 + (uint8_t)(-(value + 1)));
+
+  if (value >= INTMAX_C(-1) - (intmax_t)UINT8_MAX) {
+    int r = write_u8(f, 0x38);
+    if (ERROR(r != 0))
+      return r;
+    return write_u8(f, (uint8_t)(-(value + 1)));
+  }
+
+  if (value >= INTMAX_C(-1) - (intmax_t)UINT16_MAX) {
+    int r = write_u8(f, 0x39);
+    if (ERROR(r != 0))
+      return r;
+    return write_u16(f, (uint16_t)(-(value + 1)));
+  }
+
+  if (value >= INTMAX_C(-1) - (intmax_t)UINT32_MAX) {
+    int r = write_u8(f, 0x3a);
+    if (ERROR(r != 0))
+      return r;
+    return write_u32(f, (uint32_t)(-(value + 1)));
+  }
+
+  assert(value >= INTMAX_C(-1) - (intmax_t)UINT64_MAX);
+  int r = write_u8(f, 0x3b);
+  if (ERROR(r != 0))
+    return r;
+  return write_u64(f, (uint64_t)(-(value + 1)));
+}
+
 static int pack_string(FILE *f, const char *value) {
+
+  if (value == NULL)
+    return write_u8(f, 0xf6);
 
   size_t len = strlen(value);
 
@@ -155,6 +235,62 @@ int pack_proc(FILE *f, const xc_proc_t *proc) {
   // serialise cwd
   {
     int r = pack_string(f, proc->cwd);
+    if (ERROR(r != 0))
+      return r;
+  }
+
+  return 0;
+}
+
+/// byte used as a tag to indicate a trace entry
+static const uint8_t TRACE_TAG = 'T';
+
+int pack_trace(FILE *f, const xc_trace_t *trace) {
+
+  assert(f != NULL);
+  assert(trace != NULL);
+
+  // write the tag
+  {
+    int r = pack_tag(f, TRACE_TAG);
+    if (ERROR(r != 0))
+      return r;
+  }
+
+  // serialise accessed files
+  {
+    int r = pack_array_length(f, trace->io.size);
+    if (ERROR(r != 0))
+      return r;
+  }
+  for (size_t i = 0; i < trace->io.size; ++i) {
+    const fs_t *fs = &trace->io.base[i];
+    int r = pack_string(f, fs->path);
+    if (ERROR(r != 0))
+      return r;
+    r = pack_bool(f, fs->read);
+    if (ERROR(r != 0))
+      return r;
+    r = pack_bool(f, fs->existed);
+    if (ERROR(r != 0))
+      return r;
+    r = pack_bool(f, fs->accessible);
+    if (ERROR(r != 0))
+      return r;
+    r = pack_bool(f, fs->written);
+    if (ERROR(r != 0))
+      return r;
+    r = pack_uint(f, fs->hash);
+    if (ERROR(r != 0))
+      return r;
+    r = pack_string(f, fs->content_path);
+    if (ERROR(r != 0))
+      return r;
+  }
+
+  // serialise exit status
+  {
+    int r = pack_int(f, trace->exit_status);
     if (ERROR(r != 0))
       return r;
   }
