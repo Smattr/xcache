@@ -1,9 +1,10 @@
 #include "db.h"
 #include "debug.h"
-#include "macros.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <xcache/db.h>
 
 int xc_db_open(xc_db_t **db, const char *path) {
@@ -14,7 +15,7 @@ int xc_db_open(xc_db_t **db, const char *path) {
   if (ERROR(path == NULL))
     return EINVAL;
 
-  int rc = 0;
+  int rc = -1;
 
   xc_db_t *d = calloc(1, sizeof(*d));
   if (ERROR(d == NULL)) {
@@ -29,12 +30,21 @@ int xc_db_open(xc_db_t **db, const char *path) {
     goto done;
   }
 
-done:
-  if (UNLIKELY(rc != 0)) {
-    xc_db_close(d);
-  } else {
-    *db = d;
+  // construct the directory if it does not already exist
+  if (mkdir(path, 0755) < 0) {
+    if (ERROR(errno != EEXIST)) {
+      rc = errno;
+      goto done;
+    }
   }
+
+  // success
+  *db = d;
+  d = NULL;
+  rc = 0;
+
+done:
+  xc_db_close(d);
 
   return rc;
 }
