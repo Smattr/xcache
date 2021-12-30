@@ -4,6 +4,12 @@
 #include <unistd.h>
 #include <xcache/proc.h>
 
+// this is called from `tracee_exec`, so make `DEBUG` unusable here as a safe
+// guard
+#ifdef DEBUG
+#undef DEBUG
+#endif
+
 int xc_proc_exec(const xc_proc_t *proc) {
 
   if (UNLIKELY(proc == NULL))

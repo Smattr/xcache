@@ -19,16 +19,26 @@
 #include <unistd.h>
 #include <xcache/proc.h>
 
-/// Flip this to true when debugging tricky child startup failures. Note this
-/// will skip duping stderr, so will make tracing possibly incorrect.
-enum { DEBUGGING = false };
+/// Flip this to 1 when debugging tricky child startup failures. Note this will
+/// skip duping stderr, so will make tracing possibly incorrect.
+#define DEBUGGING 0
 
+#if DEBUGGING
 #define DEBUG_(args...)                                                        \
   do {                                                                         \
     if (DEBUGGING) {                                                           \
       DEBUG("[tracee] " args);                                                 \
     }                                                                          \
   } while (0)
+#else
+#define DEBUG_(args...) /* nothing */
+
+// we are in a forked child in the code below who furthermore dups over its
+// stderr, so disable the use of DEBUG
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#endif
 
 // The tracee’s actions are coordinated with the tracer. That is, the
 // interleaving of what the tracee does below needs to line up with the tracer’s
