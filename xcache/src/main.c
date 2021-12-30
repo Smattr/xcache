@@ -136,7 +136,7 @@ static int make_process(xc_proc_t **proc, int argc, char **argv) {
   return rc;
 }
 
-static int try_replay(const xc_db_t *db, const xc_proc_t *proc) {
+static int replay(const xc_db_t *db, const xc_proc_t *proc) {
 
   // try to find a prior trace in the cache
   xc_trace_t *trace = NULL;
@@ -150,7 +150,7 @@ static int try_replay(const xc_db_t *db, const xc_proc_t *proc) {
     goto done;
   }
 
-  // try to replay it
+  // try to replay it (on success, `xc_trace_replay` does not return)
   rc = xc_trace_replay(trace);
   if (UNLIKELY(rc != 0))
     goto done;
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
   if (enable_replay) {
     assert(db != NULL);
 
-    rc = try_replay(db, proc);
+    rc = replay(db, proc);
     if (UNLIKELY(rc != 0 && rc != ENOENT)) {
       fprintf(stderr, "trace replay failed: %s\n", strerror(rc));
       goto done;
