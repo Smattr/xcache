@@ -14,6 +14,7 @@
 int trace_localise(const xc_db_t *db, xc_trace_t **local,
                    const xc_trace_t *global) {
 
+  assert(db != NULL);
   assert(local != NULL);
   assert(global != NULL);
 
