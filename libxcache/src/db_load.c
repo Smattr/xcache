@@ -54,7 +54,7 @@ int xc_db_load(const xc_db_t *db, const xc_proc_t *question,
   }
 
   // open and mmap it so we can inspect its contents
-  in = open(input, O_RDONLY|O_CLOEXEC);
+  in = open(input, O_RDONLY | O_CLOEXEC);
   if (ERROR(in < 0)) {
     rc = errno;
     goto done;

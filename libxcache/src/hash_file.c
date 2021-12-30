@@ -20,7 +20,7 @@ int xc_hash_file(xc_hash_t *hash, const char *path) {
   void *base = MAP_FAILED;
   size_t size = 0;
 
-  int fd = open(path, O_RDONLY);
+  int fd = open(path, O_RDONLY | O_CLOEXEC);
   if (ERROR(fd < 0)) {
     rc = errno;
     goto done;

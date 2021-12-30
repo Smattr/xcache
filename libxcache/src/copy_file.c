@@ -23,7 +23,7 @@ int copy_file(const char *src, const char *dst) {
   int rc = -1;
 
   // open the source file
-  in = open(src, O_RDONLY);
+  in = open(src, O_RDONLY | O_CLOEXEC);
   if (ERROR(in < 0)) {
     rc = errno;
     goto done;
@@ -37,7 +37,7 @@ int copy_file(const char *src, const char *dst) {
   }
 
   // open the destination file
-  out = open(dst, O_WRONLY);
+  out = open(dst, O_WRONLY | O_CLOEXEC);
   if (ERROR(out < 0)) {
     rc = errno;
     goto done;
