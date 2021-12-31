@@ -92,6 +92,7 @@ done:
     (void)unlink(output);
   if (localised != NULL)
     trace_deinit(localised);
+  free(localised);
   free(output);
 
   return rc;
