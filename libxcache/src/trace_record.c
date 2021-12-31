@@ -33,7 +33,7 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc, xc_db_t *db) {
   if (ERROR(db == NULL))
     return EINVAL;
 
-  int rc = 0;
+  int rc = -1;
   tracee_t tracee = {0};
   xc_trace_t *t = NULL;
 
@@ -68,15 +68,18 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc, xc_db_t *db) {
   tracee.out[1] = 0;
 
   rc = tracee_monitor(t, &tracee);
+  if (ERROR(rc != 0))
+    goto done;
+
+  // success
+  *t = tracee.trace;
+  memset(&tracee.trace, 0, sizeof(tracee.trace));
+  *trace = t;
+  t = NULL;
+  rc = 0;
 
 done:
-  if (UNLIKELY(rc != 0)) {
-    free(t);
-  } else {
-    // steal the completed trace out of the tracee
-    *t = tracee.trace;
-    memset(&tracee.trace, 0, sizeof(tracee.trace));
-  }
+  free(t);
   tracee_deinit(&tracee);
 
   return rc;

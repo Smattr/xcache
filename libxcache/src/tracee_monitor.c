@@ -146,7 +146,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         rc = ECHILD;
         goto done;
       }
-      goto done; // success
+      break; // success
     }
 
     // was this a signal/tracing event?
