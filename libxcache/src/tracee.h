@@ -40,11 +40,9 @@ typedef struct {
 
   /// bytes written to stdout
   FILE *out_f;
-  char *out_path;
 
   /// bytes written to stderr
   FILE *err_f;
-  char *err_path;
 
   /// trace being built up
   xc_trace_t trace;

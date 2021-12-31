@@ -11,19 +11,9 @@ void tracee_deinit(tracee_t *tracee) {
 
   trace_deinit(&tracee->trace);
 
-  if (tracee->err_path != NULL)
-    (void)unlink(tracee->err_path);
-  free(tracee->err_path);
-  tracee->err_path = NULL;
-
   if (tracee->err_f != NULL)
     (void)fclose(tracee->err_f);
   tracee->err_f = NULL;
-
-  if (tracee->out_path != NULL)
-    (void)unlink(tracee->out_path);
-  free(tracee->out_path);
-  tracee->out_path = NULL;
 
   if (tracee->out_f != NULL)
     (void)fclose(tracee->out_f);

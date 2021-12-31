@@ -7,8 +7,8 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <xcache/db_t.h>
@@ -64,20 +64,28 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_db_t *db) {
     goto done;
 
   // setup a file to save stdout
-  rc = db_make_file(db, &tracee->out_f, &tracee->out_path);
-  if (ERROR(rc != 0))
-    goto done;
-  rc = fs_set_add_write(&tracee->trace.io, "/dev/stdout", tracee->out_path);
-  if (ERROR(rc != 0))
-    goto done;
+  {
+    char *path = NULL;
+    rc = db_make_file(db, &tracee->out_f, &path);
+    if (ERROR(rc != 0))
+      goto done;
+    rc = fs_set_add_write(&tracee->trace.io, "/dev/stdout", path);
+    free(path);
+    if (ERROR(rc != 0))
+      goto done;
+  }
 
   // setup a file to save stderr
-  rc = db_make_file(db, &tracee->err_f, &tracee->err_path);
-  if (ERROR(rc != 0))
-    goto done;
-  rc = fs_set_add_write(&tracee->trace.io, "/dev/stderr", tracee->err_path);
-  if (ERROR(rc != 0))
-    goto done;
+  {
+    char *path = NULL;
+    rc = db_make_file(db, &tracee->err_f, &path);
+    if (ERROR(rc != 0))
+      goto done;
+    rc = fs_set_add_write(&tracee->trace.io, "/dev/stderr", path);
+    free(path);
+    if (ERROR(rc != 0))
+      goto done;
+  }
 
 done:
   if (UNLIKELY(rc != 0))

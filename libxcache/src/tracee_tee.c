@@ -67,19 +67,11 @@ static void discard_buffers(tracee_t *tracee) {
   if (tracee->out_f != NULL)
     (void)fclose(tracee->out_f);
   tracee->out_f = NULL;
-  if (tracee->out_path != NULL)
-    (void)unlink(tracee->out_path);
-  free(tracee->out_path);
-  tracee->out_path = NULL;
 
   // discard and deallocate stderr sink
   if (tracee->err_f != NULL)
     (void)fclose(tracee->err_f);
   tracee->err_f = NULL;
-  if (tracee->err_path != NULL)
-    (void)unlink(tracee->err_path);
-  free(tracee->err_path);
-  tracee->err_path = NULL;
 }
 
 void *tracee_tee(void *arg) {
