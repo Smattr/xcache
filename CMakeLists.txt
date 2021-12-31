@@ -19,11 +19,9 @@ add_compile_options(-std=c11 -W -Wall -Wextra -Wformat=2 -Wwrite-strings
   -Wmissing-prototypes -Wshadow -Wundef)
 add_definitions(-D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L)
 
-# enable --as-needed, present on GNU ld on Linux, to minimise dependencies
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--as-needed")
-endif()
+# enable --as-needed to minimise dependencies
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--as-needed")
 
 find_program(CLANG_FORMAT clang-format)
 if(CLANG_FORMAT)
