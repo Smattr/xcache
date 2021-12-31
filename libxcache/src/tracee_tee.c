@@ -55,7 +55,7 @@ static rc_t drain(int to, FILE *to_buffer, int from) {
     if (LIKELY(to_buffer != NULL)) {
       size_t written = fwrite(buffer, sizeof(buffer[0]), size, to_buffer);
       if (ERROR(written != size))
-        return (rc_t){.soft_rc = ENOMEM};
+        return (rc_t){.soft_rc = EIO};
     }
   }
   UNREACHABLE();
