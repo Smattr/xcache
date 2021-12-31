@@ -95,7 +95,7 @@ int see_write(tracee_t *tracee, int dirfd, const char *pathname) {
   }
 
   // record a write for this file
-  rc = fs_set_add_write(&tracee->trace.io, abs);
+  rc = fs_set_add_write(&tracee->trace.io, abs, NULL);
   if (ERROR(rc != 0))
     goto done;
 
