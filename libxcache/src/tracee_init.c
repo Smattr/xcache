@@ -69,6 +69,7 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_db_t *db) {
     rc = db_make_file(db, &tracee->out_f, &path);
     if (ERROR(rc != 0))
       goto done;
+    DEBUG("stdout contents will be saved to %s", path);
     rc = fs_set_add_write(&tracee->trace.io, "/dev/stdout", path);
     free(path);
     if (ERROR(rc != 0))
@@ -81,6 +82,7 @@ int tracee_init(tracee_t *tracee, const xc_proc_t *proc, xc_db_t *db) {
     rc = db_make_file(db, &tracee->err_f, &path);
     if (ERROR(rc != 0))
       goto done;
+    DEBUG("stderr contents will be saved to %s", path);
     rc = fs_set_add_write(&tracee->trace.io, "/dev/stderr", path);
     free(path);
     if (ERROR(rc != 0))
