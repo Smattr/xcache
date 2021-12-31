@@ -32,7 +32,7 @@ int db_make_file(xc_db_t *db, FILE **fp, char **path) {
   }
 
   // turn the descriptor into a file handle
-  f = fdopen(fd, "r");
+  f = fdopen(fd, "w");
   if (ERROR(f == NULL)) {
     rc = errno;
     goto done;
