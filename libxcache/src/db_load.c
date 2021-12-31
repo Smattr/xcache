@@ -114,12 +114,8 @@ int xc_db_load(const xc_db_t *db, const xc_proc_t *question,
   rc = 0;
 
 done:
-  if (globalised != NULL)
-    trace_deinit(globalised);
-  free(globalised);
-  if (t != NULL)
-    trace_deinit(t);
-  free(t);
+  xc_trace_free(globalised);
+  xc_trace_free(t);
   if (buffer != NULL)
     (void)fclose(buffer);
   if (buffer_base != NULL)

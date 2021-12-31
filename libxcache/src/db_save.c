@@ -90,9 +90,7 @@ done:
     (void)fclose(f);
   if (rc != 0 && output != NULL)
     (void)unlink(output);
-  if (localised != NULL)
-    trace_deinit(localised);
-  free(localised);
+  xc_trace_free(localised);
   free(output);
 
   return rc;
