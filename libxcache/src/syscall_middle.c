@@ -53,6 +53,29 @@ int syscall_middle(tracee_t *tracee) {
     break;
   }
 
+  // `stat` counts as a read attempt
+  case __NR_stat: {
+
+    // retrieve the path
+    char *path = NULL;
+    rc = peek_string(&path, tracee->pid, REG(rdi));
+    if (ERROR(rc != 0))
+      goto done;
+
+    DEBUG("PID %d called stat(\"%s\", …)", (int)tracee->pid, path);
+
+    rc = see_read(tracee, AT_FDCWD, path);
+    free(path);
+    if (ERROR(rc != 0))
+      goto done;
+
+    rc = tracee_resume(tracee);
+    if (ERROR(rc != 0))
+      goto done;
+
+    break;
+  }
+
   // `access` can be handled either here or on syscall exit, so we may as well
   // handle it here for efficiency
   case __NR_access: {
