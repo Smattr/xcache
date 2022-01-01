@@ -20,6 +20,39 @@ int syscall_middle(tracee_t *tracee) {
 
   switch (nr) {
 
+  // Handle a read `open` here because we do not care whether it succeeds or
+  // fails. Either counts as a read attempt
+  case __NR_open: {
+
+    // retrieve the flags first to see if we need to continue
+    int flags = peek_reg(tracee->pid, REG(rsi));
+    bool is_read = (flags & O_RDWR) == O_RDWR || (flags & O_WRONLY) != O_WRONLY;
+
+    if (is_read) {
+      // retrieve the path
+      char *path = NULL;
+      rc = peek_string(&path, tracee->pid, REG(rdi));
+      // FIXME: what happens if the tracee made a bad open call?
+      if (ERROR(rc != 0))
+        goto done;
+
+      DEBUG("PID %d called open(\"%s\", …)", (int)tracee->pid, path);
+
+      rc = see_read(tracee, AT_FDCWD, path);
+      free(path);
+      if (ERROR(rc != 0))
+        goto done;
+    }
+
+    // resume the tracee, but we need to again intercept at syscall end to pick
+    // up the newly allocated FD if the syscall was successful
+    rc = tracee_resume_to_syscall(tracee);
+    if (ERROR(rc != 0))
+      goto done;
+
+    break;
+  }
+
   // `access` can be handled either here or on syscall exit, so we may as well
   // handle it here for efficiency
   case __NR_access: {
