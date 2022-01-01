@@ -157,6 +157,7 @@ static int exec(tracee_t *tracee) {
       IGNORE(rt_sigqueueinfo),
       IGNORE(rt_sigsuspend),
       IGNORE(sigaltstack),
+      IGNORE(clone),
       IGNORE(kill),
 #ifdef __NR_set_tid_address
       IGNORE(set_tid_address),
