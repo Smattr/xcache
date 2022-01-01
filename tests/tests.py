@@ -6,9 +6,11 @@ Xcache test suite
 
 # pylint: disable=bad-indentation,invalid-name
 
+import os
 from pathlib import Path
 import subprocess
 import tempfile
+from typing import List
 import pytest
 
 # debug text indicating various operations succeeded or failed
@@ -17,6 +19,17 @@ RECORD_GOOD = "[DEBUG] record succeeded\n"
 RECORD_BAD = "[DEBUG] record failed\n"
 REPLAY_GOOD = "[DEBUG] replay succeeded\n"
 REPLAY_BAD = "[DEBUG] replay failed\n"
+
+def strace(args: List[str]):
+  """
+  `strace` a process, expecting it to succeed
+  """
+
+  # we need to disable LSan, which does not work under `strace`
+  env = os.environ.copy()
+  env["ASAN_OPTIONS"] = "detect_leaks=0"
+
+  subprocess.check_call(["strace", "-f", "--"] + args, env=env)
 
 @pytest.mark.parametrize("record_enabled", (False, True))
 @pytest.mark.parametrize("replay_enabled", (False, True))
@@ -30,7 +43,7 @@ def test_echo(replay_enabled: bool, record_enabled: bool):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    subprocess.check_call(["strace", "-f", "--", "my-echo", "hello", "world"])
+    strace(["my-echo", "hello", "world"])
 
     # echo some text
     argv = ["xcache", "--dir", tmp, "--debug"]
@@ -102,7 +115,7 @@ def test_cat(replay_enabled: bool, record_enabled: bool):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    subprocess.check_call(["strace", "-f", "--", "my-cat", p])
+    strace(["my-cat", p])
 
     # cat this file
     argv = ["xcache", "--dir", tmp, "--debug"]
