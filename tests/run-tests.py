@@ -16,14 +16,15 @@ def test_uncached_cat():
       f.write("hello world\n")
 
     # cat this file
-    output = subprocess.check_output(["xcache", "--", "my-cat", p],
-                                     universal_newlines=True)
+    argv = ["xcache", "--dir", tmp, "--", "my-cat", p]
+    output = subprocess.check_output(argv, universal_newlines=True)
     assert output == "hello world\n"
 
 def test_uncached_echo():
   """
   running echo with no prior cache should result in the correct output
   """
-  output = subprocess.check_output(["xcache", "--", "my-echo", "hello",
-                                    "world"], universal_newlines=True)
-  assert output == "hello world\n"
+  with tempfile.TemporaryDirectory() as tmp:
+    argv = ["xcache", "--dir", tmp, "--", "my-echo", "hello", "world"]
+    output = subprocess.check_output(argv, universal_newlines=True)
+    assert output == "hello world\n"
