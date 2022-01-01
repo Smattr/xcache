@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
     assert(db != NULL);
 
     rc = replay(db, proc);
-    DEBUG("replay %s", rc == 0 ? "successful" : "failed");
+    DEBUG("replay %s", rc == 0 ? "succeeded" : "failed");
     if (UNLIKELY(rc != 0 && rc != ENOENT)) {
       fprintf(stderr, "trace replay failed: %s\n", strerror(rc));
       goto done;
@@ -246,7 +246,7 @@ int main(int argc, char **argv) {
 
     // record child execution
     rc = record(db, proc);
-    DEBUG("record %s", rc == 0 ? "successful" : "failed");
+    DEBUG("record %s", rc == 0 ? "succeeded" : "failed");
     if (UNLIKELY(rc != 0)) {
       fprintf(stderr, "trace record failed: %s\n", strerror(rc));
       goto done;
