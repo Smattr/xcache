@@ -169,6 +169,7 @@ static int exec(tracee_t *tracee) {
 #endif
       IGNORE(splice),
       IGNORE(tee),
+      IGNORE(prctl),
 #ifdef __NR_arch_prctl
       IGNORE(arch_prctl),
 #endif
