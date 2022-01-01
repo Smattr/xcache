@@ -9,6 +9,9 @@
 #include <unistd.h>
 #include <xcache/xcache.h>
 
+/// are we in debug mode?
+static bool debug = false;
+
 /// allow recording new process executions into the database?
 static bool enable_record = true;
 
@@ -32,6 +35,16 @@ static char *xstrdup(const char *s) {
     if (UNLIKELY(asprintf(args) < 0)) {                                        \
       fprintf(stderr, "out of memory\n");                                      \
       exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+  } while (0)
+
+/// our own equivalent of ../../libxcache/src/debug.h:DEBUG
+#define DEBUG(args...)                                                         \
+  do {                                                                         \
+    if (UNLIKELY(debug)) {                                                     \
+      fprintf(stderr, "xcache:%s:%d: [DEBUG] ", __FILE__, __LINE__);           \
+      fprintf(stderr, args);                                                   \
+      fprintf(stderr, "\n");                                                   \
     }                                                                          \
   } while (0)
 
@@ -62,6 +75,7 @@ static int parse_args(int argc, char **argv) {
     switch (c) {
 
     case 130: // --debug
+      debug = true;
       xc_set_debug(stderr);
       break;
 
@@ -216,6 +230,7 @@ int main(int argc, char **argv) {
     assert(db != NULL);
 
     rc = replay(db, proc);
+    DEBUG("replay %s", rc == 0 ? "successful" : "failed");
     if (UNLIKELY(rc != 0 && rc != ENOENT)) {
       fprintf(stderr, "trace replay failed: %s\n", strerror(rc));
       goto done;
@@ -231,6 +246,7 @@ int main(int argc, char **argv) {
 
     // record child execution
     rc = record(db, proc);
+    DEBUG("record %s", rc == 0 ? "successful" : "failed");
     if (UNLIKELY(rc != 0)) {
       fprintf(stderr, "trace record failed: %s\n", strerror(rc));
       goto done;
