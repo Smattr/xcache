@@ -37,6 +37,45 @@ int syscall_end(tracee_t *tracee) {
 
   switch (nr) {
 
+  case __NR_open: {
+
+    // if this call failed, at most it counts as a read attempt that would have
+    // been handled during `syscall_middle`
+    if (ret < 0)
+      return 0;
+
+    // retrieve the path
+    char *path = NULL;
+    int rc = peek_string(&path, tracee->pid, REG(rdi));
+    if (ERROR(rc != 0))
+      return rc;
+
+    // retrieve the flags
+    int flags = peek_reg(tracee->pid, REG(rsi));
+
+    DEBUG("PID %d called open(\"%s\", %s | %d), ret %ld", (int)tracee->pid,
+          path, flag_name(flags), other_flags(flags), ret);
+
+    // does this count as a write intent?
+    bool is_write =
+        (flags & O_RDWR) == O_RDWR || (flags & O_WRONLY) == O_WRONLY;
+    if (is_write) {
+      rc = see_write(tracee, AT_FDCWD, path);
+      if (ERROR(rc != 0)) {
+        free(path);
+        return rc;
+      }
+    }
+
+    // note the new file handle we need to learn
+    rc = see_open(tracee, ret, AT_FDCWD, path);
+    free(path);
+    if (ERROR(rc != 0))
+      return rc;
+
+    return rc;
+  }
+
   case __NR_chdir: {
 
     // if this call failed, nothing to do
