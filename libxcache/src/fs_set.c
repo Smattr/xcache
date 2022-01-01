@@ -53,12 +53,12 @@ int fs_set_add_read(fs_set_t *set, const char *path) {
   assert(set->size < set->capacity);
 
   // hash this file
-  // TODO: deal with directories
   xc_hash_t h = 0;
   int r = xc_hash_file(&h, path);
   bool existed = r != ENOENT;
   bool accessible = r != EACCES && r != EPERM;
-  if (existed && accessible && r != 0)
+  bool is_directory = r == EISDIR;
+  if (ERROR(existed && accessible && !is_directory && r != 0))
     return r;
 
   // append the new entry
@@ -70,6 +70,7 @@ int fs_set_add_read(fs_set_t *set, const char *path) {
   set->base[index].read = true;
   set->base[index].existed = existed;
   set->base[index].accessible = accessible;
+  set->base[index].is_directory = is_directory;
   set->base[index].hash = h;
   ++set->size;
 

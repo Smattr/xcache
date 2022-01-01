@@ -20,6 +20,9 @@ typedef struct {
   /// if `read`, did the tracee (and the tracer) have permission to read it?
   unsigned accessible : 1;
 
+  /// is this a directory as opposed to a file?
+  unsigned is_directory: 1;
+
   /// was this file written?
   unsigned written : 1;
 
