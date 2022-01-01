@@ -33,6 +33,11 @@ int xc_hash_file(xc_hash_t *hash, const char *path) {
   }
   size = st.st_size;
 
+  if (S_ISDIR(st.st_mode)) {
+    rc = EISDIR;
+    goto done;
+  }
+
   base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
   if (ERROR(base == MAP_FAILED)) {
     rc = errno;

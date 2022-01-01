@@ -244,6 +244,9 @@ int pack_trace(FILE *f, const xc_trace_t *trace) {
     r = pack_bool(f, fs->accessible);
     if (ERROR(r != 0))
       return r;
+    r = pack_bool(f, fs->is_directory);
+    if (ERROR(r != 0))
+      return r;
     r = pack_bool(f, fs->written);
     if (ERROR(r != 0))
       return r;
@@ -585,6 +588,13 @@ int unpack_trace(const void *base, size_t size, xc_trace_t **trace) {
       if (ERROR(rc != 0))
         goto done;
       fs->accessible = v;
+    }
+    {
+      bool v = false;
+      rc = unpack_bool(&base, &size, &v);
+      if (ERROR(rc != 0))
+        goto done;
+      fs->is_directory = v;
     }
     {
       bool v = false;

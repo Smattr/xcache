@@ -49,6 +49,7 @@ int trace_localise(const xc_db_t *db, xc_trace_t **local,
     dst->read = src->read;
     dst->existed = src->existed;
     dst->accessible = src->accessible;
+    dst->is_directory = src->is_directory;
     dst->written = src->written;
     dst->hash = src->hash;
 

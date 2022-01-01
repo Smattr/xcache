@@ -28,7 +28,8 @@ bool xc_trace_is_valid(const xc_trace_t *trace) {
     int rc = xc_hash_file(&hash, trace->io.base[i].path);
     bool exists = rc != ENOENT;
     bool accessible = rc != EACCES && rc != EPERM;
-    if (ERROR(exists && accessible && rc != 0))
+    bool is_directory = rc == EISDIR;
+    if (ERROR(exists && accessible && !is_directory && rc != 0))
       return false;
 
     if (exists != trace->io.base[i].existed)
@@ -39,6 +40,11 @@ bool xc_trace_is_valid(const xc_trace_t *trace) {
     if (accessible != trace->io.base[i].accessible)
       return false;
     if (!accessible)
+      continue;
+
+    if (is_directory != trace->io.base[i].is_directory)
+      return false;
+    if (is_directory)
       continue;
 
     if (hash != trace->io.base[i].hash)
