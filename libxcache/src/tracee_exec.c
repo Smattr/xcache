@@ -172,6 +172,7 @@ static int exec(tracee_t *tracee) {
 #ifdef __NR_arch_prctl
       IGNORE(arch_prctl),
 #endif
+      IGNORE(gettid),
 #ifdef __NR_pipe2
       IGNORE(pipe2),
 #endif
