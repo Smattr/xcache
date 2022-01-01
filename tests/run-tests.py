@@ -16,7 +16,7 @@ def test_uncached_cat():
       f.write("hello world\n")
 
     # cat this file
-    output = subprocess.check_output(["xcache", "--", "cat", p],
+    output = subprocess.check_output(["xcache", "--", "my-cat", p],
                                      universal_newlines=True)
     assert output == "hello world\n"
 
