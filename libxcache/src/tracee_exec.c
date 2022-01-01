@@ -184,6 +184,15 @@ static int exec(tracee_t *tracee) {
       IGNORE(sched_setaffinity),
       IGNORE(sched_getaffinity),
       IGNORE(set_thread_area), // unimplemented
+      IGNORE(timer_create),
+      IGNORE(timer_settime),
+      IGNORE(timer_gettime),
+      IGNORE(timer_getoverrun),
+      IGNORE(timer_delete),
+      IGNORE(clock_settime),
+      IGNORE(clock_gettime),
+      IGNORE(clock_getres),
+      IGNORE(clock_nanosleep),
       IGNORE(exit_group),
 #ifdef __NR_epoll_wait
       IGNORE(epoll_wait),
