@@ -151,6 +151,28 @@ int syscall_middle(tracee_t *tracee) {
     break;
   }
 
+  case __NR_readlink: {
+
+    // retrieve the path
+    char *path = NULL;
+    rc = peek_string(&path, tracee->pid, REG(rdi));
+    if (ERROR(rc != 0))
+      goto done;
+
+    DEBUG("PID %d called readlink(\"%s\", …)", (int)tracee->pid, path);
+
+    rc = see_read(tracee, AT_FDCWD, path);
+    free(path);
+    if (ERROR(rc != 0))
+      goto done;
+
+    rc = tracee_resume(tracee);
+    if (ERROR(rc != 0))
+      goto done;
+
+    break;
+  }
+
   // Handle a read `openat` here because we do not care whether it succeeds or
   // fails. Either counts as a read attempt.
   case __NR_openat: {
