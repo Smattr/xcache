@@ -137,9 +137,7 @@ int syscall_middle(tracee_t *tracee) {
 
     DEBUG("PID %d called chdir(\"%s\")", (int)tracee->pid, path);
 
-#if 0 // TODO
     rc = see_read(tracee, AT_FDCWD, path);
-#endif
     free(path);
     if (ERROR(rc != 0))
       goto done;
