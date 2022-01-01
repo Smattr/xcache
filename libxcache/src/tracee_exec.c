@@ -119,7 +119,7 @@ static int exec(tracee_t *tracee) {
 #endif
       IGNORE(readv),
       IGNORE(writev),
-      IGNORE(pipe),
+      IGNORE(pipe), // FIXME: the FDs from this need to be recorded in tracee.fds
       IGNORE(select),
       IGNORE(sched_yield),
       IGNORE(mremap),
@@ -143,7 +143,6 @@ static int exec(tracee_t *tracee) {
 #endif
       IGNORE(splice),
       IGNORE(tee),
-      IGNORE(pipe),
 #ifdef __NR_arch_prctl
       IGNORE(arch_prctl),
 #endif
