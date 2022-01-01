@@ -67,6 +67,10 @@ static int exec(tracee_t *tracee) {
   if (!DEBUGGING && UNLIKELY(dup2(tracee->err[1], STDERR_FILENO) == -1))
     return errno;
 
+  // LeakSanitizer does not work under ptrace (as we are), so disable it
+  if (UNLIKELY(setenv("ASAN_OPTIONS", "detect_leaks=0", 1) < 0))
+    return errno;
+
   // opt-in to being a ptrace tracee
   if (UNLIKELY(ptrace(PTRACE_TRACEME, 0, NULL, NULL) != 0)) {
     int r = errno;
