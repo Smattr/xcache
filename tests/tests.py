@@ -26,6 +26,12 @@ def test_echo(replay_enabled: bool, record_enabled: bool):
   """
   with tempfile.TemporaryDirectory() as tmp:
 
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    subprocess.check_call(["strace", "-f", "--", "my-echo", "hello", "world"])
+
     # echo some text
     argv = ["xcache", "--dir", tmp, "--debug"]
     if replay_enabled:
@@ -91,6 +97,12 @@ def test_cat(replay_enabled: bool, record_enabled: bool):
     p = Path(tmp) / "test.txt"
     with open(p, "wt", encoding="utf-8") as f:
       f.write("hello world\n")
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    subprocess.check_call(["strace", "-f", "--", "my-cat", p])
 
     # cat this file
     argv = ["xcache", "--dir", tmp, "--debug"]
