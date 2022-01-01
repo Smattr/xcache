@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+Xcache test suite
+"""
+
+# pylint: disable=bad-indentation,invalid-name
+
 from pathlib import Path
 import subprocess
 import tempfile
