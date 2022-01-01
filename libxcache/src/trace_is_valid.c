@@ -21,6 +21,9 @@ bool xc_trace_is_valid(const xc_trace_t *trace) {
   // does the current hash of each file match those seen by the trace?
   for (size_t i = 0; i < trace->io.size; ++i) {
 
+    if (!trace->io.base[i].read)
+      continue;
+
     xc_hash_t hash;
     int rc = xc_hash_file(&hash, trace->io.base[i].path);
     bool exists = rc != ENOENT;
