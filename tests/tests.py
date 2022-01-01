@@ -18,7 +18,7 @@ def test_uncached_cat():
 
     # write some content to a test file
     p = Path(tmp) / "test.txt"
-    with open(p, "wt") as f:
+    with open(p, "wt", encoding="utf-8") as f:
       f.write("hello world\n")
 
     # cat this file
