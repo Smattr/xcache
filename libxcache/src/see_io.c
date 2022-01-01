@@ -48,6 +48,13 @@ int see_read(tracee_t *tracee, int dirfd, const char *pathname) {
     }
   }
 
+  // ignore anything under /proc/self, under the assumption that this is all
+  // process-internal information that varies from run-to-run in irrelevant ways
+  if (path_is_relative_to(pathname, "/proc/self")) {
+    DEBUG("ignoring %s read as it is under /proc/self", pathname);
+    return 0;
+  }
+
   // TODO: check dirfd is valid and bail if not
 
   int rc = 0;
