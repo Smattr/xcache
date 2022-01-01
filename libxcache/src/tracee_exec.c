@@ -157,6 +157,12 @@ static int exec(tracee_t *tracee) {
 #ifdef __NR_prlimit64
       IGNORE(prlimit64),
 #endif
+      IGNORE(tkill),
+      IGNORE(time),
+      IGNORE(futex),
+      IGNORE(sched_setaffinity),
+      IGNORE(sched_getaffinity),
+      IGNORE(set_thread_area), // unimplemented
       IGNORE(exit_group),
 #ifdef __NR_epoll_wait
       IGNORE(epoll_wait),
