@@ -261,7 +261,7 @@ int pack_trace(FILE *f, const xc_trace_t *trace) {
 static int read_u8(const void **base, size_t *size, uint8_t *value) {
   if (ERROR(*size < sizeof(*value)))
     return ENODATA;
-  memcpy(value, base, sizeof(*value));
+  memcpy(value, *base, sizeof(*value));
   *base += sizeof(*value);
   *size -= sizeof(*value);
   return 0;
@@ -271,7 +271,7 @@ static int read_u16(const void **base, size_t *size, uint16_t *value) {
   if (ERROR(*size < sizeof(*value)))
     return ENODATA;
   uint16_t v = 0;
-  memcpy(&v, base, sizeof(v));
+  memcpy(&v, *base, sizeof(v));
   *value = be16toh(v);
   *base += sizeof(*value);
   *size -= sizeof(*value);
@@ -282,7 +282,7 @@ static int read_u32(const void **base, size_t *size, uint32_t *value) {
   if (ERROR(*size < sizeof(*value)))
     return ENODATA;
   uint32_t v = 0;
-  memcpy(&v, base, sizeof(v));
+  memcpy(&v, *base, sizeof(v));
   *value = be32toh(v);
   *base += sizeof(*value);
   *size -= sizeof(*value);
@@ -293,7 +293,7 @@ static int read_u64(const void **base, size_t *size, uint64_t *value) {
   if (ERROR(*size < sizeof(*value)))
     return ENODATA;
   uint64_t v = 0;
-  memcpy(&v, base, sizeof(v));
+  memcpy(&v, *base, sizeof(v));
   *value = be64toh(v);
   *base += sizeof(*value);
   *size -= sizeof(*value);
