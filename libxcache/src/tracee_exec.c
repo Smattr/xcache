@@ -134,6 +134,8 @@ static int exec(tracee_t *tracee) {
       IGNORE(getitimer),
       IGNORE(alarm),
       IGNORE(setitimer),
+      IGNORE(getpid),
+      IGNORE(sendfile),
       IGNORE(fcntl),
       IGNORE(ptrace),
       IGNORE(getuid),
