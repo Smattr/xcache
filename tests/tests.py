@@ -38,7 +38,7 @@ def test_echo(replay_enabled: bool, record_enabled: bool):
       argv += ["--disable-record"]
     argv += ["--", "my-echo", "hello", "world"]
     output = subprocess.check_output(argv, stderr=subprocess.STDOUT,
-                                     universal_newlines=True)
+                                     universal_newlines=True, timeout=120)
     assert "hello world\n" in output
 
     # the cache was empty when this ran, so it should have missed
@@ -57,7 +57,7 @@ def test_echo(replay_enabled: bool, record_enabled: bool):
 
     # try this again
     output = subprocess.check_output(argv, stderr=subprocess.STDOUT,
-                                     universal_newlines=True)
+                                     universal_newlines=True, timeout=120)
     assert "hello world\n" in output
 
     # if recording was enabled, we should have recorded this in the first pass,
@@ -104,7 +104,7 @@ def test_cat(replay_enabled: bool, record_enabled: bool):
       argv += ["--disable-record"]
     argv += ["--", "my-cat", p]
     output = subprocess.check_output(argv, stderr=subprocess.STDOUT,
-                                     universal_newlines=True)
+                                     universal_newlines=True, timeout=120)
     assert "hello world\n" in output
 
     # the cache was empty when this ran, so it should have missed
@@ -123,7 +123,7 @@ def test_cat(replay_enabled: bool, record_enabled: bool):
 
     # try this again
     output = subprocess.check_output(argv, stderr=subprocess.STDOUT,
-                                     universal_newlines=True)
+                                     universal_newlines=True, timeout=120)
     assert "hello world\n" in output
 
     # if recording was enabled, we should have recorded this in the first pass,
@@ -158,7 +158,7 @@ def test_uncached_cat():
 
     # cat this file
     argv = ["xcache", "--dir", tmp, "--", "my-cat", p]
-    output = subprocess.check_output(argv, universal_newlines=True)
+    output = subprocess.check_output(argv, universal_newlines=True, timeout=120)
     assert output == "hello world\n"
 
 def test_uncached_echo():
@@ -167,5 +167,5 @@ def test_uncached_echo():
   """
   with tempfile.TemporaryDirectory() as tmp:
     argv = ["xcache", "--dir", tmp, "--", "my-echo", "hello", "world"]
-    output = subprocess.check_output(argv, universal_newlines=True)
+    output = subprocess.check_output(argv, universal_newlines=True, timeout=120)
     assert output == "hello world\n"
