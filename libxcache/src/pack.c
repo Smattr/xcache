@@ -529,8 +529,10 @@ int unpack_trace(const void *base, size_t size, xc_trace_t **trace) {
     int r = unpack_tag(&base, &size, &tag);
     if (ERROR(r != 0))
       return r;
-    if (ERROR(tag != TRACE_TAG))
+    if (ERROR(tag != TRACE_TAG)) {
+      DEBUG("read unexpected tag 0x%02x", (unsigned)tag);
       return ENOMSG;
+    }
   }
 
   xc_trace_t *t = NULL;
