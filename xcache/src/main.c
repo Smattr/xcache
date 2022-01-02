@@ -150,7 +150,7 @@ static int make_process(xc_proc_t **proc, int argc, char **argv) {
   return rc;
 }
 
-static int replay(const xc_db_t *db, const xc_proc_t *proc) {
+static int replay(const xc_db_t *db, const xc_proc_t *proc, int *exit_status) {
 
   // try to find a prior trace in the cache
   xc_trace_t *trace = NULL;
@@ -169,13 +169,16 @@ static int replay(const xc_db_t *db, const xc_proc_t *proc) {
   if (UNLIKELY(rc != 0))
     goto done;
 
+  assert(trace != NULL);
+  *exit_status = xc_trace_exit_status(trace);
+
 done:
   xc_trace_free(trace);
 
   return rc;
 }
 
-static int record(xc_db_t *db, const xc_proc_t *proc) {
+static int record(xc_db_t *db, const xc_proc_t *proc, int *exit_status) {
 
   // try to run the process and record its trace
   xc_trace_t *trace = NULL;
@@ -189,6 +192,11 @@ static int record(xc_db_t *db, const xc_proc_t *proc) {
     goto done;
 
 done:
+  if (rc == 0 || rc == ENOTSUP) {
+    assert(trace != NULL);
+    *exit_status = xc_trace_exit_status(trace);
+  }
+
   xc_trace_free(trace);
 
   return rc;
@@ -201,6 +209,7 @@ int main(int argc, char **argv) {
 
   xc_proc_t *proc = NULL;
   xc_db_t *db = NULL;
+  int exit_status = EXIT_FAILURE;
   int rc = -1;
 
   // did the caller give us too few arguments?
@@ -229,7 +238,7 @@ int main(int argc, char **argv) {
   if (enable_replay) {
     assert(db != NULL);
 
-    rc = replay(db, proc);
+    rc = replay(db, proc, &exit_status);
     DEBUG("replay %s", rc == 0 ? "succeeded" : "failed");
     if (UNLIKELY(rc != 0 && rc != ENOENT)) {
       fprintf(stderr, "trace replay failed: %s\n", strerror(rc));
@@ -245,8 +254,13 @@ int main(int argc, char **argv) {
     assert(db != NULL);
 
     // record child execution
-    rc = record(db, proc);
+    rc = record(db, proc, &exit_status);
     DEBUG("record %s", rc == 0 ? "succeeded" : "failed");
+
+    // if we bailed out due to an unsupported system call, we are done
+    if (rc == ENOTSUP)
+      goto done;
+
     if (UNLIKELY(rc != 0)) {
       fprintf(stderr, "trace record failed: %s\n", strerror(rc));
       goto done;
@@ -258,6 +272,7 @@ int main(int argc, char **argv) {
   }
 
   // else fall back on pass through execution
+  assert(exit_status == EXIT_FAILURE && "exit status incorrectly modified");
   rc = xc_proc_exec(proc);
 
 done:
@@ -265,5 +280,5 @@ done:
   xc_proc_free(proc);
   free(cache_dir);
 
-  return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+  return exit_status;
 }
