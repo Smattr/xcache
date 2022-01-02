@@ -66,10 +66,9 @@ INTERNAL _Noreturn void tracee_exec(tracee_t *tracee);
 
 /// monitor a tracee, constructing a trace of it
 ///
-/// \param trace [out] Constructed trace on success
 /// \param tracee Tracee to monitor
 /// \return 0 on success or errno on failure
-INTERNAL int tracee_monitor(xc_trace_t *trace, tracee_t *tracee);
+INTERNAL int tracee_monitor(tracee_t *tracee);
 
 /// run a loop reading and processing a tracee’s stdout, stderr
 ///

@@ -67,7 +67,7 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc, xc_db_t *db) {
   (void)close(tracee.out[1]);
   tracee.out[1] = 0;
 
-  rc = tracee_monitor(t, &tracee);
+  rc = tracee_monitor(&tracee);
   if (ERROR(rc != 0))
     goto done;
 
