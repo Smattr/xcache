@@ -77,8 +77,7 @@ int fs_set_add_read(fs_set_t *set, const char *path) {
   return 0;
 }
 
-int fs_set_add_write(fs_set_t *set, const char *path,
-                     const char *content_path) {
+int fs_set_add_write(fs_set_t *set, const char *path, char **content_path) {
 
   assert(set != NULL);
   assert(path != NULL);
@@ -90,11 +89,11 @@ int fs_set_add_write(fs_set_t *set, const char *path,
       // if we are setting a `content_path`, it should not already have a
       // conflicting one
       if (content_path != NULL) {
+        assert(*content_path != NULL);
         assert(set->base[i].content_path == NULL ||
-               strcmp(set->base[i].content_path, content_path) == 0);
-        set->base[i].content_path = strdup(content_path);
-        if (ERROR(set->base[i].content_path == NULL))
-          return ENOMEM;
+               strcmp(set->base[i].content_path, *content_path) == 0);
+        set->base[i].content_path = *content_path;
+        *content_path = NULL;
       }
 
       // mark it as written
@@ -125,11 +124,9 @@ int fs_set_add_write(fs_set_t *set, const char *path,
     return ENOMEM;
   set->base[index].written = true;
   if (content_path != NULL) {
-    set->base[index].content_path = strdup(content_path);
-    if (ERROR(set->base[index].content_path == NULL)) {
-      free(set->base[index].path);
-      return ENOMEM;
-    }
+    assert(*content_path != NULL);
+    set->base[index].content_path = *content_path;
+    *content_path = NULL;
   }
   ++set->size;
 

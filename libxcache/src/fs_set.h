@@ -54,16 +54,19 @@ INTERNAL int fs_set_add_read(fs_set_t *set, const char *path);
 /// If `content_path` is non-null, it will be assumed to be the final location
 /// of cached data for this written file. That is, this file does not need to be
 /// fully written (or even exist) at the time the `fs_set_add_write` call is
-/// made. If it is null, it is assumed the caller will later update the added
-/// entry’s `content_path` member.
+/// made. On success, ownership will be taken over the backing memory and the
+/// pointer set to null.
+///
+/// If `content_path` is null, it is assumed the caller will later update the
+/// added entry’s `content_path` member.
 ///
 /// \param set Set to add to
 /// \param path Path to mark as written
-/// \param content_path Optional path to where a cached copy of this file was
-///   stored
+/// \param content_path [in/out] Optional path to where a cached copy of this
+///   file was stored
 /// \return 0 on success or an errno on failure
 INTERNAL int fs_set_add_write(fs_set_t *set, const char *path,
-                              const char *content_path);
+                              char **content_path);
 
 /// clear a set and deallocate any contained entries
 ///
