@@ -194,3 +194,65 @@ def test_uncached_echo():
     argv = ["xcache", "--dir", tmp, "--", "my-echo", "hello", "world"]
     output = subprocess.check_output(argv, universal_newlines=True, timeout=120)
     assert output == "hello world\n"
+
+@pytest.mark.parametrize("record_enabled", (False, True))
+@pytest.mark.parametrize("replay_enabled", (False, True))
+def test_unsupported(record_enabled: bool, replay_enabled: bool):
+  """
+  a command that runs an unsupported syscall should be uncacheable
+  """
+  with tempfile.TemporaryDirectory() as tmp:
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(["socket-then-print"])
+
+    # run under Xcache
+    argv = ["xcache", "--dir", tmp, "--debug"]
+    if replay_enabled:
+      argv += ["--enable-replay"]
+    else:
+      argv += ["--disable-replay"]
+    if record_enabled:
+      argv += ["--enable-record"]
+    else:
+      argv += ["--disable-record"]
+    argv += ["--", "socket-then-print"]
+    output = subprocess.check_output(argv, stderr=subprocess.STDOUT,
+                                     universal_newlines=True, timeout=120)
+    assert "hello world\n" in output
+
+    # the cache was empty when this ran, so it should have missed
+    if replay_enabled:
+      assert REPLAY_BAD in output, "incorrect cache hit"
+    else:
+      assert REPLAY_BAD not in output, "replay incorrectly enabled"
+      assert REPLAY_GOOD not in output, "replay incorrectly enabled"
+
+    # recording should not have worked for this, if enabled
+    if record_enabled:
+      assert RECORD_BAD in output, "incorrectly cached something uncacheable"
+    else:
+      assert RECORD_BAD not in output, "record incorrectly enabled"
+      assert RECORD_GOOD not in output, "record incorrectly enabled"
+
+    # try this again
+    output = subprocess.check_output(argv, stderr=subprocess.STDOUT,
+                                     universal_newlines=True, timeout=120)
+    assert "hello world\n" in output
+
+    # replay should have again failed
+    if replay_enabled:
+      assert REPLAY_BAD in output, "incorrect cache hit"
+    else:
+      assert REPLAY_BAD not in output, "replay incorrectly enabled"
+      assert REPLAY_GOOD not in output, "replay incorrectly enabled"
+
+    # recording should have again failed
+    if record_enabled:
+      assert RECORD_BAD in output, "incorrectly cached something uncacheable"
+    else:
+      assert RECORD_BAD not in output, "record incorrectly enabled"
+      assert RECORD_GOOD not in output, "record incorrectly enabled"
