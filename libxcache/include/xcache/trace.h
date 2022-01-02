@@ -47,6 +47,12 @@ XCACHE_API bool xc_trace_is_valid(const xc_trace_t *trace);
 /// \return 0 on success or an errno on failure
 XCACHE_API int xc_trace_replay(const xc_trace_t *trace);
 
+/// retrieve the exit status of a trace
+///
+/// \param trace Trace to inspect, assumed to be non-null
+/// \return The exit status from this trace
+XCACHE_API int xc_trace_exit_status(const xc_trace_t *trace);
+
 /// clean up and deallocate a previously created trace
 ///
 /// \param trace Trace to deallocate

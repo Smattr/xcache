@@ -48,6 +48,7 @@ add_library(libxcache
   src/syscall_end.c
   src/syscall_middle.c
   src/trace_deinit.c
+  src/trace_exit_status.c
   src/trace_free.c
   src/trace_globalise.c
   src/trace_localise.c
