@@ -109,9 +109,8 @@ static event_t get_event(int status) {
   return EV_SIGNAL;
 }
 
-int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
+int tracee_monitor(tracee_t *tracee) {
 
-  assert(trace != NULL);
   assert(tracee != NULL);
   assert(tracee->pid > 0 && "tracee not started");
 
