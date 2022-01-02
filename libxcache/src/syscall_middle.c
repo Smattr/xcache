@@ -249,6 +249,18 @@ int syscall_middle(tracee_t *tracee) {
     break;
   }
 
+  // if we saw a syscall we do not support, bail out
+  case __NR_socket: {
+    DEBUG("saw unsupported syscall %ld", nr);
+
+    rc = tracee_resume_to_exit(tracee);
+    if (ERROR(rc != 0))
+      goto done;
+
+    rc = ENOTSUP;
+    break;
+  }
+
   // any other syscalls we either do not care about or handle at syscall exit
   default:
     DEBUG("ignored seccomp stop for syscall %ld", nr);

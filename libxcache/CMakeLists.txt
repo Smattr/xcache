@@ -59,6 +59,7 @@ add_library(libxcache
   src/tracee_init.c
   src/tracee_monitor.c
   src/tracee_resume.c
+  src/tracee_resume_to_exit.c
   src/tracee_resume_to_syscall.c
   src/tracee_tee.c
 )
