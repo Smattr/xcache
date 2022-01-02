@@ -89,6 +89,16 @@ INTERNAL void *tracee_tee(void *arg);
 /// \return 0 on success or an errno on failure
 INTERNAL int tracee_resume(tracee_t *tracee);
 
+/// restart a stopped tracee, running it until exit (or a terminating signal)
+///
+/// It is assumed the tracee is in `ptrace-stop` when this function is called.
+/// This function detaches the tracee, so no further `seccomp` or `ptrace`
+/// events will be observed.
+///
+/// \param tracee Tracee to resume
+/// return 0 on success or an errno on failure
+INTERNAL int tracee_resume_to_exit(tracee_t *tracee);
+
 /// restart a stopped tracee, running it to the next syscall event
 ///
 /// It is assumed the tracee is in ``ptrace-stop`` when this function is called.

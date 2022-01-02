@@ -116,6 +116,7 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
   assert(tracee->pid > 0 && "tracee not started");
 
   int rc = 0;
+  int soft_rc = 0; // non-terminating error condition we noted while tracing
   bool tee_created = false;
   pthread_t tee;
 
@@ -170,8 +171,15 @@ int tracee_monitor(xc_trace_t *trace, tracee_t *tracee) {
         DEBUG("saw seccomp stop");
 
         rc = syscall_middle(tracee);
-        if (ERROR(rc != 0))
+        if (ERROR(rc != 0 && rc != ENOTSUP))
           goto done;
+
+        // save any error we saw from an unsupported syscall
+        if (rc == ENOTSUP) {
+          if (soft_rc == 0)
+            soft_rc = rc;
+          rc = 0;
+        }
 
         // `syscall_middle` will have resumed the child
         continue;
@@ -214,6 +222,9 @@ done:
       rc = (int)(intptr_t)r;
     }
   }
+
+  if (rc == 0)
+    rc = soft_rc;
 
   return rc;
 }
