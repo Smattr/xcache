@@ -42,7 +42,8 @@ static char *xstrdup(const char *s) {
 #define DEBUG(args...)                                                         \
   do {                                                                         \
     if (UNLIKELY(debug)) {                                                     \
-      fprintf(stderr, "xcache:%s:%d: [DEBUG] ", __FILE__, __LINE__);           \
+      const char *name_ = strrchr(__FILE__, '/');                              \
+      fprintf(stderr, "xcache:xcache/src%s:%d: [DEBUG] ", name_, __LINE__);    \
       fprintf(stderr, args);                                                   \
       fprintf(stderr, "\n");                                                   \
     }                                                                          \

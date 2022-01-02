@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 /// output stream for debugging information
 extern FILE *debug;
@@ -12,8 +13,9 @@ extern FILE *debug;
 #define DEBUG(args...)                                                         \
   do {                                                                         \
     if (UNLIKELY(debug != NULL)) {                                             \
+      const char *name_ = strrchr(__FILE__, '/');                              \
       flockfile(debug);                                                        \
-      fprintf(debug, "xcache:%s:%d: [DEBUG] ", __FILE__, __LINE__);            \
+      fprintf(debug, "xcache:libxcache/src%s:%d: [DEBUG] ", name_, __LINE__);  \
       fprintf(debug, args);                                                    \
       fprintf(debug, "\n");                                                    \
       funlockfile(debug);                                                      \
