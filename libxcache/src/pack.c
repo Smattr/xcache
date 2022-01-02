@@ -667,15 +667,7 @@ int unpack_trace(const void *base, size_t size, xc_trace_t **trace) {
   rc = 0;
 
 done:
-  if (UNLIKELY(t != NULL)) {
-    for (size_t i = 0; i < t->io.size; ++i) {
-      fs_t *fs = &t->io.base[i];
-      free(fs->path);
-      free(fs->content_path);
-    }
-    free(t->io.base);
-  }
-  free(t);
+  xc_trace_free(t);
 
   return rc;
 }
