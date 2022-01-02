@@ -62,6 +62,9 @@ int trace_globalise(const xc_db_t *db, xc_trace_t **global,
     }
   }
 
+  // copy the exit status, as-is
+  t->exit_status = local->exit_status;
+
   // success
   *global = t;
   t = NULL;
