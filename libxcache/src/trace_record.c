@@ -76,7 +76,6 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc, xc_db_t *db) {
   memset(&tracee.trace, 0, sizeof(tracee.trace));
   *trace = t;
   t = NULL;
-  rc = 0;
 
 done:
   free(t);
