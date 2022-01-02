@@ -58,7 +58,7 @@ static rc_t drain(int to, FILE *to_buffer, int from) {
         return (rc_t){.soft_rc = EIO};
     }
   }
-  UNREACHABLE();
+  UNREACHABLE("infinite loop");
 }
 
 static void discard_buffers(tracee_t *tracee) {

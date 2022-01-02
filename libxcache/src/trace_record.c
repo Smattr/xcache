@@ -56,7 +56,7 @@ int xc_trace_record(xc_trace_t **trace, const xc_proc_t *proc, xc_db_t *db) {
   // are we the child (tracee)?
   if (tracee.pid == 0) {
     tracee_exec(&tracee);
-    UNREACHABLE();
+    UNREACHABLE("tracee_exec did not call exec or exit");
   }
 
   // we are the parent (tracer)

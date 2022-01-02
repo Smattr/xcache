@@ -99,7 +99,7 @@ static event_t get_event(int status) {
   case SIGTRAP | (PTRACE_EVENT_EXIT << 8):
   case SIGTRAP | (PTRACE_EVENT_VFORK_DONE << 8):
     DEBUG("unexpected ptrace event %d", status);
-    UNREACHABLE();
+    UNREACHABLE("unexpected ptrace event");
 
     // otherwise, this was a signal
   default:
@@ -203,7 +203,7 @@ int tracee_monitor(tracee_t *tracee) {
     }
 
     DEBUG("unhandled child stop");
-    UNREACHABLE();
+    UNREACHABLE("unhandled child stop");
   }
 
 done:

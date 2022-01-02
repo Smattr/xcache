@@ -23,5 +23,5 @@ int xc_proc_exec(const xc_proc_t *proc) {
   if (UNLIKELY(rc != 0))
     return errno;
 
-  UNREACHABLE();
+  UNREACHABLE("execvp returned 0");
 }

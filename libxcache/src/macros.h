@@ -13,11 +13,11 @@
 #endif
 
 #ifdef __GNUC__
-#define UNREACHABLE()                                                          \
+#define UNREACHABLE(msg)                                                       \
   do {                                                                         \
-    assert("unreachable" && 0);                                                \
+    assert("unreachable: " msg && 0);                                          \
     __builtin_unreachable();                                                   \
   } while (0)
 #else
-#define UNREACHABLE() assert("unreachable" && 0);
+#define UNREACHABLE(msg) assert("unreachable" msg && 0);
 #endif
