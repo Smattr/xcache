@@ -71,14 +71,7 @@ int trace_globalise(const xc_db_t *db, xc_trace_t **global,
   rc = 0;
 
 done:
-  if (UNLIKELY(t != NULL)) {
-    for (size_t i = 0; i < t->io.size; ++i) {
-      free(t->io.base[i].path);
-      free(t->io.base[i].content_path);
-    }
-    free(t->io.base);
-  }
-  free(t);
+  xc_trace_free(t);
 
   return rc;
 }
