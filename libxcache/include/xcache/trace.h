@@ -22,6 +22,9 @@ typedef struct xc_trace xc_trace_t;
 /// unsupported system call, the tracer will detach and allow it to complete
 /// unmonitored, then returning `ENOTSUP`.
 ///
+/// The value of the output parameter `trace` is only valid if the function
+/// returns 0 or `ENOTSUP`.
+///
 /// \param trace [out] Trace of the process’ inputs and outputs
 /// \param proc Process to run
 /// \param db Database in which to host output artifacts

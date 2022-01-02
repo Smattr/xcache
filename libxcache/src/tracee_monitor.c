@@ -142,10 +142,7 @@ int tracee_monitor(tracee_t *tracee) {
     // was this an exit?
     if (WIFEXITED(status)) {
       DEBUG("child exited");
-      if (ERROR(WEXITSTATUS(status) != EXIT_SUCCESS)) {
-        rc = ECHILD;
-        goto done;
-      }
+      tracee->trace.exit_status = WEXITSTATUS(status);
       break; // success
     }
 

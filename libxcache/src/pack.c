@@ -118,6 +118,15 @@ static int pack_uint(FILE *f, uintmax_t value) {
   return write_u64(f, (uint64_t)value);
 }
 
+static int pack_int(FILE *f, intmax_t value) {
+
+  // pack this identically to unsigned, for simplicity
+  uintmax_t u = 0;
+  static_assert(sizeof(u) == sizeof(value));
+  memcpy(&u, &value, sizeof(u));
+  return pack_uint(f, u);
+}
+
 static int pack_string(FILE *f, const char *value) {
 
   if (value == NULL)
@@ -254,6 +263,13 @@ int pack_trace(FILE *f, const xc_trace_t *trace) {
     if (ERROR(r != 0))
       return r;
     r = pack_string(f, fs->content_path);
+    if (ERROR(r != 0))
+      return r;
+  }
+
+  // serialise exit status
+  {
+    int r = pack_int(f, trace->exit_status);
     if (ERROR(r != 0))
       return r;
   }
@@ -517,6 +533,19 @@ static int unpack_uint(const void **base, size_t *size, uintmax_t *value) {
   return 0;
 }
 
+static int unpack_int(const void **base, size_t *size, intmax_t *value) {
+
+  uintmax_t u = 0;
+  {
+    int r = unpack_uint(base, size, &u);
+    if (ERROR(r != 0))
+      return r;
+  }
+  static_assert(sizeof(u) == sizeof(*value));
+  memcpy(value, &u, sizeof(*value));
+  return 0;
+}
+
 static int unpack_tag(const void **base, size_t *size, uint8_t *tag) {
   return read_u8(base, size, tag);
 }
@@ -617,6 +646,19 @@ int unpack_trace(const void *base, size_t size, xc_trace_t **trace) {
     rc = unpack_string(&base, &size, &fs->content_path);
     if (ERROR(rc != 0))
       goto done;
+  }
+
+  // deserialise exit status
+  {
+    intmax_t es = 0;
+    rc = unpack_int(&base, &size, &es);
+    if (ERROR(rc != 0))
+      goto done;
+    if (ERROR(es < INT_MIN || es > INT_MAX)) {
+      rc = ERANGE;
+      goto done;
+    }
+    t->exit_status = (int)es;
   }
 
   // success
