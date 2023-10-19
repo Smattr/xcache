@@ -3,37 +3,78 @@
 #include "input_t.h"
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include <sys/stat.h>
 
-int input_new(input_t *i, const char *path) {
+/// which errno values should be anticipated as informational, not errors
+static bool accepted_errno(int err) {
+  if (err == 0)
+    return true;
+  if (err == ENOENT)
+    return true;
+  if (err == EACCES || err == EPERM)
+    return true;
+  if (err == EISDIR)
+    return true;
+  return false;
+}
 
-  assert(i != NULL);
+int input_new(input_t *input, const char *path) {
+
+  assert(input != NULL);
   assert(path != NULL);
 
-  memset(i, 0, sizeof(*i));
+  *input = (input_t){0};
+  input_t i = {0};
   int rc = 0;
 
-  i->path = strdup(path);
-  if (ERROR(i->path == NULL)) {
+  // save the path
+  i.path = strdup(path);
+  if (ERROR(i.path == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
+  // read the target’s attributes
   {
-    int r = hash_file(path, &i->digest);
-    i->exists = r != ENOENT;
-    i->accessible = r != EACCES && r != EPERM;
-    i->is_directory = r == EISDIR;
-    if (r != 0 && i->exists && i->accessible && !i->is_directory) {
-      rc = r;
+    struct stat st = {0};
+    if (stat(path, &st) < 0) {
+      if (ERROR(!accepted_errno(errno))) {
+        rc = errno;
+        goto done;
+      }
+      i.stat_errno = errno;
+    } else {
+      // only accept directories and regular files
+      if (!S_ISDIR(st.st_mode) && !S_ISREG(st.st_mode)) {
+        rc = ENOTSUP;
+        goto done;
+      }
+
+      i.stat_errno = 0;
+      i.st_mode = st.st_mode;
+      i.st_uid = st.st_uid;
+      i.st_gid = st.st_gid;
+      i.st_size = (size_t)st.st_size;
+    }
+  }
+
+  // hash it
+  if (i.stat_errno == 0 && S_ISREG(i.st_mode) && i.st_size > 0) {
+    i.open_errno = hash_file(path, &i.digest);
+    if (ERROR(!accepted_errno(i.open_errno))) {
+      rc = i.open_errno;
       goto done;
     }
   }
 
+  *input = i;
+  i = (input_t){0};
+
 done:
-  if (rc)
-    input_free(*i);
+  input_free(i);
 
   return rc;
 }
