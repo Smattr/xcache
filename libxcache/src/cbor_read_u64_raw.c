@@ -4,14 +4,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int cbor_read_u64_raw(FILE *stream, uint64_t *value, int bias) {
+int cbor_read_u64_raw(FILE *stream, uint64_t *value, uint8_t bias) {
 
-  const int tag = getc(stream);
-  if (tag < 0)
+  const int tag_int = getc(stream);
+  if (tag_int < 0)
     return EIO;
+  const uint8_t tag = (uint8_t)tag_int;
 
   if (tag < 0x17 + bias) {
-    *value = (uint64_t)tag;
+    *value = tag;
     return 0;
   }
 

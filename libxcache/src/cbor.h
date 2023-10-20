@@ -35,4 +35,4 @@ INTERNAL int cbor_read_u64(FILE *stream, uint64_t *value);
  * \param bias Offset to apply when interpreting tags
  * \return 0 on success or an errno on failure
  */
-INTERNAL int cbor_read_u64_raw(FILE *stream, uint64_t *value, int bias);
+INTERNAL int cbor_read_u64_raw(FILE *stream, uint64_t *value, uint8_t bias);
