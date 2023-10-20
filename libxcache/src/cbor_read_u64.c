@@ -16,7 +16,7 @@ int cbor_read_u64(FILE *stream, uint64_t *value) {
   }
 
   if (tag == 0x18) {
-    uint8_t v;
+    uint8_t v = 0;
     if (fread(&v, sizeof(v), 1, stream) < 1)
       return EIO;
     *value = v;
@@ -24,7 +24,7 @@ int cbor_read_u64(FILE *stream, uint64_t *value) {
   }
 
   if (tag == 0x19) {
-    uint16_t v;
+    uint16_t v = 0;
     if (fread(&v, sizeof(v), 1, stream) < 1)
       return EIO;
     *value = be16toh(v);
@@ -32,7 +32,7 @@ int cbor_read_u64(FILE *stream, uint64_t *value) {
   }
 
   if (tag == 0x1a) {
-    uint32_t v;
+    uint32_t v = 0;
     if (fread(&v, sizeof(v), 1, stream) < 1)
       return EIO;
     *value = be32toh(v);
@@ -40,7 +40,7 @@ int cbor_read_u64(FILE *stream, uint64_t *value) {
   }
 
   if (tag == 0x1b) {
-    uint64_t v;
+    uint64_t v = 0;
     if (fread(&v, sizeof(v), 1, stream) < 1)
       return EIO;
     *value = be64toh(v);
