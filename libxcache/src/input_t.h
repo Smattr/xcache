@@ -3,29 +3,34 @@
 #include "../../common/compiler.h"
 #include "hash_t.h"
 #include <stdbool.h>
+#include <stddef.h>
+#include <sys/stat.h>
 
 /// a file/directory that was read
 typedef struct {
-  char *path;            ///< absolute path to the target
-  bool exists : 1;       ///< did it exist on disk?
-  bool accessible : 1;   ///< did we have permission to read it?
-  bool is_directory : 1; ///< was it a directory (not a file)?
-  hash_t digest;         ///< hash of the file’s contents
+  char *path;     ///< absolute path to the target
+  int stat_errno; ///< errno from `stat(path)`
+  mode_t st_mode; ///< stat-ed mode
+  uid_t st_uid;   ///< stat-ed uid
+  gid_t st_gid;   ///< stat-ed gid
+  size_t st_size; ///< on-disk size
+  int open_errno; ///< errno from `open(path, …)`
+  hash_t digest;  ///< hash of the file’s contents
 } input_t;
 
 /** create a new input
  *
- * \param i [out] Created input on success
+ * \param input [out] Created input on success
  * \param path Absolute path to the input
  * \return 0 on success or errno on failure
  */
-INTERNAL int input_new(input_t *i, const char *path);
+INTERNAL int input_new(input_t *input, const char *path);
 
 /** is this input still consistent with how it was originally perceived?
  *
- * \param i Input to examine
+ * \param input Input to examine
  */
-INTERNAL bool input_is_valid(const input_t i);
+INTERNAL bool input_is_valid(const input_t input);
 
 /** destroy an input
  *
