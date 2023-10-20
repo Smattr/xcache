@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /** summary digest of some data
  *
@@ -32,3 +33,11 @@ INTERNAL hash_t hash_data(const void *base, size_t size);
  * \return 0 on success or an errno on failure
  */
 INTERNAL int hash_file(const char *path, hash_t *hash);
+
+/** deserialise a hash value from a file
+ *
+ * \param hash [out] Reconstructed hash on success
+ * \param stream File to read from
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int hash_read(hash_t *hash, FILE *stream);
