@@ -5,6 +5,7 @@ add_library(libxcache
   src/hash_data.c
   src/hash_eq.c
   src/hash_file.c
+  src/hash_read.c
   src/input_free.c
   src/input_is_valid.c
   src/input_new.c
