@@ -13,7 +13,7 @@ void xc_trace_free(xc_trace_t *trace) {
     input_free(trace->inputs[i]);
   free(trace->inputs);
 
-  if (trace->root)
+  if (trace->root > 0)
     (void)close(trace->root);
 
   *trace = (xc_trace_t){0};
