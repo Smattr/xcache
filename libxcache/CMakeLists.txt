@@ -15,6 +15,7 @@ add_library(libxcache
   src/xc_db_open.c
   src/xc_debug.c
   src/xc_set_debug.c
+  src/xc_trace_is_valid.c
   src/xc_trace_record.c
 )
 
