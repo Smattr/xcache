@@ -1,13 +1,20 @@
 #include "alloc.h"
+#include <errno.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sysexits.h>
+#include <unistd.h>
+#include <xcache/xcache.h>
 
 static bool record_enabled = true;
 static bool replay_enabled = true;
 
 static char *cache_dir;
+
+static xc_cmd_t cmd;
 
 static int parse_args(int argc, char **argv) {
 
@@ -71,6 +78,18 @@ static int parse_args(int argc, char **argv) {
       exit(EX_USAGE);
     }
   }
+
+  assert(argc >= optind);
+  cmd.argc = (size_t)(argc - optind);
+  cmd.argv = &argv[optind];
+
+  cmd.cwd = getcwd(NULL, 0);
+  if (cmd.cwd == NULL) {
+    int rc = errno;
+    fprintf(stderr, "getcwd: %s\n", strerror(rc));
+    return rc;
+  }
+
   return 0;
 }
 
@@ -83,5 +102,7 @@ int main(int argc, char **argv) {
 
   rc = EXIT_SUCCESS;
 done:
+  free(cmd.cwd);
+
   return rc;
 }
