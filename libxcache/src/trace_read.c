@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <xcache/trace.h>
 
 int trace_read(xc_trace_t *trace, FILE *stream) {
@@ -16,6 +17,20 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
   *trace = (xc_trace_t){0};
   xc_trace_t t = {0};
   int rc = 0;
+
+  // check the leading tag confirms this is a serialised input
+  {
+    uint64_t tag = 0;
+    if ((rc = cbor_read_u64_raw(stream, &tag, 0xc0)))
+      goto done;
+    // “trace”, remembering CBOR stores data big endian
+    const char expected[sizeof(uint64_t)] = {'\0', '\0', '\0', 'e',
+                                             'c',  'a',  'r',  't'};
+    if (memcmp(&tag, &expected, sizeof(tag)) != 0) {
+      rc = EPROTO;
+      goto done;
+    }
+  }
 
   {
     uint64_t n_inputs = 0;
