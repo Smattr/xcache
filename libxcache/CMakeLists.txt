@@ -1,6 +1,7 @@
 project(libxcache LANGUAGES C)
 
 add_library(libxcache
+  src/cbor_read_u64.c
   src/hash_data.c
   src/hash_eq.c
   src/hash_file.c
