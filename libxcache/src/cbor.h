@@ -10,6 +10,14 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/** read a string
+ *
+ * \param stream File to read from
+ * \param value [out] Resulting string on success
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int cbor_read_str(FILE *stream, char **value);
+
 /** read a ≤64-bit unsigned integer
  *
  * \param stream File to read from
