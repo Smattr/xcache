@@ -25,3 +25,14 @@ INTERNAL int cbor_read_str(FILE *stream, char **value);
  * \return 0 on success or an errno on failure
  */
 INTERNAL int cbor_read_u64(FILE *stream, uint64_t *value);
+
+/** read a ≤64-bit unsigned integer
+ *
+ * Same as `cbor_read_u64` but supports tweaking how tags are interpreted.
+ *
+ * \param stream File to read from
+ * \param value [out] Result on success
+ * \param bias Offset to apply when interpreting tags
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int cbor_read_u64_raw(FILE *stream, uint64_t *value, int bias);

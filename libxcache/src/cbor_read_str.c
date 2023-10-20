@@ -14,31 +14,11 @@ int cbor_read_str(FILE *stream, char **value) {
   if (tag < 0)
     return EIO;
 
-  size_t len = 0;
-  if (tag >= 0x60 && tag <= 0x77) {
-    len = (size_t)tag - 0x60;
-  } else if (tag == 0x78) {
-    uint8_t l = 0;
-    if (fread(&l, sizeof(l), 1, stream) < 1)
-      return EIO;
-    len = l;
-  } else if (tag == 0x79) {
-    uint16_t l = 0;
-    if (fread(&l, sizeof(l), 1, stream) < 1)
-      return EIO;
-    len = be16toh(l);
-  } else if (tag == 0x7a) {
-    uint32_t l = 0;
-    if (fread(&l, sizeof(l), 1, stream) < 1)
-      return EIO;
-    len = be32toh(l);
-  } else if (tag == 0x7b) {
-    uint64_t l = 0;
-    if (fread(&l, sizeof(l), 1, stream) < 1)
-      return EIO;
-    len = be64toh(l);
-  } else {
-    return EIO;
+  uint64_t len = 0;
+  {
+    int rc = cbor_read_u64_raw(stream, &len, 0x60);
+    if (rc)
+      return rc;
   }
 
   if (SIZE_MAX - 1 < len)
