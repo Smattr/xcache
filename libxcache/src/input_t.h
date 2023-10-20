@@ -4,6 +4,7 @@
 #include "hash_t.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <sys/stat.h>
 
 /// a file/directory that was read
@@ -25,6 +26,14 @@ typedef struct {
  * \return 0 on success or errno on failure
  */
 INTERNAL int input_new(input_t *input, const char *path);
+
+/** deserialise an input from a file
+ *
+ * \param input [out] Reconstructed input on success
+ * \param stream File to read from
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int input_read(input_t *input, FILE *stream);
 
 /** is this input still consistent with how it was originally perceived?
  *
