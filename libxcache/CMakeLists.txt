@@ -14,6 +14,7 @@ add_library(libxcache
   src/input_new.c
   src/input_read.c
   src/output_free.c
+  src/output_read.c
   src/output_replay.c
   src/trace_read.c
   src/xc_db_close.c
