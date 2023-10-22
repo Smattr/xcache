@@ -24,6 +24,7 @@ add_library(libxcache
   src/xc_trace_free.c
   src/xc_trace_is_valid.c
   src/xc_trace_record.c
+  src/xc_trace_replay.c
 )
 
 if(APPLE)
