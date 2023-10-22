@@ -1,5 +1,6 @@
 #include "cbor.h"
 #include "input_t.h"
+#include "output_t.h"
 #include "trace_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -51,6 +52,28 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
 
   for (size_t i = 0; i < t.n_inputs; ++i) {
     if ((rc = input_read(&t.inputs[i], stream)))
+      goto done;
+  }
+
+  {
+    uint64_t n_outputs = 0;
+    if ((rc = cbor_read_u64_raw(stream, &n_outputs, 0x80)))
+      goto done;
+    if (n_outputs > SIZE_MAX)
+      return EOVERFLOW;
+
+    if (n_outputs > 0) {
+      t.outputs = calloc((size_t)n_outputs, sizeof(t.outputs[0]));
+      if (t.outputs == NULL) {
+        rc = ENOMEM;
+        goto done;
+      }
+      t.n_outputs = (size_t)n_outputs;
+    }
+  }
+
+  for (size_t i = 0; i < t.n_outputs; ++i) {
+    if ((rc = output_read(&t.outputs[i], stream)))
       goto done;
   }
 

@@ -2,6 +2,8 @@
 
 #include "../../common/compiler.h"
 #include "input_t.h"
+#include "output_t.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <xcache/trace.h>
 
@@ -11,7 +13,8 @@ struct xc_trace {
   input_t *inputs; ///< inputs that were read by the tracee
   size_t n_inputs; ///< number of items in `inputs`
 
-  // TODO: outputs
+  output_t *outputs; ///< outputs that were written by the tracee
+  size_t n_outputs;  ///< number of items in `outputs`
 };
 
 /** deserialise a trace from a file
