@@ -100,6 +100,23 @@ int main(int argc, char **argv) {
   if (parse_args(argc, argv) < 0)
     goto done;
 
+  if (replay_enabled) {
+    // TODO: find trace and exec
+  }
+
+  if (record_enabled) {
+    // TODO: trace
+  }
+
+  // did not replay or record, so exec uninstrumented
+  {
+    int r = xc_cmd_exec(cmd);
+    if (r) {
+      fprintf(stderr, "xc_cmd_exec: %s\n", strerror(r));
+      goto done;
+    }
+  }
+
   rc = EXIT_SUCCESS;
 done:
   free(cmd.cwd);
