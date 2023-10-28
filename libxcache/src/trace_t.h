@@ -5,10 +5,13 @@
 #include "output_t.h"
 #include <stddef.h>
 #include <stdio.h>
+#include <xcache/cmd.h>
 #include <xcache/trace.h>
 
 struct xc_trace {
   int root; ///< handle to open trace-containing directory
+
+  xc_cmd_t cmd; ///< command originating this trace
 
   input_t *inputs; ///< inputs that were read by the tracee
   size_t n_inputs; ///< number of items in `inputs`

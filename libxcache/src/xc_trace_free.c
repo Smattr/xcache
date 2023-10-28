@@ -3,6 +3,7 @@
 #include "trace_t.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include <xcache/cmd.h>
 #include <xcache/trace.h>
 
 void xc_trace_free(xc_trace_t *trace) {
@@ -17,6 +18,8 @@ void xc_trace_free(xc_trace_t *trace) {
   for (size_t i = 0; i < trace->n_inputs; ++i)
     input_free(trace->inputs[i]);
   free(trace->inputs);
+
+  xc_cmd_free(trace->cmd);
 
   if (trace->root > 0)
     (void)close(trace->root);

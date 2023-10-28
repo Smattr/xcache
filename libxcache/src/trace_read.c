@@ -1,4 +1,5 @@
 #include "cbor.h"
+#include "cmd_t.h"
 #include "input_t.h"
 #include "output_t.h"
 #include "trace_t.h"
@@ -32,6 +33,9 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
       goto done;
     }
   }
+
+  if ((rc = cmd_read(&t.cmd, stream)))
+    goto done;
 
   {
     uint64_t n_inputs = 0;
