@@ -1,4 +1,5 @@
 #include "alloc.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,8 +11,8 @@ void xasprintf(char **restrict strp, const char *restrict fmt, ...) {
   va_start(ap, fmt);
 
   int rc = vasprintf(strp, fmt, ap);
-  if (rc) {
-    fprintf(stderr, "vasprintf: %s\n", strerror(rc));
+  if (rc < 0) {
+    fprintf(stderr, "vasprintf: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
 

@@ -36,7 +36,7 @@ int xc_db_open(const char *path, xc_db_t **db) {
   }
 
   // open the directory, now that it exists
-  d->root = open(path, O_RDWR | O_CLOEXEC | O_DIRECTORY);
+  d->root = open(path, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
   if (ERROR(d->root < 0)) {
     rc = errno;
     goto done;

@@ -111,8 +111,10 @@ static int parse_args(int argc, char **argv) {
   assert(argc >= optind);
   {
     int rc = xc_cmd_new(&cmd, (size_t)(argc - optind), &argv[optind], NULL);
-    fprintf(stderr, "xc_cmd_new: %s\n", strerror(rc));
-    return rc;
+    if (rc) {
+      fprintf(stderr, "xc_cmd_new: %s\n", strerror(rc));
+      return rc;
+    }
   }
 
   return 0;
@@ -129,7 +131,7 @@ int main(int argc, char **argv) {
     assert(cache_dir != NULL);
 
     // if the cache does not exist, create it
-    if (mkdir(cache_dir, 0755) < 0) {
+    if (mkdir(cache_dir, 0755) < 0 && errno != EEXIST) {
       rc = errno;
       goto done;
     }
