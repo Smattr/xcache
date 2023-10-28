@@ -28,6 +28,7 @@ static int parse_args(int argc, char **argv) {
         {"read-write", no_argument, 0, 133},
         {"ro", no_argument, 0, 131},
         {"rw", no_argument, 0, 132},
+        {"version", no_argument, 0, 'V'},
         {"wo", no_argument, 0, 133},
         {"write-only", no_argument, 0, 134},
         {0},
@@ -63,6 +64,10 @@ static int parse_args(int argc, char **argv) {
       record_enabled = false;
       replay_enabled = true;
       break;
+
+    case 'V': // --version, -V
+      printf("xcache version %s\n", xc_version());
+      exit(EXIT_SUCCESS);
 
     case 133: // --read-write, --rw
       record_enabled = true;
