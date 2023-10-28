@@ -15,6 +15,8 @@ static bool replay_enabled = true;
 
 static char *cache_dir;
 
+static xc_db_t *db;
+
 static xc_cmd_t cmd;
 
 static int parse_args(int argc, char **argv) {
@@ -131,6 +133,21 @@ int main(int argc, char **argv) {
       rc = errno;
       goto done;
     }
+
+    // suffix the DB path to namespace different versions
+    char *root = NULL;
+    const char *version = xc_version();
+    if (xc_version_is_release(version)) {
+      xasprintf(&root, "%s/%s", cache_dir, version);
+    } else {
+      xasprintf(&root, "%s/dev", cache_dir);
+    }
+    if ((rc = xc_db_open(root, &db))) {
+      free(root);
+      fprintf(stderr, "xc_db_open: %s\n", strerror(rc));
+      goto done;
+    }
+    free(root);
   }
 
   if (replay_enabled) {
@@ -148,6 +165,7 @@ int main(int argc, char **argv) {
   }
 
 done:
+  xc_db_close(db);
   xc_cmd_free(cmd);
   free(cache_dir);
 
