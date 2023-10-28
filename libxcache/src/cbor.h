@@ -37,6 +37,14 @@ INTERNAL int cbor_read_u64(FILE *stream, uint64_t *value);
  */
 INTERNAL int cbor_read_u64_raw(FILE *stream, uint64_t *value, uint8_t bias);
 
+/** write a string
+ *
+ * \param stream File to write to
+ * \param value Stirng to write
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int cbor_write_str(FILE *stream, const char *value);
+
 /** write a ≤64-bit unsigned integer
  *
  * \param stream File to write to
