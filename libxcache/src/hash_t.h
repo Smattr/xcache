@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <xcache/cmd.h>
 
 /** summary digest of some data
  *
@@ -17,6 +18,14 @@ typedef struct {
 
 /// compare two hashes for equality
 INTERNAL bool hash_eq(hash_t a, hash_t b);
+
+/** derive the hash of a command
+ *
+ * \param cmd Command to examine
+ * \param hash [out] Hash value on success
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int hash_cmd(const xc_cmd_t cmd, hash_t *hash);
 
 /** derive the hash of in-memory data
  *
