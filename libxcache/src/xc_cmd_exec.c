@@ -21,13 +21,14 @@ int xc_cmd_exec(const xc_cmd_t cmd) {
   if (ERROR(cmd.argv[cmd.argc] != NULL))
     return EINVAL;
 
+  if (ERROR(cmd.cwd == NULL))
+    return EINVAL;
+
   int rc = 0;
 
-  if (cmd.cwd != NULL) {
-    if (ERROR(chdir(cmd.cwd) < 0)) {
-      rc = errno;
-      goto done;
-    }
+  if (ERROR(chdir(cmd.cwd) < 0)) {
+    rc = errno;
+    goto done;
   }
 
   if (ERROR(execvp(cmd.argv[0], cmd.argv) < 0)) {
