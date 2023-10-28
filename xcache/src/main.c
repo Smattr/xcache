@@ -22,14 +22,14 @@ static int parse_args(int argc, char **argv) {
     const struct option opts[] = {
         {"debug", no_argument, 0, 130},
         {"dir", required_argument, 0, 'd'},
-        {"dry-run", no_argument, 0, 'n'},
+        {"disable", no_argument, 0, 131},
         {"help", no_argument, 0, 'h'},
-        {"read-only", no_argument, 0, 131},
-        {"read-write", no_argument, 0, 132},
+        {"read-only", no_argument, 0, 132},
+        {"read-write", no_argument, 0, 133},
         {"ro", no_argument, 0, 131},
         {"rw", no_argument, 0, 132},
         {"wo", no_argument, 0, 133},
-        {"write-only", no_argument, 0, 133},
+        {"write-only", no_argument, 0, 134},
         {0},
     };
 
@@ -50,7 +50,7 @@ static int parse_args(int argc, char **argv) {
       cache_dir = xstrdup(optarg);
       break;
 
-    case 'n': // --dry-run, -n
+    case 131: // --disable
       record_enabled = false;
       replay_enabled = false;
       break;
@@ -59,17 +59,17 @@ static int parse_args(int argc, char **argv) {
       // TODO
       break;
 
-    case 131: // --read-only, --ro
+    case 132: // --read-only, --ro
       record_enabled = false;
       replay_enabled = true;
       break;
 
-    case 132: // --read-write, --rw
+    case 133: // --read-write, --rw
       record_enabled = true;
       replay_enabled = true;
       break;
 
-    case 133: // --write-only, --wo
+    case 134: // --write-only, --wo
       record_enabled = true;
       replay_enabled = false;
       break;
