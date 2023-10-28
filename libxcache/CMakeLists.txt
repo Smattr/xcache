@@ -24,6 +24,7 @@ add_library(libxcache
   src/trace_read.c
   src/xc_cmd_exec.c
   src/xc_cmd_free.c
+  src/xc_cmd_new.c
   src/xc_db_close.c
   src/xc_db_open.c
   src/xc_debug.c
@@ -33,6 +34,9 @@ add_library(libxcache
   src/xc_trace_record.c
   src/xc_trace_replay.c
 )
+
+target_compile_options(libxcache PRIVATE -D_DEFAULT_SOURCE)
+target_compile_options(libxcache PRIVATE -D_POSIX_C_SOURCE=200809L)
 
 if(APPLE)
   target_compile_options(libxcache PRIVATE -fno-common)
