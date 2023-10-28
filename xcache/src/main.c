@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sysexits.h>
 #include <unistd.h>
 #include <xcache/xcache.h>
@@ -121,6 +122,16 @@ int main(int argc, char **argv) {
 
   if ((rc = parse_args(argc, argv)))
     goto done;
+
+  if (replay_enabled || record_enabled) {
+    assert(cache_dir != NULL);
+
+    // if the cache does not exist, create it
+    if (mkdir(cache_dir, 0755) < 0) {
+      rc = errno;
+      goto done;
+    }
+  }
 
   if (replay_enabled) {
     // TODO: find trace and exec

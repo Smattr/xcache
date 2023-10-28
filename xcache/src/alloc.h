@@ -4,4 +4,4 @@
 
 INTERNAL char *xstrdup(const char *s);
 
-INTERNAL int xasprintf(char **restrict strp, const char *restrict fmt, ...);
+INTERNAL void xasprintf(char **restrict strp, const char *restrict fmt, ...);
