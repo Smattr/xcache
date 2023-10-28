@@ -8,3 +8,4 @@
 #include <xcache/db.h>
 #include <xcache/debug.h>
 #include <xcache/trace.h>
+#include <xcache/version.h>

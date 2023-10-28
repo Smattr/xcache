@@ -33,7 +33,23 @@ add_library(libxcache
   src/xc_trace_is_valid.c
   src/xc_trace_record.c
   src/xc_trace_replay.c
+  src/xc_version_is_release.c
+  ${CMAKE_CURRENT_BINARY_DIR}/version.c
 )
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+add_custom_command(
+  OUTPUT version.c
+  COMMAND src/make-version.py ${CMAKE_CURRENT_BINARY_DIR}/version.c
+  MAIN_DEPENDENCY src/make-version.py
+  DEPENDS always_run
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+# dummy output to make sure we always re-evaluate the version step above
+add_custom_command(
+  OUTPUT always_run
+  COMMAND /usr/bin/env true)
 
 target_compile_options(libxcache PRIVATE -D_DEFAULT_SOURCE)
 target_compile_options(libxcache PRIVATE -D_POSIX_C_SOURCE=200809L)
