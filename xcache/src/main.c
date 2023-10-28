@@ -79,6 +79,27 @@ static int parse_args(int argc, char **argv) {
     }
   }
 
+  // if `--dir` was not given, use environment variables to decide
+  if (cache_dir == NULL) {
+    const char *XCACHE_DIR = getenv("XCACHE_DIR");
+    if (XCACHE_DIR != NULL)
+      cache_dir = xstrdup(XCACHE_DIR);
+  }
+  if (cache_dir == NULL) {
+    const char *XDG_CACHE_HOME = getenv("XDG_CACHE_HOME");
+    if (XDG_CACHE_HOME != NULL)
+      xasprintf(&cache_dir, "%s/xcache", XDG_CACHE_HOME);
+  }
+  if (cache_dir == NULL) {
+    const char *HOME = getenv("HOME");
+    if (HOME == NULL) {
+      fprintf(stderr, "--dir not provided and none of $XCACHE_DIR, "
+                      "$XDG_CACHE_HOME, $HOME set\n");
+      exit(EXIT_FAILURE);
+    }
+    xasprintf(&cache_dir, "%s/.xcache", HOME);
+  }
+
   assert(argc >= optind);
   {
     int rc = xc_cmd_new(&cmd, (size_t)(argc - optind), &argv[optind], NULL);
@@ -116,6 +137,7 @@ int main(int argc, char **argv) {
   rc = EXIT_SUCCESS;
 done:
   xc_cmd_free(cmd);
+  free(cache_dir);
 
   return rc;
 }
