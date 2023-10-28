@@ -11,3 +11,11 @@
  * \return 0 on success or an errno on failure
  */
 INTERNAL int cmd_read(xc_cmd_t *cmd, FILE *stream);
+
+/** serialise a command to a file
+ *
+ * \param cmd Command to write out
+ * \param stream File to write to
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int cmd_write(const xc_cmd_t cmd, FILE *stream);
