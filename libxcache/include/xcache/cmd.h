@@ -17,6 +17,16 @@ typedef struct {
   char *cwd;   ///< directory the command starts from
 } xc_cmd_t;
 
+/** execute a command
+ *
+ * This is a thin wrapper around `execvp`. On success, this function does not
+ * return.
+ *
+ * \param cmd Command to execute
+ * \return an errno on failure
+ */
+XCACHE_API int xc_cmd_exec(const xc_cmd_t cmd);
+
 /** deallocate memory backing a command
  *
  * This assumes all `cmd` fields were heap-allocated. Do not call this function
