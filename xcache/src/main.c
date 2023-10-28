@@ -80,13 +80,9 @@ static int parse_args(int argc, char **argv) {
   }
 
   assert(argc >= optind);
-  cmd.argc = (size_t)(argc - optind);
-  cmd.argv = &argv[optind];
-
-  cmd.cwd = getcwd(NULL, 0);
-  if (cmd.cwd == NULL) {
-    int rc = errno;
-    fprintf(stderr, "getcwd: %s\n", strerror(rc));
+  {
+    int rc = xc_cmd_new(&cmd, (size_t)(argc - optind), &argv[optind], NULL);
+    fprintf(stderr, "xc_cmd_new: %s\n", strerror(rc));
     return rc;
   }
 
@@ -119,7 +115,7 @@ int main(int argc, char **argv) {
 
   rc = EXIT_SUCCESS;
 done:
-  free(cmd.cwd);
+  xc_cmd_free(cmd);
 
   return rc;
 }
