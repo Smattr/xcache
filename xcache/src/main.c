@@ -117,9 +117,9 @@ static int parse_args(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 
-  int rc = EXIT_FAILURE;
+  int rc = 0;
 
-  if (parse_args(argc, argv) < 0)
+  if ((rc = parse_args(argc, argv)))
     goto done;
 
   if (replay_enabled) {
@@ -131,18 +131,14 @@ int main(int argc, char **argv) {
   }
 
   // did not replay or record, so exec uninstrumented
-  {
-    int r = xc_cmd_exec(cmd);
-    if (r) {
-      fprintf(stderr, "xc_cmd_exec: %s\n", strerror(r));
-      goto done;
-    }
+  if ((rc = xc_cmd_exec(cmd))) {
+    fprintf(stderr, "xc_cmd_exec: %s\n", strerror(rc));
+    goto done;
   }
 
-  rc = EXIT_SUCCESS;
 done:
   xc_cmd_free(cmd);
   free(cache_dir);
 
-  return rc;
+  return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }
