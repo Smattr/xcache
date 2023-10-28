@@ -36,3 +36,12 @@ INTERNAL int cbor_read_u64(FILE *stream, uint64_t *value);
  * \return 0 on success or an errno on failure
  */
 INTERNAL int cbor_read_u64_raw(FILE *stream, uint64_t *value, uint8_t bias);
+
+/** write a ≤64-bit unsigned integer
+ *
+ * \param stream File to write to
+ * \param value Value to write
+ * \param bias Offset to apply when writing tags
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int cbor_write_u64_raw(FILE *stream, uint64_t value, uint8_t bias);
