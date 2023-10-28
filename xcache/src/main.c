@@ -45,8 +45,8 @@ static int parse_args(int argc, char **argv) {
 
     switch (c) {
 
-    case 130:
-      // TODO
+    case 130: // --debug
+      xc_set_debug(stderr);
       break;
 
     case 'd': // --dir, -d
