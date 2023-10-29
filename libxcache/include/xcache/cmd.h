@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -29,6 +30,14 @@ typedef struct {
  */
 XCACHE_API int xc_cmd_new(xc_cmd_t *cmd, size_t argc, char **argv,
                           const char *cwd);
+
+/** compare two commands for equality
+ *
+ * \param a First operand
+ * \param b Second operand
+ * \return True if the commands are equal
+ */
+XCACHE_API bool xc_cmd_eq(const xc_cmd_t a, const xc_cmd_t b);
 
 /** execute a command
  *

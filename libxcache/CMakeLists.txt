@@ -22,6 +22,7 @@ add_library(libxcache
   src/output_read.c
   src/output_replay.c
   src/trace_read.c
+  src/xc_cmd_eq.c
   src/xc_cmd_exec.c
   src/xc_cmd_free.c
   src/xc_cmd_new.c
