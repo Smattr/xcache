@@ -124,6 +124,11 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
     if (ERROR(rc))
       goto done;
 
+    if (!xc_cmd_eq(query, trace.cmd)) {
+      xc_trace_free(&trace);
+      continue;
+    }
+
     const int r = cb(&trace, state);
     xc_trace_free(&trace);
     if (r != 0)
