@@ -41,30 +41,30 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
   // check the leading tag confirms this is a serialised input
   {
     uint64_t tag = 0;
-    if ((rc = cbor_read_u64_raw(stream, &tag, 0xc0)))
+    if (ERROR((rc = cbor_read_u64_raw(stream, &tag, 0xc0))))
       goto done;
     // “trace”, remembering CBOR stores data big endian
     const char expected[sizeof(uint64_t)] = {'\0', '\0', '\0', 'e',
                                              'c',  'a',  'r',  't'};
-    if (memcmp(&tag, &expected, sizeof(tag)) != 0) {
+    if (ERROR(memcmp(&tag, &expected, sizeof(tag)) != 0)) {
       rc = EPROTO;
       goto done;
     }
   }
 
-  if ((rc = cmd_read(&t.cmd, stream)))
+  if (ERROR((rc = cmd_read(&t.cmd, stream))))
     goto done;
 
   {
     uint64_t n_inputs = 0;
-    if ((rc = cbor_read_u64_raw(stream, &n_inputs, 0x80)))
+    if (ERROR((rc = cbor_read_u64_raw(stream, &n_inputs, 0x80))))
       goto done;
-    if (n_inputs > SIZE_MAX)
+    if (ERROR(n_inputs > SIZE_MAX))
       return EOVERFLOW;
 
     if (n_inputs > 0) {
       t.inputs = calloc((size_t)n_inputs, sizeof(t.inputs[0]));
-      if (t.inputs == NULL) {
+      if (ERROR(t.inputs == NULL)) {
         rc = ENOMEM;
         goto done;
       }
@@ -73,20 +73,20 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
   }
 
   for (size_t i = 0; i < t.n_inputs; ++i) {
-    if ((rc = input_read(&t.inputs[i], stream)))
+    if (ERROR((rc = input_read(&t.inputs[i], stream))))
       goto done;
   }
 
   {
     uint64_t n_outputs = 0;
-    if ((rc = cbor_read_u64_raw(stream, &n_outputs, 0x80)))
+    if (ERROR((rc = cbor_read_u64_raw(stream, &n_outputs, 0x80))))
       goto done;
-    if (n_outputs > SIZE_MAX)
+    if (ERROR(n_outputs > SIZE_MAX))
       return EOVERFLOW;
 
     if (n_outputs > 0) {
       t.outputs = calloc((size_t)n_outputs, sizeof(t.outputs[0]));
-      if (t.outputs == NULL) {
+      if (ERROR(t.outputs == NULL)) {
         rc = ENOMEM;
         goto done;
       }
@@ -95,7 +95,7 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
   }
 
   for (size_t i = 0; i < t.n_outputs; ++i) {
-    if ((rc = output_read(&t.outputs[i], stream)))
+    if (ERROR((rc = output_read(&t.outputs[i], stream))))
       goto done;
   }
 
