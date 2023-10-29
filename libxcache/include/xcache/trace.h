@@ -28,9 +28,9 @@ XCACHE_API int xc_trace_record(xc_db_t *db, xc_cmd_t cmd, xc_trace_t **trace);
  *
  * \param db Database in which to search
  * \param query Command to look for
- * \param result [out] Found trace on success
- * \return 0 on success, ENOMSG if no match was found, or another errno on
- *   failure
+ * \param cb Callback to be invoked for each matching trace
+ * \param state Value to pass as second parameter to callback
+ * \return 0 on success or an errno on failure
  */
 XCACHE_API int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
                              int (*cb)(const xc_trace_t *trace, void *state),

@@ -1,4 +1,5 @@
 #include "alloc.h"
+#include "debug.h"
 #include <errno.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -18,6 +19,8 @@ static char *cache_dir;
 static xc_db_t *db;
 
 static xc_cmd_t cmd;
+
+bool debug;
 
 static int parse_args(int argc, char **argv) {
 
@@ -47,6 +50,7 @@ static int parse_args(int argc, char **argv) {
 
     case 130: // --debug
       xc_set_debug(stderr);
+      debug = true;
       break;
 
     case 'd': // --dir, -d
@@ -120,6 +124,20 @@ static int parse_args(int argc, char **argv) {
   return 0;
 }
 
+static int replay_callback(const xc_trace_t *trace, void *state) {
+
+  // skip if trace is invalid
+  if (!xc_trace_is_valid(trace))
+    return 0;
+
+  // attempt replay
+  int *rc = state;
+  *rc = xc_trace_replay(trace);
+
+  // either way, we are done
+  return 1;
+}
+
 int main(int argc, char **argv) {
 
   int rc = 0;
@@ -153,7 +171,18 @@ int main(int argc, char **argv) {
   }
 
   if (replay_enabled) {
-    // TODO: find trace and exec
+    int r = 0;
+    if ((rc = xc_trace_find(db, cmd, replay_callback, &r))) {
+      fprintf(stderr, "xc_trace_find: %s\n", strerror(rc));
+      goto done;
+    }
+    if (r) {
+      rc = r;
+      fprintf(stderr, "replay_callback: %s\n", strerror(rc));
+      goto done;
+    }
+    DEBUG("replay succeeded");
+    goto done;
   }
 
   if (record_enabled) {
