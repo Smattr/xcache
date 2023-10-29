@@ -1,5 +1,6 @@
 #include "cbor.h"
 #include "cmd_t.h"
+#include "debug.h"
 #include "input_t.h"
 #include "output_t.h"
 #include "trace_t.h"
@@ -9,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <xcache/trace.h>
 
 int trace_read(xc_trace_t *trace, FILE *stream) {
@@ -19,6 +21,22 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
   *trace = (xc_trace_t){0};
   xc_trace_t t = {0};
   int rc = 0;
+
+  {
+    // acquire a file descriptor for the source of the trace
+    int fd = fileno(stream);
+    if (ERROR(fd < 0)) {
+      rc = errno;
+      goto done;
+    }
+
+    // replicate it into the trace object
+    t.root = dup(fd);
+    if (ERROR(t.root < 0)) {
+      rc = errno;
+      goto done;
+    }
+  }
 
   // check the leading tag confirms this is a serialised input
   {
