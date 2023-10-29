@@ -124,6 +124,12 @@ static int parse_args(int argc, char **argv) {
   return 0;
 }
 
+/// state used by `replay_callback`
+typedef struct {
+  int rc;     ///< any error code
+  bool found; ///< did we find a trace to replay?
+} replay_callback_t;
+
 static int replay_callback(const xc_trace_t *trace, void *state) {
 
   // skip if trace is invalid
@@ -131,8 +137,9 @@ static int replay_callback(const xc_trace_t *trace, void *state) {
     return 0;
 
   // attempt replay
-  int *rc = state;
-  *rc = xc_trace_replay(trace);
+  replay_callback_t *st = state;
+  st->found = true;
+  st->rc = xc_trace_replay(trace);
 
   // either way, we are done
   return 1;
@@ -171,18 +178,21 @@ int main(int argc, char **argv) {
   }
 
   if (replay_enabled) {
-    int r = 0;
-    if ((rc = xc_trace_find(db, cmd, replay_callback, &r))) {
+    replay_callback_t state = {0};
+    if ((rc = xc_trace_find(db, cmd, replay_callback, &state))) {
       fprintf(stderr, "xc_trace_find: %s\n", strerror(rc));
       goto done;
     }
-    if (r) {
-      rc = r;
+    if (state.rc) {
+      rc = state.rc;
       fprintf(stderr, "replay_callback: %s\n", strerror(rc));
       goto done;
     }
-    DEBUG("replay succeeded");
-    goto done;
+    if (state.found) {
+      DEBUG("replay succeeded");
+      goto done;
+    }
+    DEBUG("no trace found to replay");
   }
 
   if (record_enabled) {

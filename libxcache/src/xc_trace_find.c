@@ -63,8 +63,12 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
 
     // there seems to be no `opendirat`, so take the long way around
     int dirfd = openat(db->root, path, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
-    if (ERROR(dirfd < 0)) {
-      rc = errno;
+    if (dirfd < 0) {
+      // allow the trace to not exist
+      if (ERROR(errno != ENOENT)) {
+        rc = errno;
+        goto done;
+      }
       goto done;
     }
     dir = fdopendir(dirfd);
