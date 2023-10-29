@@ -32,8 +32,9 @@ XCACHE_API int xc_trace_record(xc_db_t *db, xc_cmd_t cmd, xc_trace_t **trace);
  * \return 0 on success, ENOMSG if no match was found, or another errno on
  *   failure
  */
-XCACHE_API int xc_trace_find(const xc_db_t *db, xc_cmd_t query,
-                             xc_trace_t **result);
+XCACHE_API int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
+                             int (*cb)(const xc_trace_t *trace, void *state),
+                             void *state);
 
 /** check a trace is not stale
  *
