@@ -76,6 +76,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release" OR
 endif()
 
 add_subdirectory(libxcache)
+add_subdirectory(test)
 add_subdirectory(xcache)
 
 find_program(CLANG_FORMAT
