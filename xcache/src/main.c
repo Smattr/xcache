@@ -200,8 +200,7 @@ int main(int argc, char **argv) {
 
   if (record_enabled) {
     DEBUG("attempting record");
-    xc_trace_t *trace = NULL;
-    if ((rc = xc_trace_record(db, cmd, &trace))) {
+    if ((rc = xc_trace_record(db, cmd))) {
       fprintf(stderr, "xc_trace_record: %s\n", strerror(rc));
       goto done;
     }

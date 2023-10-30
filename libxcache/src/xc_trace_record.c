@@ -6,7 +6,7 @@
 #include <xcache/cmd.h>
 #include <xcache/trace.h>
 
-int xc_trace_record(xc_db_t *db, xc_cmd_t cmd, xc_trace_t **trace) {
+int xc_trace_record(xc_db_t *db, xc_cmd_t cmd) {
 
   if (ERROR(db == NULL))
     return EINVAL;
@@ -22,11 +22,7 @@ int xc_trace_record(xc_db_t *db, xc_cmd_t cmd, xc_trace_t **trace) {
       return EINVAL;
   }
 
-  if (ERROR(trace == NULL))
-    return EINVAL;
-
-  *trace = NULL;
-  xc_trace_t *t = NULL;
+  xc_trace_t *trace = NULL;
   proc_t proc = {0};
   int rc = 0;
 
@@ -36,12 +32,9 @@ int xc_trace_record(xc_db_t *db, xc_cmd_t cmd, xc_trace_t **trace) {
   rc = ENOSYS;
   goto done;
 
-  *trace = t;
-  t = NULL;
-
 done:
   proc_free(proc);
-  xc_trace_free(t);
+  xc_trace_free(trace);
 
   return rc;
 }
