@@ -4,9 +4,10 @@
 #include <errno.h>
 #include <stddef.h>
 #include <xcache/cmd.h>
+#include <xcache/db.h>
 #include <xcache/trace.h>
 
-int xc_trace_record(xc_db_t *db, xc_cmd_t cmd) {
+int xc_record(xc_db_t *db, xc_cmd_t cmd) {
 
   if (ERROR(db == NULL))
     return EINVAL;

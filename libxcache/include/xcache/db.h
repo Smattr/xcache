@@ -27,7 +27,7 @@ XCACHE_API int xc_db_open(const char *path, xc_db_t **db);
  * \param cmd Command to run
  * \return 0 on success or an errno on failure
  */
-XCACHE_API int xc_trace_record(xc_db_t *db, const xc_cmd_t cmd);
+XCACHE_API int xc_record(xc_db_t *db, const xc_cmd_t cmd);
 
 /** close an open trace database
  *
