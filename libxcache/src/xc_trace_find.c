@@ -1,6 +1,7 @@
 #include "db_t.h"
 #include "debug.h"
 #include "hash_t.h"
+#include "path.h"
 #include "trace_t.h"
 #include <dirent.h>
 #include <errno.h>
@@ -31,7 +32,7 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
   if (ERROR(db == NULL))
     return EINVAL;
 
-  if (ERROR(db->root < 0))
+  if (ERROR(db->root == NULL))
     return EINVAL;
 
   if (ERROR(query.argc == 0))
@@ -49,7 +50,7 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
     return EINVAL;
 
   DIR *dir = NULL;
-  char path[sizeof(hash_t) * 2 + 1] = {0};
+  char *trace_root = NULL;
   int rc = 0;
 
   {
@@ -59,24 +60,25 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
       goto done;
 
     // stringise the hash
-    snprintf(path, sizeof(path), "%016" PRIx64, hash.data);
+    char stem[sizeof(hash_t) * 2 + 1] = {0};
+    snprintf(stem, sizeof(stem), "%016" PRIx64, hash.data);
 
-    // there seems to be no `opendirat`, so take the long way around
-    int dirfd = openat(db->root, path, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
-    if (dirfd < 0) {
-      // allow the trace to not exist
-      if (ERROR(errno != ENOENT)) {
-        rc = errno;
-        goto done;
-      }
+    // construct a path to this trace’s root
+    trace_root = path_join(db->root, stem);
+    if (ERROR(trace_root == NULL)) {
+      rc = ENOMEM;
       goto done;
     }
-    dir = fdopendir(dirfd);
-    if (ERROR(dir == NULL)) {
+  }
+
+  dir = opendir(trace_root);
+  if (dir == NULL) {
+    // allow the trace to not exist
+    if (ERROR(errno != ENOENT)) {
       rc = errno;
-      (void)close(dirfd);
       goto done;
     }
+    goto done;
   }
 
   while (true) {
@@ -97,24 +99,19 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
     if (!endswith(entry->d_name, ".trace"))
       continue;
 
-    const size_t leaf_len = strlen(entry->d_name);
-    char *stem = calloc(1, sizeof(path) + sizeof("/") - 1 + leaf_len);
-    if (ERROR(stem == NULL)) {
+    char *trace_file = path_join(trace_root, entry->d_name);
+    if (ERROR(trace_file == NULL)) {
       rc = ENOMEM;
       goto done;
     }
-    memcpy(stem, path, sizeof(path) - 1);
-    stem[sizeof(path) - 1] = '/';
-    memcpy(&stem[sizeof(path) - 1 + sizeof("/") - 1], entry->d_name, leaf_len);
 
-    int trace_fd = openat(db->root, stem, O_RDONLY | O_CLOEXEC);
+    int trace_fd = open(trace_file, O_RDONLY | O_CLOEXEC);
     if (ERROR(trace_fd < 0)) {
       rc = errno;
-      free(stem);
+      free(trace_file);
       goto done;
     }
-    // TODO: lock
-    free(stem);
+    free(trace_file);
     FILE *trace_f = fdopen(trace_fd, "r");
     if (ERROR(trace_f == NULL)) {
       rc = errno;
@@ -142,6 +139,7 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
 done:
   if (dir != NULL)
     (void)closedir(dir);
+  free(trace_root);
 
   return rc;
 }

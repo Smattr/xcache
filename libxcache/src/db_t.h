@@ -4,5 +4,5 @@
 
 /// an open database
 struct xc_db {
-  int root; ///< file descriptor of database directory
+  char *root; ///< database directory
 };

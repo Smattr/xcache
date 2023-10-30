@@ -1,9 +1,9 @@
 #include "db_t.h"
 #include "debug.h"
 #include <errno.h>
-#include <fcntl.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <xcache/db.h>
@@ -36,9 +36,9 @@ int xc_db_open(const char *path, xc_db_t **db) {
   }
 
   // open the directory, now that it exists
-  d->root = open(path, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
-  if (ERROR(d->root < 0)) {
-    rc = errno;
+  d->root = strdup(path);
+  if (ERROR(d->root == NULL)) {
+    rc = ENOMEM;
     goto done;
   }
 
