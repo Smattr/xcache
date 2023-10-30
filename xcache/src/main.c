@@ -158,6 +158,8 @@ int main(int argc, char **argv) {
     // if the cache does not exist, create it
     if (mkdir(cache_dir, 0755) < 0 && errno != EEXIST) {
       rc = errno;
+      fprintf(stderr, "failed to create cache directory %s: %s\n", cache_dir,
+              strerror(rc));
       goto done;
     }
 
