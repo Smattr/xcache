@@ -22,7 +22,8 @@ typedef struct xc_trace xc_trace_t;
  * \param trace [out] Handle to completed trace on success
  * \return 0 on success or an errno on failure
  */
-XCACHE_API int xc_trace_record(xc_db_t *db, xc_cmd_t cmd, xc_trace_t **trace);
+XCACHE_API int xc_trace_record(xc_db_t *db, const xc_cmd_t cmd,
+                               xc_trace_t **trace);
 
 /** search for a previously recorded trace
  *
