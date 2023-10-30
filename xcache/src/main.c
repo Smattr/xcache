@@ -180,6 +180,7 @@ int main(int argc, char **argv) {
   }
 
   if (replay_enabled) {
+    DEBUG("attempting replay");
     replay_callback_t state = {0};
     if ((rc = xc_trace_find(db, cmd, replay_callback, &state))) {
       fprintf(stderr, "xc_trace_find: %s\n", strerror(rc));
@@ -194,14 +195,22 @@ int main(int argc, char **argv) {
       DEBUG("replay succeeded");
       goto done;
     }
-    DEBUG("no trace found to replay");
+    DEBUG("replay failed: no trace found to replay");
   }
 
   if (record_enabled) {
-    // TODO: trace
+    DEBUG("attempting record");
+    xc_trace_t *trace = NULL;
+    if ((rc = xc_trace_record(db, cmd, &trace))) {
+      fprintf(stderr, "xc_trace_record: %s\n", strerror(rc));
+      goto done;
+    }
+    DEBUG("record succeeded");
+    goto done;
   }
 
   // did not replay or record, so exec uninstrumented
+  DEBUG("running command uninstrumented");
   if ((rc = xc_cmd_exec(cmd))) {
     fprintf(stderr, "xc_cmd_exec: %s\n", strerror(rc));
     goto done;

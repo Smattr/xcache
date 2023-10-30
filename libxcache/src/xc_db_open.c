@@ -13,6 +13,8 @@ int xc_db_open(const char *path, xc_db_t **db) {
   if (ERROR(path == NULL))
     return EINVAL;
 
+  DEBUG("opening database %s…", path);
+
   if (ERROR(db == NULL))
     return EINVAL;
 
