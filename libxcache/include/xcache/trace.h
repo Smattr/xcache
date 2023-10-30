@@ -55,7 +55,7 @@ XCACHE_API int xc_trace_remove(xc_trace_t *trace);
  * \param trace Trace to replay
  * \return 0 on success or an errno on failure
  */
-XCACHE_API int xc_trace_replay(const xc_trace_t *trace);
+XCACHE_API int xc_replay(const xc_trace_t *trace);
 
 /** release a handle to a trace
  *

@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <xcache/trace.h>
 
-int xc_trace_replay(const xc_trace_t *trace) {
+int xc_replay(const xc_trace_t *trace) {
 
   if (ERROR(trace == NULL))
     return EINVAL;

@@ -139,7 +139,7 @@ static int replay_callback(const xc_trace_t *trace, void *state) {
   // attempt replay
   replay_callback_t *st = state;
   st->found = true;
-  st->rc = xc_trace_replay(trace);
+  st->rc = xc_replay(trace);
 
   // either way, we are done
   return 1;

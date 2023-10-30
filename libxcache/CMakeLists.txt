@@ -33,11 +33,11 @@ add_library(libxcache
   src/xc_db_open.c
   src/xc_debug.c
   src/xc_record.c
+  src/xc_replay.c
   src/xc_set_debug.c
   src/xc_trace_find.c
   src/xc_trace_free.c
   src/xc_trace_is_valid.c
-  src/xc_trace_replay.c
   src/xc_version_is_release.c
   ${CMAKE_CURRENT_BINARY_DIR}/version.c
 )
