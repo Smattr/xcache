@@ -65,14 +65,9 @@ _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd) {
   }
 
   // chdir _after_ the tracer attaches to let it naturally count this as a read
-  if (chdir(cmd.cwd) < 0) {
-    rc = errno;
-    goto fail;
-  }
 
-  execvp(cmd.argv[0], cmd.argv);
-  rc = errno;
-  goto fail;
+  if ((rc = xc_cmd_exec(cmd)))
+    goto fail;
 
 fail:
   assert(rc != 0 && "reached child failure without failing status");
