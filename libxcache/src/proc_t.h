@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include <xcache/cmd.h>
 
 /// a subprocess being traced
 typedef struct {
@@ -14,6 +15,16 @@ typedef struct {
  * \return 0 on success or an errno on failure
  */
 INTERNAL int proc_new(proc_t *proc);
+
+/** execute a process
+ *
+ * This function is intended to be called by a subprocess/tracee. On failure, it
+ * calls `exit` with an errno.
+ *
+ * \param proc Process to run
+ * \param cmd Command describing what to `exec`
+ */
+INTERNAL _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd);
 
 /** destroy a process
  *
