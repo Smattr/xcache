@@ -3,6 +3,8 @@
 
 void proc_free(proc_t proc) {
 
+  proc_end(&proc);
+
   if (proc.errfd[0] > 0)
     (void)close(proc.errfd[0]);
   if (proc.errfd[1] > 0)

@@ -19,6 +19,16 @@ typedef struct {
  */
 INTERNAL int proc_new(proc_t *proc);
 
+/** start a process running
+ *
+ * This function `fork`s.
+ *
+ * \param proc Store for started process ID
+ * \param cmd Command to start running
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int proc_start(proc_t *proc, const xc_cmd_t cmd);
+
 /** execute a process
  *
  * This function is intended to be called by a subprocess/tracee. On failure, it
