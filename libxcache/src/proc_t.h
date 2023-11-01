@@ -1,12 +1,15 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include <sys/types.h>
 #include <xcache/cmd.h>
 
 /// a subprocess being traced
 typedef struct {
   int outfd[2]; ///< pipe for communicating stdout content
   int errfd[2]; ///< pipe for communicating stderr content
+
+  pid_t pid; ///< process ID of the child
 } proc_t;
 
 /** create a new process
@@ -25,6 +28,14 @@ INTERNAL int proc_new(proc_t *proc);
  * \param cmd Command describing what to `exec`
  */
 INTERNAL _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd);
+
+/** unceremoniously terminate a child
+ *
+ * This is a no-op if the child has already terminated.
+ *
+ * \param proc Process to terminate
+ */
+INTERNAL void proc_end(proc_t *proc);
 
 /** destroy a process
  *
