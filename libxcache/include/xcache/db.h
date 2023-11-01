@@ -23,6 +23,9 @@ XCACHE_API int xc_db_open(const char *path, xc_db_t **db);
 
 /** run a command and monitor its behaviour
  *
+ * This function `fork`s and spawns background threads. It attempts to join all
+ * these subprocesses and threads before returning.
+ *
  * \param db Database to record results into
  * \param cmd Command to run
  * \return 0 on success or an errno on failure

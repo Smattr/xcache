@@ -30,6 +30,9 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd) {
   if (ERROR((rc = proc_new(&proc))))
     goto done;
 
+  if (ERROR((rc = proc_start(&proc, cmd))))
+    goto done;
+
   rc = ENOSYS;
   goto done;
 
