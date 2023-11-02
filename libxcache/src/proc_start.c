@@ -82,10 +82,8 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
   //   1. continue to next seccomp stop on Linux ≥ 3.5
   //   2. continue to next syscall on Linux < 3.5
   // I don’t think we care about the </≥4.8 differences
-  if (ERROR(ptrace(PTRACE_CONT, proc->pid, NULL, NULL) < 0)) {
-    rc = errno;
+  if (ERROR((rc = proc_cont(*proc))))
     goto done;
-  }
 
 done:
   return rc;

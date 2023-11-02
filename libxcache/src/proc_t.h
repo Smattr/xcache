@@ -39,6 +39,13 @@ INTERNAL int proc_start(proc_t *proc, const xc_cmd_t cmd);
  */
 INTERNAL _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd);
 
+/** resume a stopped process, running it until the next event
+ *
+ * \param proc Process to resume
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int proc_cont(const proc_t proc);
+
 /** unceremoniously terminate a child
  *
  * This is a no-op if the child has already terminated.
