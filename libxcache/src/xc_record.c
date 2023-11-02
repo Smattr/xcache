@@ -49,6 +49,11 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd) {
     assert(!WIFCONTINUED(status) &&
            "waitpid indicated SIGCONT when we did not request it");
 
+    // we should not have received any of the events we did not ask for
+    assert(!is_exec(status));
+    assert(!is_exit(status));
+    assert(!is_vfork_done(status));
+
     // did the child exit?
     if (WIFEXITED(status)) {
       proc.pid = 0;
