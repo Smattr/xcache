@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <xcache/cmd.h>
 #include <xcache/db.h>
+#include <xcache/record.h>
 #include <xcache/trace.h>
 
 int xc_record(xc_db_t *db, xc_cmd_t cmd) {
