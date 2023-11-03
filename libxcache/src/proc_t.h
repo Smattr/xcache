@@ -3,9 +3,12 @@
 #include "../../common/compiler.h"
 #include <sys/types.h>
 #include <xcache/cmd.h>
+#include <xcache/record.h>
 
 /// a subprocess being traced
 typedef struct {
+  xc_record_mode_t mode;
+
   int outfd[2]; ///< pipe for communicating stdout content
   int errfd[2]; ///< pipe for communicating stderr content
 
@@ -15,9 +18,10 @@ typedef struct {
 /** create a new process
  *
  * \param proc [out] Created process on success
+ * \param mode Acceptable modes
  * \return 0 on success or an errno on failure
  */
-INTERNAL int proc_new(proc_t *proc);
+INTERNAL int proc_new(proc_t *proc, unsigned mode);
 
 /** start a process running
  *

@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <xcache/record.h>
 
 static int set_cloexec(int fd) {
   int flags = fcntl(fd, F_GETFD, 0);
@@ -22,13 +23,23 @@ static int set_nonblock(int fd) {
   return 0;
 }
 
-int proc_new(proc_t *proc) {
+int proc_new(proc_t *proc, unsigned mode) {
 
   assert(proc != NULL);
 
   *proc = (proc_t){0};
   proc_t p = {0};
   int rc = 0;
+
+  // pick the newest mode available to us
+  assert((mode & (XC_SYSCALL | XC_EARLY_SECCOMP | XC_LATE_SECCOMP)) != 0);
+  if (mode & XC_LATE_SECCOMP) {
+    p.mode = XC_LATE_SECCOMP;
+  } else if (mode & XC_EARLY_SECCOMP) {
+    p.mode = XC_EARLY_SECCOMP;
+  } else {
+    p.mode = XC_SYSCALL;
+  }
 
   // setup a pipe for stdout
   if (ERROR(pipe(p.outfd) < 0)) {

@@ -48,11 +48,14 @@ XCACHE_API unsigned xc_record_modes(unsigned request);
  * This function `fork`s and spawns background threads. It attempts to join all
  * these subprocesses and threads before returning.
  *
+ * `mode` is expected to be a bitmask of `xc_record_mode_t` values.
+ *
  * \param db Database to record results into
  * \param cmd Command to run
+ * \param mode Acceptable modes in which to record
  * \return 0 on success or an errno on failure
  */
-XCACHE_API int xc_record(xc_db_t *db, const xc_cmd_t cmd);
+XCACHE_API int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode);
 
 #ifdef __cplusplus
 }

@@ -11,7 +11,7 @@
 #include <xcache/record.h>
 #include <xcache/trace.h>
 
-int xc_record(xc_db_t *db, xc_cmd_t cmd) {
+int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
 
   if (ERROR(db == NULL))
     return EINVAL;
@@ -27,11 +27,21 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd) {
       return EINVAL;
   }
 
+  if (ERROR((mode & XC_MODE_AUTO) == 0))
+    return EINVAL;
+
   xc_trace_t *trace = NULL;
   proc_t proc = {0};
   int rc = 0;
 
-  if (ERROR((rc = proc_new(&proc))))
+  // find a usable recording mode
+  mode = xc_record_modes(mode);
+  if (ERROR(mode == 0)) {
+    rc = ENOSYS;
+    goto done;
+  }
+
+  if (ERROR((rc = proc_new(&proc, mode))))
     goto done;
 
   if (ERROR((rc = proc_start(&proc, cmd))))

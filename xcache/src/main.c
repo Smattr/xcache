@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
 
   if (record_enabled) {
     DEBUG("attempting record");
-    if ((rc = xc_record(db, cmd))) {
+    if ((rc = xc_record(db, cmd, XC_MODE_AUTO))) {
       fprintf(stderr, "xc_record: %s\n", strerror(rc));
       goto done;
     }
