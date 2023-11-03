@@ -27,6 +27,7 @@ add_library(libxcache
   src/proc_exec.c
   src/proc_free.c
   src/proc_new.c
+  src/proc_signal.c
   src/proc_start.c
   src/proc_syscall.c
   src/trace_read.c

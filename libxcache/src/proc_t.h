@@ -50,6 +50,16 @@ INTERNAL _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd);
  */
 INTERNAL int proc_cont(const proc_t proc);
 
+/** resume a stopped process, forwarding it the given signal
+ *
+ * If `sig` is 0, no signal will be forwarded.
+ *
+ * \param proc Process to resume
+ * \param sig Signal to forward
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int proc_signal(const proc_t proc, int sig);
+
 /** resume a stopped process, running it until the next syscall
  *
  * \param proc Process to resume
