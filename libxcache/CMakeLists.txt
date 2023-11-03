@@ -37,6 +37,7 @@ add_library(libxcache
   src/xc_db_open.c
   src/xc_debug.c
   src/xc_record.c
+  src/xc_record_modes.c
   src/xc_replay.c
   src/xc_set_debug.c
   src/xc_trace_find.c

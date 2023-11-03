@@ -72,9 +72,25 @@ static int parse_args(int argc, char **argv) {
       replay_enabled = true;
       break;
 
-    case 'V': // --version, -V
-      printf("xcache version %s\n", xc_version());
+    case 'V': { // --version, -V
+      printf("xcache version %s\n supported recording modes: ", xc_version());
+      unsigned modes = xc_record_modes(XC_MODE_AUTO);
+      if (modes == 0)
+        printf("<none>");
+      const char *separator = "";
+      if (modes & XC_SYSCALL) {
+        printf("ptrace");
+        separator = ", ";
+      }
+      if (modes & XC_EARLY_SECCOMP) {
+        printf("%sseccomp (early)", separator);
+        separator = ", ";
+      }
+      if (modes & XC_LATE_SECCOMP)
+        printf("%sseccomp (late)", separator);
+      printf("\n");
       exit(EXIT_SUCCESS);
+    }
 
     case 133: // --read-write, --rw
       record_enabled = true;
