@@ -2,6 +2,7 @@
 #include "proc_t.h"
 #include <assert.h>
 #include <errno.h>
+#include <linux/version.h>
 #include <signal.h>
 #include <stddef.h>
 #include <sys/ptrace.h>
@@ -67,10 +68,13 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
 
   // set our tracer preferences
   {
-    // TODO: support Linux < 3.5, missing PTRACE_O_SECCOMP
-    const int opts = PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACESECCOMP |
-                     PTRACE_O_TRACECLONE | PTRACE_O_TRACEFORK |
-                     PTRACE_O_TRACEVFORK;
+    int opts = PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACECLONE |
+               PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK;
+#if LINUX_VERSION_MAJOR > 3 ||                                                 \
+    (LINUX_VERSION_MAJOR == 3 && LINUX_VERSION_MINOR > 4)
+    if (proc->mode == XC_EARLY_SECCOMP || proc->mode == XC_LATE_SECCOMP)
+      opts |= PTRACE_O_TRACESECCOMP;
+#endif
     if (ERROR(ptrace(PTRACE_SETOPTIONS, proc->pid, NULL, opts) < 0)) {
       rc = errno;
       goto done;
@@ -78,12 +82,13 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
   }
 
   // resume the child
-  // TODO: Do some more nuanced discrimination here:
-  //   1. continue to next seccomp stop on Linux ≥ 3.5
-  //   2. continue to next syscall on Linux < 3.5
-  // I don’t think we care about the </≥4.8 differences
-  if (ERROR((rc = proc_cont(*proc))))
-    goto done;
+  if (proc->mode == XC_SYSCALL) {
+    if (ERROR((rc = proc_syscall(*proc))))
+      goto done;
+  } else {
+    if (ERROR((rc = proc_cont(*proc))))
+      goto done;
+  }
 
 done:
   return rc;

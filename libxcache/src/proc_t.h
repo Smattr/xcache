@@ -50,6 +50,13 @@ INTERNAL _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd);
  */
 INTERNAL int proc_cont(const proc_t proc);
 
+/** resume a stopped process, running it until the next syscall
+ *
+ * \param proc Process to resume
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int proc_syscall(const proc_t proc);
+
 /** unceremoniously terminate a child
  *
  * This is a no-op if the child has already terminated.
