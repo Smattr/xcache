@@ -14,7 +14,7 @@ typedef struct {
 
 /** create a new process
  *
- * \param proce [out] Created process on success
+ * \param proc [out] Created process on success
  * \return 0 on success or an errno on failure
  */
 INTERNAL int proc_new(proc_t *proc);
