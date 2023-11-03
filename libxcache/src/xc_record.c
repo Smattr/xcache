@@ -109,9 +109,12 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
       goto done;
     }
 
-    DEBUG("child stopped by signal %d", WSTOPSIG(status));
-    if (ERROR((rc = proc_cont(proc))))
-      goto done;
+    {
+      const int sig = WSTOPSIG(status);
+      DEBUG("child stopped by signal %d", sig);
+      if (ERROR((rc = proc_signal(proc, sig))))
+        goto done;
+    }
   }
 
   rc = ENOSYS;
