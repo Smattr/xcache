@@ -1,5 +1,6 @@
 #include "alloc.h"
 #include "debug.h"
+#include "help.h"
 #include <errno.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -63,9 +64,14 @@ static int parse_args(int argc, char **argv) {
       replay_enabled = false;
       break;
 
-    case 'h':
-      // TODO
-      break;
+    case 'h': { // --help, -h
+      int rc = help();
+      if (rc) {
+        fprintf(stderr, "failed to show manpage: %s\n", strerror(rc));
+        exit(EXIT_FAILURE);
+      }
+      exit(EXIT_SUCCESS);
+    }
 
     case 132: // --read-only, --ro
       record_enabled = false;

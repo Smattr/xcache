@@ -1,0 +1,115 @@
+.TH XCACHE 1
+.SH NAME
+xcache \- ccache for everything
+.SH SYNOPSIS
+.B \fBxcache\fR \fBoptions\fR \fIcommand\fR [\fIargs\fR]
+.SH DESCRIPTION
+Xcache is a tool for tracing and then caching the outputs of arbitrary programs.
+You run something once with xcache observing it. If its inputs have not changed
+the next time you execute it, xcache can retrieve the outputs it cached from the
+previous run and avoid re-executing the program.
+.PP
+The purpose of this is to save time spent executing programs that do complicated
+calculations. The prime example is a compiler. Running a compiler on a large
+program can take a long time due to time spent computing optimisations. Xcache
+can save you spending this time repeatedly in future compilations.
+.PP
+If you are familiar with
+.BR ccache(1)
+xcache tries to do the same thing, but for any program, not just your C
+compiler.
+.SH OPTIONS
+\fB--debug\fR
+.RS
+Enable debugging output. Debugging messages will be printed to stderr.
+.RE
+.PP
+\fB--dir\fR \fIPATH\fR or \fB-d\fR \fIPATH\fR
+.RS
+Set directory in which to store or lookup cache results. If this option is not
+given, the contents of the environment variable \fB$XCACHE_DIR\fR is used. If
+\fB$XCACHE_DIR\fR is not set, the path \fB$XDG_CACHE_HOME/xcache\fR is used. If
+\fB$XDG_CACHE_HOME\fR is not set, the path \fB$HOME/.xcache\fR is used.
+.RE
+.PP
+\fB--disable\fR
+.br
+\fB--read-only\fR or \fB--ro\fR
+.br
+\fB--read-write\fR or \fB--rw\fR
+.br
+\fB--write-only\fR or \fB--wo\fR
+.RS
+Select which combination of replay and record functionality is enabled:
+.RS
+.IP \[bu] 2
+\fB--disable\fR Disable both record and replay. In this mode, the sub-command is
+simply executed as-is.
+.IP \[bu]
+\fB--read-only\fR Disable record, enable replay.
+.IP \[bu]
+\fB--read-write\fR Enable both record and replay (default).
+.IP \[bu]
+\fB--write-only\fR Enable record, disable replay.
+.RE
+.RE
+.PP
+\fB--help\fR
+.RS
+Display this information.
+.RE
+.PP
+\fB--version\fR or \f-V\fR
+.RS
+Display version information and exit.
+.RE
+.SH ENVIRONMENT
+The behaviour of xcache is affected by the following environment variables.
+.PP
+\fBHOME\fR
+.RS
+If the \fB--dir\fR option is not passed and the \fBXCACHE_DIR\fR environment
+variable is unset and the \fBXDG_CACHE_HOME\fR environment variable is unset,
+\fB$HOME/.xcache\fR will be used as the cache directory.
+.RE
+.PP
+\fBXCACHE_DIR\fR
+.RS
+If the \fB--dir\fR option is not passed, \fB$XCACHE_DIR\fR will be used as the
+cache directory.
+.RE
+.PP
+\fBXDG_CACHE_HOME\fR
+.RS
+If the \fB--dir\fR option is not passed and the \fBXCACHE_DIR\fR environment
+variable is unset, \fB$XDG_CACHE_HOME/xcache\fR will be used as the cache
+directory.
+.RE
+.SH AUTHOR
+All comments, questions and complaints should be directed to Matthew Fernandez
+<matthew.fernandez@gmail.com>.
+.SH LICENSE
+This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to <http://unlicense.org>
