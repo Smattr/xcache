@@ -21,6 +21,7 @@ add_library(libxcache
   src/output_free.c
   src/output_read.c
   src/output_replay.c
+  src/page_size.c
   src/path_absolute.c
   src/path_join.c
   src/proc_cont.c
