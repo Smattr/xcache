@@ -30,6 +30,7 @@ add_library(libxcache
   src/proc_signal.c
   src/proc_start.c
   src/proc_syscall.c
+  src/syscall_to_str.c
   src/sysenter.c
   src/sysexit.c
   src/trace_read.c

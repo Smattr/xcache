@@ -16,3 +16,10 @@ INTERNAL int sysenter(proc_t *proc);
  * \return 0 on success or an errno on failure
  */
 INTERNAL int sysexit(proc_t *proc);
+
+/** convert a syscall number to its name
+ *
+ * \param number Syscall to lookup
+ * \return The name of the syscall of "<unknown>" if there was no match
+ */
+INTERNAL const char *syscall_to_str(unsigned long number);
