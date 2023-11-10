@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include <stdbool.h>
 #include <sys/types.h>
 #include <xcache/cmd.h>
 #include <xcache/record.h>
@@ -12,7 +13,8 @@ typedef struct {
   int outfd[2]; ///< pipe for communicating stdout content
   int errfd[2]; ///< pipe for communicating stderr content
 
-  pid_t pid; ///< process ID of the child
+  pid_t pid;                ///< process ID of the child
+  bool pending_sysexit : 1; ///< is this process mid-syscall?
 } proc_t;
 
 /** create a new process

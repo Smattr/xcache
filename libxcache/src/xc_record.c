@@ -1,6 +1,7 @@
 #include "debug.h"
 #include "event.h"
 #include "proc_t.h"
+#include "syscall.h"
 #include "trace_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -100,13 +101,22 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
     }
 
     if (is_seccomp(status)) {
+      assert((proc.mode == XC_EARLY_SECCOMP || proc.mode == XC_LATE_SECCOMP) &&
+             "received a seccomp stop when we did not request it");
       rc = ENOTSUP; // TODO
       goto done;
     }
 
     if (is_syscall(status)) {
-      rc = ENOTSUP; // TODO
-      goto done;
+      if (proc.pending_sysexit) {
+        if (ERROR((rc = sysexit(&proc))))
+          goto done;
+      } else {
+        if (ERROR((rc = sysenter(&proc))))
+          goto done;
+      }
+      proc.pending_sysexit = !proc.pending_sysexit;
+      continue;
     }
 
     {
