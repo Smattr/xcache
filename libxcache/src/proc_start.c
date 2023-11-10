@@ -4,7 +4,8 @@
 #include <errno.h>
 #include <linux/version.h>
 #include <signal.h>
-#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -17,6 +18,13 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
   assert(proc->pid == 0 && "proc already started?");
 
   int rc = 0;
+
+  free(proc->cwd);
+  proc->cwd = strdup(cmd.cwd);
+  if (ERROR(proc->cwd == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
 
   {
     pid_t pid = fork();

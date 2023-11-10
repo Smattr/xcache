@@ -1,7 +1,7 @@
 #include "proc_t.h"
 #include <assert.h>
 #include <signal.h>
-#include <stddef.h>
+#include <stdlib.h>
 
 void proc_end(proc_t *proc) {
 
@@ -14,4 +14,7 @@ void proc_end(proc_t *proc) {
   (void)kill(proc->pid, SIGKILL);
   // TODO: wait() on the process
   proc->pid = 0;
+
+  free(proc->cwd);
+  proc->cwd = NULL;
 }

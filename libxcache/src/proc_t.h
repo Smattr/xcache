@@ -13,6 +13,8 @@ typedef struct {
   int outfd[2]; ///< pipe for communicating stdout content
   int errfd[2]; ///< pipe for communicating stderr content
 
+  char *cwd; ///< current working directory
+
   pid_t pid;                ///< process ID of the child
   bool pending_sysexit : 1; ///< is this process mid-syscall?
 } proc_t;
