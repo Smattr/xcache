@@ -2,6 +2,7 @@
 
 #include "../../common/compiler.h"
 #include <stddef.h>
+#include <stdint.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/user.h>
@@ -24,6 +25,6 @@ static inline unsigned long peek_syscall_no(pid_t pid) {
  *
  * \param out [out] Read string on success
  * \param pid Process to read from
- * \param offset Address to read from
+ * \param addr Address to read from
  */
-INTERNAL int peek_string(char **out, pid_t pid, size_t offset);
+INTERNAL int peek_str(char **out, pid_t pid, uintptr_t addr);

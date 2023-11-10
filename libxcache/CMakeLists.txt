@@ -24,6 +24,7 @@ add_library(libxcache
   src/page_size.c
   src/path_absolute.c
   src/path_join.c
+  src/peek_str.c
   src/proc_cont.c
   src/proc_end.c
   src/proc_exec.c
@@ -69,6 +70,7 @@ add_custom_command(
   COMMAND /usr/bin/env true)
 
 target_compile_options(libxcache PRIVATE -D_DEFAULT_SOURCE)
+target_compile_options(libxcache PRIVATE -D_GNU_SOURCE)
 target_compile_options(libxcache PRIVATE -D_POSIX_C_SOURCE=200809L)
 
 if(APPLE)
