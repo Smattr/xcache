@@ -2,10 +2,14 @@
 #include "peek.h"
 #include "proc_t.h"
 #include "syscall.h"
+#include <assert.h>
 #include <errno.h>
+#include <stddef.h>
 #include <sys/syscall.h>
 
 int sysenter(proc_t *proc) {
+
+  assert(proc != NULL);
 
   int rc = 0;
 

@@ -36,6 +36,7 @@ add_library(libxcache
   src/syscall_to_str.c
   src/sysenter.c
   src/sysexit.c
+  src/sysexit_chdir.c
   src/trace_read.c
   src/xc_cmd_eq.c
   src/xc_cmd_exec.c

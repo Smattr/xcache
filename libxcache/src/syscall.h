@@ -17,6 +17,8 @@ INTERNAL int sysenter(proc_t *proc);
  */
 INTERNAL int sysexit(proc_t *proc);
 
+INTERNAL int sysexit_chdir(proc_t *proc);
+
 /** convert a syscall number to its name
  *
  * \param number Syscall to lookup
