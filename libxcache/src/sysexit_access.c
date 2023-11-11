@@ -6,12 +6,11 @@
 #include "syscall.h"
 #include <assert.h>
 #include <errno.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <xcache/record.h>
 
-int sysexit_chdir(proc_t *proc) {
+int sysexit_access(proc_t *proc) {
 
   assert(proc != NULL);
 
@@ -37,14 +36,23 @@ int sysexit_chdir(proc_t *proc) {
     goto done;
   }
 
+  // extract the flags
+  const long flags = peek_reg(proc->pid, REG(rsi));
+
+  // treat any flag we do not know as the child doing something unsupported
+  if (ERROR(flags & ~(R_OK | W_OK | X_OK | F_OK))) {
+    rc = ECHILD;
+    goto done;
+  }
+
   // extract the result
   const int err = peek_errno(proc->pid);
 
-  DEBUG("pid %ld, chdir(\"%s\") = %d, errno == %d", (long)proc->pid, path,
-        err == 0 ? 0 : -1, err);
+  DEBUG("pid %ld, access(\"%s\", %ld) = %d, errno == %d", (long)proc->pid, path,
+        flags, err == 0 ? 0 : -1, err);
 
-  // record chdir() as if it were access()
-  saw = action_new_access(abs, err, R_OK);
+  // record it
+  saw = action_new_access(abs, err, (int)flags);
   if (ERROR(saw == NULL)) {
     rc = ENOMEM;
     goto done;
@@ -53,13 +61,6 @@ int sysexit_chdir(proc_t *proc) {
   saw->previous = proc->actions;
   proc->actions = saw;
   saw = NULL;
-
-  // if it succeeded, update our cwd
-  if (err == 0) {
-    free(proc->cwd);
-    proc->cwd = abs;
-    abs = NULL;
-  }
 
   // restart the process
   if (proc->mode == XC_SYSCALL) {

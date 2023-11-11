@@ -41,6 +41,7 @@ add_library(libxcache
   src/sysenter.c
   src/sysenter_execve.c
   src/sysexit.c
+  src/sysexit_access.c
   src/sysexit_chdir.c
   src/trace_read.c
   src/xc_cmd_eq.c

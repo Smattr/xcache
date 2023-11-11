@@ -21,6 +21,9 @@ IGNORE(mmap)
 #ifdef __NR_brk
 IGNORE(brk)
 #endif
+#ifdef __NR_access
+SYSENTER_IGNORE(access)
+#endif
 #ifdef __NR_execve
 SYSEXIT_IGNORE(execve)
 #endif

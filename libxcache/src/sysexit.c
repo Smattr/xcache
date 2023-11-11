@@ -37,6 +37,13 @@ int sysexit(proc_t *proc) {
   } while (0);
 #include "ignore.h"
 
+#ifdef __NR_access
+  if (syscall_no == __NR_access) {
+    if (ERROR((rc = sysexit_access(proc))))
+      goto done;
+    goto done;
+  }
+#endif
 #ifdef __NR_chdir
   if (syscall_no == __NR_chdir) {
     if (ERROR((rc = sysexit_chdir(proc))))

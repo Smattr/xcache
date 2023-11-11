@@ -24,6 +24,13 @@ INTERNAL int sysenter_execve(proc_t *proc);
  */
 INTERNAL int sysexit(proc_t *proc);
 
+/** handle end of `access`
+ *
+ * \param proc Process that made this syscall
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int sysexit_access(proc_t *proc);
+
 /** handle end of `chdir`
  *
  * \param proc Process that made this syscall
