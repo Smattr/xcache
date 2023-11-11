@@ -78,6 +78,12 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
   {
     int opts = PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACECLONE |
                PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK;
+    // We do not care about `PTRACE_EVENT_EXEC`, but we set `PTRACE_O_TRACEEXEC`
+    // anyway. This seems the only way to avoid a `SIGTRAP` after `execve`. This
+    // exec `SIGTRAP` is indistinguishable from a regular `SIGTRAP`, so we would
+    // otherwise have to do our own tracking of which PID(s) had just called
+    // `execve` and would thus receive one of these.
+    opts |= PTRACE_O_TRACEEXEC;
 #if LINUX_VERSION_MAJOR > 3 ||                                                 \
     (LINUX_VERSION_MAJOR == 3 && LINUX_VERSION_MINOR > 4)
     if (proc->mode == XC_EARLY_SECCOMP || proc->mode == XC_LATE_SECCOMP)

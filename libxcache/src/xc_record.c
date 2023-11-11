@@ -62,7 +62,6 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
            "waitpid indicated SIGCONT when we did not request it");
 
     // we should not have received any of the events we did not ask for
-    assert(!is_exec(status));
     assert(!is_exit(status));
     assert(!is_vfork_done(status));
 
@@ -116,6 +115,19 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
           goto done;
       }
       proc.pending_sysexit = !proc.pending_sysexit;
+      continue;
+    }
+
+    // we do not care about exec events
+    if (is_exec(status)) {
+      DEBUG("pid %ld, PTRACE_EVENT_EXEC", (long)proc.pid);
+      if (proc.mode == XC_SYSCALL) {
+        if (ERROR((rc = proc_syscall(proc))))
+          goto done;
+      } else {
+        if (ERROR((rc = proc_cont(proc))))
+          goto done;
+      }
       continue;
     }
 
