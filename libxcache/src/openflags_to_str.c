@@ -66,10 +66,9 @@ char *openflags_to_str(long flags) {
 
 #undef DO
 
-  // if there were unreocgnised bits, fallback on the raw number
-  if (flags & ~recognised) {
-    rewind(stream);
-    if (fprintf(stream, "%ld", flags) < 0)
+  const long unrecognised = flags & ~recognised;
+  if (unrecognised != 0) {
+    if (fprintf(stream, "|%ld", unrecognised) < 0)
       goto done;
   }
 
