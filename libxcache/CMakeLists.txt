@@ -3,6 +3,7 @@ project(libxcache LANGUAGES C)
 add_library(libxcache
   src/action_free.c
   src/action_free_all.c
+  src/action_new_access.c
   src/cbor_read_str.c
   src/cbor_read_u64.c
   src/cbor_read_u64_raw.c

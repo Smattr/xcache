@@ -1,3 +1,4 @@
+#include "action_t.h"
 #include "debug.h"
 #include "path.h"
 #include "peek.h"
@@ -7,6 +8,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int sysexit_chdir(proc_t *proc) {
 
@@ -14,6 +16,7 @@ int sysexit_chdir(proc_t *proc) {
 
   char *path = NULL;
   char *abs = NULL;
+  action_t *saw = NULL;
   int rc = 0;
 
   // extract the path
@@ -38,6 +41,18 @@ int sysexit_chdir(proc_t *proc) {
 
   DEBUG("pid %ld, chdir(\"%s\") = %ld", (long)proc->pid, path, ret);
 
+  // record chdir() as if it were access()
+  // TODO: read errno from child
+  saw = action_new_access(abs, 0, R_OK);
+  if (ERROR(saw == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
+  saw->previous = proc->actions;
+  proc->actions = saw;
+  saw = NULL;
+
   // if it succeeded, update our cwd
   if (ret == 0) {
     free(proc->cwd);
@@ -45,10 +60,17 @@ int sysexit_chdir(proc_t *proc) {
     abs = NULL;
   }
 
-  // TODO: track the read attempt
-  rc = ENOTSUP;
+  // restart the process
+  if (proc->mode == XC_SYSCALL) {
+    if (ERROR((rc = proc_syscall(*proc))))
+      goto done;
+  } else {
+    if (ERROR((rc = proc_cont(*proc))))
+      goto done;
+  }
 
 done:
+  action_free(saw);
   free(abs);
   free(path);
 

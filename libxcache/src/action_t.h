@@ -42,6 +42,15 @@ typedef struct action {
   struct action *previous; /// previous action in a linked-list
 } action_t;
 
+/** create an action for an access() call
+ *
+ * \param path Absolute path to the target file/directory
+ * \param err Any errno that resulted
+ * \param flags Flags to access()
+ * \return A created action or `NULL` on out-of-memory
+ */
+INTERNAL action_t *action_new_access(const char *path, int err, int flags);
+
 /** destroy an action
  *
  * This assumes the action has been heap allocated and frees the pointer itself.
