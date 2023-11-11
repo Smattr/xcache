@@ -14,14 +14,15 @@ int sysexit(proc_t *proc) {
   int rc = 0;
 
   const unsigned long syscall_no = peek_syscall_no(proc->pid);
-  DEBUG("sysexit %s (%lu)", syscall_to_str(syscall_no), syscall_no);
+  DEBUG("pid %ld, sysexit %s«%lu»", (long)proc->pid, syscall_to_str(syscall_no),
+        syscall_no);
 
 // skip ignored syscalls and run them to their next event
 #define SYSENTER_IGNORE(call) // notthing
 #define SYSEXIT_IGNORE(call)                                                   \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
-      DEBUG("ignoring %s (%lu)", #call, syscall_no);                           \
+      DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
       if (proc->mode == XC_SYSCALL) {                                          \
         if (ERROR((rc = proc_syscall(*proc)))) {                               \
           goto done;                                                           \

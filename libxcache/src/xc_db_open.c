@@ -37,7 +37,6 @@ int xc_db_open(const char *path, xc_db_t **db) {
     created = true;
   }
 
-  // open the directory, now that it exists
   d->root = strdup(path);
   if (ERROR(d->root == NULL)) {
     rc = ENOMEM;

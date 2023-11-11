@@ -78,8 +78,8 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
 
     // was the child killed by a signal?
     if (ERROR(WIFSIGNALED(status))) {
+      DEBUG("pid %ld died with signal %d", (long)proc.pid, WTERMSIG(status));
       proc.pid = 0;
-      DEBUG("child died with signal %d", WTERMSIG(status));
       errno = ECHILD;
       goto done;
     }
@@ -133,7 +133,7 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
 
     {
       const int sig = WSTOPSIG(status);
-      DEBUG("child stopped by signal %d", sig);
+      DEBUG("pid %ld, stopped by signal %d", (long)proc.pid, sig);
       if (ERROR((rc = proc_signal(proc, sig))))
         goto done;
     }
