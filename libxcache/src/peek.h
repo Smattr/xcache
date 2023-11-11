@@ -21,6 +21,17 @@ static inline unsigned long peek_syscall_no(pid_t pid) {
   return (unsigned long)peek_reg(pid, REG(orig_rax));
 }
 
+/// read the syscall return value at sysexit
+static inline long peek_ret(pid_t pid) { return peek_reg(pid, REG(rax)); }
+
+/// read the errno value at sysexit
+static inline int peek_errno(pid_t pid) {
+  const long ret = peek_ret(pid);
+  if (ret >= 0)
+    return 0;
+  return (int)-ret;
+}
+
 /** read a NUL-terminated string out of a child’s address space
  *
  * \param out [out] Read string on success

@@ -37,13 +37,13 @@ int sysexit_chdir(proc_t *proc) {
   }
 
   // extract the result
-  const long ret = peek_reg(proc->pid, REG(rax));
+  const int err = peek_errno(proc->pid);
 
-  DEBUG("pid %ld, chdir(\"%s\") = %ld", (long)proc->pid, path, ret);
+  DEBUG("pid %ld, chdir(\"%s\") = %d, errno == %d", (long)proc->pid, path,
+        err == 0 ? 0 : -1, err);
 
   // record chdir() as if it were access()
-  // TODO: read errno from child
-  saw = action_new_access(abs, 0, R_OK);
+  saw = action_new_access(abs, err, R_OK);
   if (ERROR(saw == NULL)) {
     rc = ENOMEM;
     goto done;
@@ -54,7 +54,7 @@ int sysexit_chdir(proc_t *proc) {
   saw = NULL;
 
   // if it succeeded, update our cwd
-  if (ret == 0) {
+  if (err == 0) {
     free(proc->cwd);
     proc->cwd = abs;
     abs = NULL;
