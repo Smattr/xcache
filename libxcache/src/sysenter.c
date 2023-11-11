@@ -20,16 +20,17 @@ int sysenter(proc_t *proc) {
   // prefer to handle at exit because the return value is available
 
 // skip ignored syscalls and run them to their sysexit
-#define IGNORE(call)                                                           \
+#define SYSENTER_IGNORE(call)                                                  \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
       DEBUG("ignoring %s (%lu)", #call, syscall_no);                           \
       if (ERROR((rc = proc_syscall(*proc)))) {                                 \
         goto done;                                                             \
       }                                                                        \
-      return 0;                                                                \
+      goto done;                                                               \
     }                                                                          \
   } while (0);
+#define SYSEXIT_IGNORE(call) // nothing
 #include "ignore.h"
 
   // `execve` is one of the few syscalls we must handle on enter because the

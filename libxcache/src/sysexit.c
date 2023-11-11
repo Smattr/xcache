@@ -16,6 +16,26 @@ int sysexit(proc_t *proc) {
   const unsigned long syscall_no = peek_syscall_no(proc->pid);
   DEBUG("sysexit %s (%lu)", syscall_to_str(syscall_no), syscall_no);
 
+// skip ignored syscalls and run them to their next event
+#define SYSENTER_IGNORE(call) // notthing
+#define SYSEXIT_IGNORE(call)                                                   \
+  do {                                                                         \
+    if (syscall_no == __NR_##call) {                                           \
+      DEBUG("ignoring %s (%lu)", #call, syscall_no);                           \
+      if (proc->mode == XC_SYSCALL) {                                          \
+        if (ERROR((rc = proc_syscall(*proc)))) {                               \
+          goto done;                                                           \
+        }                                                                      \
+      } else {                                                                 \
+        if (ERROR((rc = proc_cont(*proc)))) {                                  \
+          goto done;                                                           \
+        }                                                                      \
+      }                                                                        \
+      goto done;                                                               \
+    }                                                                          \
+  } while (0);
+#include "ignore.h"
+
 #ifdef __NR_chdir
   if (syscall_no == __NR_chdir) {
     if (ERROR((rc = sysexit_chdir(proc))))
