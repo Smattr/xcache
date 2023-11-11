@@ -15,6 +15,9 @@
 #error "<sys/syscall.h> seems not to have been #included"
 #endif
 
+#ifdef __NR_brk
+IGNORE(brk)
+#endif
 #ifdef __NR_execve
 SYSEXIT_IGNORE(execve)
 #endif
