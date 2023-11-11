@@ -1,9 +1,12 @@
+#include "action_t.h"
 #include "proc_t.h"
 #include <unistd.h>
 
 void proc_free(proc_t proc) {
 
   proc_end(&proc);
+
+  action_free_all(proc.actions);
 
   if (proc.errfd[0] > 0)
     (void)close(proc.errfd[0]);

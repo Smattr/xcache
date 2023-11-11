@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include "action_t.h"
 #include <stdbool.h>
 #include <sys/types.h>
 #include <xcache/cmd.h>
@@ -17,6 +18,8 @@ typedef struct {
 
   pid_t pid;                ///< process ID of the child
   bool pending_sysexit : 1; ///< is this process mid-syscall?
+
+  action_t *actions; ///< list of actions observed
 } proc_t;
 
 /** create a new process
