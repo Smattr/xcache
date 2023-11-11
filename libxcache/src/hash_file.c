@@ -36,6 +36,8 @@ int hash_file(const char *path, hash_t *hash) {
     goto done;
   }
 
+  // FIXME: handle size == 0
+
   base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
   if (ERROR(base == MAP_FAILED)) {
     rc = errno;
