@@ -33,3 +33,6 @@ SYSENTER_IGNORE(chdir)
 #ifdef __NR_arch_prctl
 IGNORE(arch_prctl)
 #endif
+#ifdef __NR_openat
+SYSENTER_IGNORE(openat)
+#endif

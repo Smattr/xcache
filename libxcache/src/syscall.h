@@ -38,6 +38,13 @@ INTERNAL int sysexit_access(proc_t *proc);
  */
 INTERNAL int sysexit_chdir(proc_t *proc);
 
+/** handle end of `openat`
+ *
+ * \param proc Process that made this syscall
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int sysexit_openat(proc_t *proc);
+
 /** convert a syscall number to its name
  *
  * \param number Syscall to lookup

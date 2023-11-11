@@ -51,6 +51,13 @@ int sysexit(proc_t *proc) {
     goto done;
   }
 #endif
+#ifdef __NR_openat
+  if (syscall_no == __NR_openat) {
+    if (ERROR((rc = sysexit_openat(proc))))
+      goto done;
+    goto done;
+  }
+#endif
 
   rc = ENOTSUP;
 done:
