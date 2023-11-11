@@ -51,6 +51,13 @@ typedef struct action {
  */
 INTERNAL action_t *action_new_access(const char *path, int err, int flags);
 
+/** create an action for a read open() call
+ *
+ * \param path Absolute path to the target file/directory
+ * \return A created action or `NULL` on out-of-memory
+ */
+INTERNAL action_t *action_new_read(const char *path);
+
 /** destroy an action
  *
  * This assumes the action has been heap allocated and frees the pointer itself.
