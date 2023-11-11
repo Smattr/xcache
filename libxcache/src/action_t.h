@@ -56,10 +56,12 @@ INTERNAL int action_new_access(action_t **action, const char *path, int err,
 /** create an action for a read open() call
  *
  * \param action [out] Created action on success
+ * \param expected_err Expected error result
  * \param path Absolute path to the target file/directory
  * \return 0 on success or an errno on failure
  */
-INTERNAL int action_new_read(action_t **action, const char *path);
+INTERNAL int action_new_read(action_t **action, int expected_err,
+                             const char *path);
 
 /** destroy an action
  *

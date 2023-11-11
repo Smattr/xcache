@@ -78,7 +78,7 @@ int sysexit_openat(proc_t *proc) {
   }
 
   // record it
-  if (ERROR((rc = action_new_read(&saw, abs))))
+  if (ERROR((rc = action_new_read(&saw, err, abs))))
     goto done;
 
   saw->previous = proc->actions;

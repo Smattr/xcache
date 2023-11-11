@@ -37,8 +37,8 @@ int sysenter_execve(proc_t *proc) {
 
   DEBUG("pid %ld, execve(\"%s\", …)", (long)proc->pid, path);
 
-  // record execve() as a read
-  if (ERROR((rc = action_new_read(&saw, abs))))
+  // record execve() as a read, assuming success
+  if (ERROR((rc = action_new_read(&saw, 0, abs))))
     goto done;
 
   saw->previous = proc->actions;

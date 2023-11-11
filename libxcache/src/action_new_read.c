@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int action_new_read(action_t **action, const char *path) {
+int action_new_read(action_t **action, int expected_err, const char *path) {
 
   assert(action != NULL);
   assert(path != NULL);
@@ -31,6 +31,13 @@ int action_new_read(action_t **action, const char *path) {
 
   // TODO: handle EISDIR, mmap failure
   a->err = hash_file(path, &a->read.hash);
+
+  // if we saw a different error to the child, assume it did something
+  // unsupported
+  if (ERROR(a->err != expected_err)) {
+    rc = ECHILD;
+    goto done;
+  }
 
   *action = a;
   a = NULL;
