@@ -15,6 +15,9 @@
 #error "<sys/syscall.h> seems not to have been #included"
 #endif
 
+#ifdef __NR_mmap
+IGNORE(mmap)
+#endif
 #ifdef __NR_brk
 IGNORE(brk)
 #endif
@@ -23,4 +26,7 @@ SYSEXIT_IGNORE(execve)
 #endif
 #ifdef __NR_chdir
 SYSENTER_IGNORE(chdir)
+#endif
+#ifdef __NR_arch_prctl
+IGNORE(arch_prctl)
 #endif
