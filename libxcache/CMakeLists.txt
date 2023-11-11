@@ -22,6 +22,7 @@ add_library(libxcache
   src/input_is_valid.c
   src/input_new.c
   src/input_read.c
+  src/openflags_to_str.c
   src/output_free.c
   src/output_read.c
   src/output_replay.c

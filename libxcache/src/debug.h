@@ -33,3 +33,12 @@ extern FILE *xc_debug INTERNAL;
     }                                                                          \
     cond_;                                                                     \
   })
+
+/** convert flags from an open() call to a string
+ *
+ * This function heap-allocates. Do not call it on a hot path.
+ *
+ * \param flags Flags to translate
+ * \return A string representation or `NULL` on out-of-memory
+ */
+INTERNAL char *openflags_to_str(long flags);
