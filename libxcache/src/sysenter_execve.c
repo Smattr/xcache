@@ -38,11 +38,8 @@ int sysenter_execve(proc_t *proc) {
   DEBUG("pid %ld, execve(\"%s\", …)", (long)proc->pid, path);
 
   // record execve() as a read
-  saw = action_new_read(abs);
-  if (ERROR(saw == NULL)) {
-    rc = ENOMEM;
+  if (ERROR((rc = action_new_read(&saw, abs))))
     goto done;
-  }
 
   saw->previous = proc->actions;
   proc->actions = saw;

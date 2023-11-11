@@ -53,11 +53,8 @@ int sysexit_access(proc_t *proc) {
         flags, err == 0 ? 0 : -1, err);
 
   // record it
-  saw = action_new_access(abs, err, (int)flags);
-  if (ERROR(saw == NULL)) {
-    rc = ENOMEM;
+  if (ERROR((rc = action_new_access(&saw, abs, err, (int)flags))))
     goto done;
-  }
 
   saw->previous = proc->actions;
   proc->actions = saw;

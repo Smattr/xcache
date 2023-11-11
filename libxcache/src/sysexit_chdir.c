@@ -44,11 +44,8 @@ int sysexit_chdir(proc_t *proc) {
         err == 0 ? 0 : -1, err);
 
   // record chdir() as if it were access()
-  saw = action_new_access(abs, err, R_OK);
-  if (ERROR(saw == NULL)) {
-    rc = ENOMEM;
+  if (ERROR((rc = action_new_access(&saw, abs, err, R_OK))))
     goto done;
-  }
 
   saw->previous = proc->actions;
   proc->actions = saw;

@@ -78,11 +78,8 @@ int sysexit_openat(proc_t *proc) {
   }
 
   // record it
-  saw = action_new_read(abs);
-  if (ERROR(saw == NULL)) {
-    rc = ENOMEM;
+  if (ERROR((rc = action_new_read(&saw, abs))))
     goto done;
-  }
 
   saw->previous = proc->actions;
   proc->actions = saw;

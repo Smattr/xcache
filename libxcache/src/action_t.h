@@ -44,19 +44,22 @@ typedef struct action {
 
 /** create an action for an access() call
  *
+ * \param action [out] Created action on success
  * \param path Absolute path to the target file/directory
  * \param err Any errno that resulted
  * \param flags Flags to access()
- * \return A created action or `NULL` on out-of-memory
+ * \return 0 on success or an errno on failure
  */
-INTERNAL action_t *action_new_access(const char *path, int err, int flags);
+INTERNAL int action_new_access(action_t **action, const char *path, int err,
+                               int flags);
 
 /** create an action for a read open() call
  *
+ * \param action [out] Created action on success
  * \param path Absolute path to the target file/directory
- * \return A created action or `NULL` on out-of-memory
+ * \return 0 on success or an errno on failure
  */
-INTERNAL action_t *action_new_read(const char *path);
+INTERNAL int action_new_read(action_t **action, const char *path);
 
 /** destroy an action
  *
