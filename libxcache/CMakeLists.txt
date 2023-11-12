@@ -14,6 +14,8 @@ add_library(libxcache
   src/cmd_read.c
   src/cmd_write.c
   src/cp.c
+  src/fd_free.c
+  src/fd_new.c
   src/hash_cmd.c
   src/hash_data.c
   src/hash_eq.c
@@ -34,6 +36,8 @@ add_library(libxcache
   src/proc_cont.c
   src/proc_end.c
   src/proc_exec.c
+  src/proc_fd_new.c
+  src/proc_fds_free.c
   src/proc_free.c
   src/proc_new.c
   src/proc_signal.c

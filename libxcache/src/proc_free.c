@@ -8,6 +8,8 @@ void proc_free(proc_t proc) {
 
   action_free_all(proc.actions);
 
+  proc_fds_free(&proc);
+
   if (proc.errfd[0] > 0)
     (void)close(proc.errfd[0]);
   if (proc.errfd[1] > 0)

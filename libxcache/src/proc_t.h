@@ -3,9 +3,29 @@
 #include "../../common/compiler.h"
 #include "action_t.h"
 #include <stdbool.h>
+#include <stddef.h>
 #include <sys/types.h>
 #include <xcache/cmd.h>
 #include <xcache/record.h>
+
+/// an open file descriptor in a subprocess
+typedef struct {
+  char *path;
+} fd_t;
+
+/** create a file descriptor
+ *
+ * \param fd [out] Created file descriptor on success
+ * \param path Absolute path of the target file/directory
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int fd_new(fd_t **fd, const char *path);
+
+/** destroy a file descriptor
+ *
+ * \param fd File descriptor to deallocate
+ */
+INTERNAL void fd_free(fd_t *fd);
 
 /// a subprocess being traced
 typedef struct {
@@ -19,6 +39,9 @@ typedef struct {
   pid_t pid;                ///< process ID of the child
   bool pending_sysexit : 1; ///< is this process mid-syscall?
 
+  fd_t **fds;   ///< file descriptor table
+  size_t n_fds; ///< number of entries in `fds`
+
   action_t *actions; ///< list of actions observed
 } proc_t;
 
@@ -29,6 +52,21 @@ typedef struct {
  * \return 0 on success or an errno on failure
  */
 INTERNAL int proc_new(proc_t *proc, unsigned mode);
+
+/** register a new open file descriptor
+ *
+ * \param proc Process to register the file descriptor with
+ * \param fd File descriptor number
+ * \param path Absolute path to the open file/directory
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int proc_fd_new(proc_t *proc, int fd, const char *path);
+
+/** reset the file descriptor table
+ *
+ * \param proc Process whose table to reset
+ */
+INTERNAL void proc_fds_free(proc_t *proc);
 
 /** start a process running
  *

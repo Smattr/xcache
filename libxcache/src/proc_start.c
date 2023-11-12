@@ -2,6 +2,7 @@
 #include "proc_t.h"
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <linux/version.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -25,6 +26,15 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
     rc = ENOMEM;
     goto done;
   }
+
+  proc_fds_free(proc);
+  // we dup /dev/null over the child’s stdin
+  if (ERROR((rc = proc_fd_new(proc, STDIN_FILENO, "/dev/null"))))
+    goto done;
+  if (ERROR((rc = proc_fd_new(proc, STDOUT_FILENO, "/dev/stdout"))))
+    goto done;
+  if (ERROR((rc = proc_fd_new(proc, STDERR_FILENO, "/dev/stderr"))))
+    goto done;
 
   {
     pid_t pid = fork();
