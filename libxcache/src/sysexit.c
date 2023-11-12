@@ -37,34 +37,30 @@ int sysexit(proc_t *proc) {
   } while (0);
 #include "ignore.h"
 
+#define DO(call)                                                               \
+  do {                                                                         \
+    if (syscall_no == __NR_##call) {                                           \
+      if (ERROR((rc = sysexit_##call(proc)))) {                                \
+        goto done;                                                             \
+      }                                                                        \
+      goto done;                                                               \
+    }                                                                          \
+  } while (0)
+
 #ifdef __NR_access
-  if (syscall_no == __NR_access) {
-    if (ERROR((rc = sysexit_access(proc))))
-      goto done;
-    goto done;
-  }
+  DO(access);
 #endif
 #ifdef __NR_chdir
-  if (syscall_no == __NR_chdir) {
-    if (ERROR((rc = sysexit_chdir(proc))))
-      goto done;
-    goto done;
-  }
+  DO(chdir);
 #endif
 #ifdef __NR_openat
-  if (syscall_no == __NR_openat) {
-    if (ERROR((rc = sysexit_openat(proc))))
-      goto done;
-    goto done;
-  }
+  DO(openat);
 #endif
 #ifdef __NR_newfstatat
-  if (syscall_no == __NR_newfstatat) {
-    if (ERROR((rc = sysexit_newfstatat(proc))))
-      goto done;
-    goto done;
-  }
+  DO(newfstatat);
 #endif
+
+#undef DO
 
   rc = ENOTSUP;
 done:
