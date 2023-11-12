@@ -15,14 +15,26 @@
 #error "<sys/syscall.h> seems not to have been #included"
 #endif
 
+#ifdef __NR_read
+IGNORE(read)
+#endif
 #ifdef __NR_close
 SYSENTER_IGNORE(close)
 #endif
 #ifdef __NR_mmap
 IGNORE(mmap)
 #endif
+#ifdef __NR_mprotect
+IGNORE(mprotect)
+#endif
+#ifdef __NR_munmap
+IGNORE(munmap)
+#endif
 #ifdef __NR_brk
 IGNORE(brk)
+#endif
+#ifdef __NR_pread64
+IGNORE(pread64)
 #endif
 #ifdef __NR_access
 SYSENTER_IGNORE(access)
@@ -36,9 +48,24 @@ SYSENTER_IGNORE(chdir)
 #ifdef __NR_arch_prctl
 IGNORE(arch_prctl)
 #endif
+#ifdef __NR_set_tid_address
+IGNORE(set_tid_address)
+#endif
+#ifdef __NR_exit_group
+IGNORE(exit_group)
+#endif
 #ifdef __NR_openat
 SYSENTER_IGNORE(openat)
 #endif
 #ifdef __NR_newfstatat
 SYSENTER_IGNORE(newfstatat)
+#endif
+#ifdef __NR_prlimit64
+IGNORE(prlimit64)
+#endif
+#ifdef __NR_set_robust_list
+IGNORE(set_robust_list)
+#endif
+#ifdef __NR_rseq
+IGNORE(rseq)
 #endif
