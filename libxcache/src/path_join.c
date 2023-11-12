@@ -9,6 +9,9 @@ char *path_join(const char *root, const char *stem) {
   assert(root != NULL);
   assert(stem != NULL);
 
+  if (strcmp(stem, "") == 0)
+    return strdup(root);
+
   const size_t root_len = strlen(root);
   assert(root_len > 0);
 
