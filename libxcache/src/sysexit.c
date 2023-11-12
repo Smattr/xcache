@@ -47,6 +47,9 @@ int sysexit(proc_t *proc) {
     }                                                                          \
   } while (0)
 
+#ifdef __NR_close
+  DO(close);
+#endif
 #ifdef __NR_access
   DO(access);
 #endif

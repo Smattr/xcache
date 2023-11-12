@@ -15,6 +15,9 @@
 #error "<sys/syscall.h> seems not to have been #included"
 #endif
 
+#ifdef __NR_close
+SYSENTER_IGNORE(close)
+#endif
 #ifdef __NR_mmap
 IGNORE(mmap)
 #endif
