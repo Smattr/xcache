@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,10 +66,24 @@ int sysexit_newfstatat(proc_t *proc) {
       rc = ENOMEM;
       goto done;
     }
-  } else {
-    // TODO
-    rc = ENOTSUP;
+  } else if (ERROR(fd < 0 || fd > INT_MAX)) {
+    rc = ECHILD;
     goto done;
+  } else {
+    const fd_t *dirfd = proc_fd(proc, (int)fd);
+    if (ERROR(dirfd == NULL)) {
+      rc = ECHILD;
+      goto done;
+    }
+    if (strcmp(path, "") == 0 && (flags & AT_EMPTY_PATH)) {
+      abs = strdup(dirfd->path);
+    } else {
+      abs = path_join(dirfd->path, path);
+    }
+    if (ERROR(abs == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
   }
 
   rc = ENOTSUP;

@@ -62,6 +62,14 @@ INTERNAL int proc_new(proc_t *proc, unsigned mode);
  */
 INTERNAL int proc_fd_new(proc_t *proc, int fd, const char *path);
 
+/** lookup a file descriptor
+ *
+ * \param proc Process in whose context to search
+ * \param fd Number of the descriptor
+ * \return The found descriptor or `NULL` if not found
+ */
+INTERNAL const fd_t *proc_fd(const proc_t *proc, int fd);
+
 /** reset the file descriptor table
  *
  * \param proc Process whose table to reset

@@ -36,6 +36,7 @@ add_library(libxcache
   src/proc_cont.c
   src/proc_end.c
   src/proc_exec.c
+  src/proc_fd.c
   src/proc_fd_new.c
   src/proc_fds_free.c
   src/proc_free.c
