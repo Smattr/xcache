@@ -85,6 +85,16 @@ int sysexit_openat(proc_t *proc) {
   proc->actions = saw;
   saw = NULL;
 
+  // if it succeeded, update the file descriptor table
+  if (err == 0) {
+    const long ret = peek_ret(proc->pid);
+    assert(ret >= 0 && "logic error");
+    assert(ret <= INT_MAX && "unexpected kernel return from openat");
+    DEBUG("pid %ld, updateing FD %ld → \"%s\"", (long)proc->pid, ret, abs);
+    if (ERROR((rc = proc_fd_new(proc, (int)ret, abs))))
+      goto done;
+  }
+
   // restart the process
   if (proc->mode == XC_SYSCALL) {
     if (ERROR((rc = proc_syscall(*proc))))
