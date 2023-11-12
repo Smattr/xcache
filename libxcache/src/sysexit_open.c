@@ -91,7 +91,7 @@ int sysexit_openat(proc_t *proc) {
     const long ret = peek_ret(proc->pid);
     assert(ret >= 0 && "logic error");
     assert(ret <= INT_MAX && "unexpected kernel return from openat");
-    DEBUG("pid %ld, updateing FD %ld → \"%s\"", (long)proc->pid, ret, abs);
+    DEBUG("pid %ld, updating FD %ld → \"%s\"", (long)proc->pid, ret, abs);
     if (ERROR((rc = proc_fd_new(proc, (int)ret, abs))))
       goto done;
   }

@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 
 int sysexit_newfstatat(proc_t *proc) {
 
@@ -54,7 +56,11 @@ int sysexit_newfstatat(proc_t *proc) {
     abs = path;
     path = NULL;
   } else if (fd == AT_FDCWD) {
-    abs = path_absolute(proc->cwd, path);
+    if (strcmp(path, "") == 0 && (flags & AT_EMPTY_PATH)) {
+      abs = strdup(proc->cwd);
+    } else {
+      abs = path_absolute(proc->cwd, path);
+    }
     if (ERROR(abs == NULL)) {
       rc = ENOMEM;
       goto done;
