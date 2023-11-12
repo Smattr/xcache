@@ -5,6 +5,7 @@ add_library(libxcache
   src/action_free_all.c
   src/action_new_access.c
   src/action_new_read.c
+  src/action_new_stat.c
   src/atfd_to_str.c
   src/cbor_read_str.c
   src/cbor_read_u64.c

@@ -2,6 +2,7 @@
 
 #include "../../common/compiler.h"
 #include "hash_t.h"
+#include <stdbool.h>
 #include <sys/stat.h>
 
 /// type of a recorded file system action
@@ -29,6 +30,7 @@ typedef struct action {
       hash_t hash; ///< hash of the file’s content
     } read;
     struct {
+      bool is_lstat : 1;    ///< were symlinks not followed?
       mode_t mode;          ///< mode of the file/directory
       uid_t uid;            ///< user ID
       gid_t gid;            ///< group ID
@@ -62,6 +64,17 @@ INTERNAL int action_new_access(action_t **action, const char *path, int err,
  */
 INTERNAL int action_new_read(action_t **action, int expected_err,
                              const char *path);
+
+/** create an action for a stat() call
+ *
+ * \param action [out] Created action on success
+ * \param expected_err Expected error result
+ * \param path Absolute path to the target file/directory
+ * \param is_lstat Whether to use `stat` or `lstat`
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int action_new_stat(action_t **action, int expected_err,
+                             const char *path, bool is_lstat);
 
 /** destroy an action
  *

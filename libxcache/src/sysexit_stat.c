@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,7 +87,26 @@ int sysexit_newfstatat(proc_t *proc) {
     }
   }
 
-  rc = ENOTSUP;
+  // record it
+  {
+    bool is_lstat = !!(flags & AT_SYMLINK_NOFOLLOW);
+    if (ERROR((rc = action_new_stat(&saw, err, abs, is_lstat))))
+      goto done;
+  }
+
+  saw->previous = proc->actions;
+  proc->actions = saw;
+  saw = NULL;
+
+  // restart the process
+  if (proc->mode == XC_SYSCALL) {
+    if (ERROR((rc = proc_syscall(*proc))))
+      goto done;
+  } else {
+    if (ERROR((rc = proc_cont(*proc))))
+      goto done;
+  }
+
 done:
   action_free(saw);
   free(abs);
