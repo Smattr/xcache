@@ -43,6 +43,7 @@ add_library(libxcache
   src/proc_signal.c
   src/proc_start.c
   src/proc_syscall.c
+  src/statflags_to_str.c
   src/syscall_to_str.c
   src/sysenter.c
   src/sysenter_execve.c

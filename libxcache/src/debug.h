@@ -51,3 +51,12 @@ INTERNAL char *atfd_to_str(long fd);
  * \return A string representation or `NULL` on out-of-memory
  */
 INTERNAL char *openflags_to_str(long flags);
+
+/** convert flags from a newfstatat() call to a string
+ *
+ * This function heap-allocates. Do not call it on a hot path.
+ *
+ * \param flags Flags to translate
+ * \return A string representation or `NULL` on out-of-memory
+ */
+INTERNAL char *statflags_to_str(long flags);
