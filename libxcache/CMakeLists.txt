@@ -51,6 +51,7 @@ add_library(libxcache
   src/sysexit_access.c
   src/sysexit_chdir.c
   src/sysexit_open.c
+  src/sysexit_stat.c
   src/trace_read.c
   src/xc_cmd_eq.c
   src/xc_cmd_exec.c

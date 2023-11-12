@@ -36,3 +36,6 @@ IGNORE(arch_prctl)
 #ifdef __NR_openat
 SYSENTER_IGNORE(openat)
 #endif
+#ifdef __NR_newfstatat
+SYSENTER_IGNORE(newfstatat)
+#endif

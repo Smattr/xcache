@@ -7,12 +7,10 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <xcache/record.h>
 
-int sysexit_openat(proc_t *proc) {
+int sysexit_newfstatat(proc_t *proc) {
 
   assert(proc != NULL);
 
@@ -35,15 +33,15 @@ int sysexit_openat(proc_t *proc) {
   }
 
   // extract the flags
-  const long flags = peek_reg(proc->pid, REG(rdx));
+  const long flags = peek_reg(proc->pid, REG(r10));
 
   // extract the result
   const int err = peek_errno(proc->pid);
 
   if (UNLIKELY(xc_debug != NULL)) {
     char *fd_str = atfd_to_str(fd);
-    char *flags_str = openflags_to_str(flags);
-    DEBUG("pid %ld, openat(%s, \"%s\", %s, …) = %d, errno == %d",
+    char *flags_str = statflags_to_str(flags);
+    DEBUG("pid %ld, newfstatat(%s, \"%s\", …, %s) = %d, errno == %d",
           (long)proc->pid, fd_str == NULL ? "<oom>" : fd_str, path,
           flags_str == NULL ? "<oom>" : flags_str, err == 0 ? 0 : -1, err);
     free(flags_str);
@@ -67,44 +65,7 @@ int sysexit_openat(proc_t *proc) {
     goto done;
   }
 
-  // discard the flags that have no relevance to us
-  const long flags_relevant =
-      flags & ~(O_ASYNC | O_CLOEXEC | O_DIRECT | O_DSYNC | O_LARGEFILE |
-                O_NOCTTY | O_NONBLOCK | O_NDELAY | O_SYNC);
-
-  // TODO
-  if (ERROR(flags_relevant != O_RDONLY)) {
-    rc = ENOTSUP;
-    goto done;
-  }
-
-  // record it
-  if (ERROR((rc = action_new_read(&saw, err, abs))))
-    goto done;
-
-  saw->previous = proc->actions;
-  proc->actions = saw;
-  saw = NULL;
-
-  // if it succeeded, update the file descriptor table
-  if (err == 0) {
-    const long ret = peek_ret(proc->pid);
-    assert(ret >= 0 && "logic error");
-    assert(ret <= INT_MAX && "unexpected kernel return from openat");
-    DEBUG("pid %ld, updateing FD %ld → \"%s\"", (long)proc->pid, ret, abs);
-    if (ERROR((rc = proc_fd_new(proc, (int)ret, abs))))
-      goto done;
-  }
-
-  // restart the process
-  if (proc->mode == XC_SYSCALL) {
-    if (ERROR((rc = proc_syscall(*proc))))
-      goto done;
-  } else {
-    if (ERROR((rc = proc_cont(*proc))))
-      goto done;
-  }
-
+  rc = ENOTSUP;
 done:
   action_free(saw);
   free(abs);

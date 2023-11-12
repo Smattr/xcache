@@ -58,6 +58,13 @@ int sysexit(proc_t *proc) {
     goto done;
   }
 #endif
+#ifdef __NR_newfstatat
+  if (syscall_no == __NR_newfstatat) {
+    if (ERROR((rc = sysexit_newfstatat(proc))))
+      goto done;
+    goto done;
+  }
+#endif
 
   rc = ENOTSUP;
 done:
