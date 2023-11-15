@@ -4,8 +4,10 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-int action_new_access(action_t **action, const char *path, int err, int flags) {
+int action_new_access(action_t **action, int expected_err, const char *path,
+                      int flags) {
 
   assert(action != NULL);
   assert(path != NULL);
@@ -28,7 +30,19 @@ int action_new_access(action_t **action, const char *path, int err, int flags) {
     goto done;
   }
 
-  a->err = err;
+  {
+    const int r = access(path, flags);
+    if (ERROR(r < 0 && errno != expected_err)) {
+      rc = ECHILD;
+      goto done;
+    }
+    if (ERROR(r == 0 && expected_err != 0)) {
+      rc = ECHILD;
+      goto done;
+    }
+  }
+
+  a->err = expected_err;
   a->access.flags = flags;
 
   *action = a;

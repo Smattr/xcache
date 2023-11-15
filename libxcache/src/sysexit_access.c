@@ -53,7 +53,7 @@ int sysexit_access(proc_t *proc) {
         flags, err == 0 ? 0 : -1, err);
 
   // record it
-  if (ERROR((rc = action_new_access(&saw, abs, err, (int)flags))))
+  if (ERROR((rc = action_new_access(&saw, err, abs, (int)flags))))
     goto done;
 
   saw->previous = proc->actions;

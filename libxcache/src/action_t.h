@@ -47,13 +47,13 @@ typedef struct action {
 /** create an action for an access() call
  *
  * \param action [out] Created action on success
+ * \param expected_err Expected error result
  * \param path Absolute path to the target file/directory
- * \param err Any errno that resulted
  * \param flags Flags to access()
  * \return 0 on success or an errno on failure
  */
-INTERNAL int action_new_access(action_t **action, const char *path, int err,
-                               int flags);
+INTERNAL int action_new_access(action_t **action, int expected_err,
+                               const char *path, int flags);
 
 /** create an action for a read open() call
  *
