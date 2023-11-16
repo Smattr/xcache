@@ -89,7 +89,7 @@ int sysexit_newfstatat(proc_t *proc) {
 
   // record it
   {
-    bool is_lstat = !!(flags & AT_SYMLINK_NOFOLLOW);
+    const bool is_lstat = !!(flags & AT_SYMLINK_NOFOLLOW);
     if (ERROR((rc = action_new_stat(&saw, err, abs, is_lstat))))
       goto done;
   }
