@@ -75,6 +75,14 @@ INTERNAL int action_new_read(action_t **action, int expected_err,
 INTERNAL int action_new_stat(action_t **action, int expected_err,
                              const char *path, bool is_lstat);
 
+/** compare two actions for equality
+ *
+ * \param a First operand to ==
+ * \param b Second operand to ==
+ * \return True if the actions are identical
+ */
+INTERNAL bool action_eq(const action_t a, const action_t b);
+
 /** destroy an action
  *
  * This assumes the action has been heap allocated and frees the pointer itself.

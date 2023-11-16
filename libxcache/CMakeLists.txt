@@ -1,6 +1,7 @@
 project(libxcache LANGUAGES C)
 
 add_library(libxcache
+  src/action_eq.c
   src/action_free.c
   src/action_free_all.c
   src/action_new_access.c
