@@ -83,6 +83,17 @@ INTERNAL int action_new_stat(action_t **action, int expected_err,
  */
 INTERNAL bool action_eq(const action_t a, const action_t b);
 
+/** is this previously observed action consistent with the present?
+ *
+ * For input actions, this checks if the same conditions hold as when the action
+ * was created. For output actions, this is a no-op. This function may return
+ * false positives; that is, false when the answer is actually true.
+ *
+ * \param action Action to evaluate
+ * \return True if the action is valid for replay
+ */
+INTERNAL bool action_is_valid(const action_t action);
+
 /** destroy an action
  *
  * This assumes the action has been heap allocated and frees the pointer itself.
