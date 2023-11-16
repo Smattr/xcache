@@ -17,7 +17,7 @@ typedef struct {
 } hash_t;
 
 /// compare two hashes for equality
-INTERNAL bool hash_eq(hash_t a, hash_t b);
+INTERNAL bool hash_eq(const hash_t a, const hash_t b);
 
 /** derive the hash of a command
  *
