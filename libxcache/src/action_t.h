@@ -39,8 +39,6 @@ typedef struct action {
       struct timespec ctim; ///< creation time
     } stat;
   };
-
-  struct action *previous; /// previous action in a linked-list
 } action_t;
 
 /** create an action for an access() call
@@ -51,7 +49,7 @@ typedef struct action {
  * \param flags Flags to access()
  * \return 0 on success or an errno on failure
  */
-INTERNAL int action_new_access(action_t **action, int expected_err,
+INTERNAL int action_new_access(action_t *action, int expected_err,
                                const char *path, int flags);
 
 /** create an action for a read open() call
@@ -61,7 +59,7 @@ INTERNAL int action_new_access(action_t **action, int expected_err,
  * \param path Absolute path to the target file/directory
  * \return 0 on success or an errno on failure
  */
-INTERNAL int action_new_read(action_t **action, int expected_err,
+INTERNAL int action_new_read(action_t *action, int expected_err,
                              const char *path);
 
 /** create an action for a stat() call
@@ -72,7 +70,7 @@ INTERNAL int action_new_read(action_t **action, int expected_err,
  * \param is_lstat Whether to use `stat` or `lstat`
  * \return 0 on success or an errno on failure
  */
-INTERNAL int action_new_stat(action_t **action, int expected_err,
+INTERNAL int action_new_stat(action_t *action, int expected_err,
                              const char *path, bool is_lstat);
 
 /** compare two actions for equality
@@ -101,12 +99,4 @@ INTERNAL bool action_is_valid(const action_t action);
  *
  * \param action Action to free
  */
-INTERNAL void action_free(action_t *action);
-
-/** destroy an action list
- *
- * Calls `action_free` on all actions within a linked-list chain.
- *
- * \param action Head of the list to destroy
- */
-INTERNAL void action_free_all(action_t *action);
+INTERNAL void action_free(action_t action);

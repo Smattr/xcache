@@ -1,12 +1,15 @@
 #include "action_t.h"
 #include "proc_t.h"
+#include <stdlib.h>
 #include <unistd.h>
 
 void proc_free(proc_t proc) {
 
   proc_end(&proc);
 
-  action_free_all(proc.actions);
+  for (size_t i = 0; i < proc.n_actions; ++i)
+    action_free(proc.actions[i]);
+  free(proc.actions);
 
   proc_fds_free(&proc);
 

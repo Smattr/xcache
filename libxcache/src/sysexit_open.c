@@ -18,7 +18,7 @@ int sysexit_openat(proc_t *proc) {
 
   char *path = NULL;
   char *abs = NULL;
-  action_t *saw = NULL;
+  action_t saw = {0};
   int rc = 0;
 
   // extract the file descriptor
@@ -82,9 +82,9 @@ int sysexit_openat(proc_t *proc) {
   if (ERROR((rc = action_new_read(&saw, err, abs))))
     goto done;
 
-  saw->previous = proc->actions;
-  proc->actions = saw;
-  saw = NULL;
+  if (ERROR((rc = proc_action_new(proc, saw))))
+    goto done;
+  saw = (action_t){0};
 
   // if it succeeded, update the file descriptor table
   if (err == 0) {

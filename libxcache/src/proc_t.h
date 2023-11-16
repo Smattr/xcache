@@ -43,6 +43,8 @@ typedef struct {
   size_t n_fds; ///< number of entries in `fds`
 
   action_t *actions; ///< list of actions observed
+  size_t n_actions;  ///< number of entries in `actions`
+  size_t c_actions;  ///< number of allocated slots in `actions`
 } proc_t;
 
 /** create a new process
@@ -75,6 +77,14 @@ INTERNAL const fd_t *proc_fd(const proc_t *proc, int fd);
  * \param proc Process whose table to reset
  */
 INTERNAL void proc_fds_free(proc_t *proc);
+
+/** append a new action
+ *
+ * \param proc Process to append action to
+ * \param action Action to append
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int proc_action_new(proc_t *proc, const action_t action);
 
 /** start a process running
  *

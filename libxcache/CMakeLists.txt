@@ -3,7 +3,6 @@ project(libxcache LANGUAGES C)
 add_library(libxcache
   src/action_eq.c
   src/action_free.c
-  src/action_free_all.c
   src/action_is_valid.c
   src/action_new_access.c
   src/action_new_read.c
@@ -36,6 +35,7 @@ add_library(libxcache
   src/path_absolute.c
   src/path_join.c
   src/peek_str.c
+  src/proc_action_new.c
   src/proc_cont.c
   src/proc_end.c
   src/proc_exec.c

@@ -5,7 +5,7 @@
 
 bool action_is_valid(const action_t action) {
 
-  action_t *attempt = NULL;
+  action_t attempt = {0};
 
   switch (action.tag) {
 
@@ -38,7 +38,7 @@ bool action_is_valid(const action_t action) {
     return true;
   }
 
-  const bool is_valid = action_eq(action, *attempt);
+  const bool is_valid = action_eq(action, attempt);
   action_free(attempt);
   return is_valid;
 }

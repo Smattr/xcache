@@ -17,7 +17,7 @@ int sysexit_chdir(proc_t *proc) {
 
   char *path = NULL;
   char *abs = NULL;
-  action_t *saw = NULL;
+  action_t saw = {0};
   int rc = 0;
 
   // extract the path
@@ -47,9 +47,9 @@ int sysexit_chdir(proc_t *proc) {
   if (ERROR((rc = action_new_access(&saw, err, abs, R_OK))))
     goto done;
 
-  saw->previous = proc->actions;
-  proc->actions = saw;
-  saw = NULL;
+  if (ERROR((rc = proc_action_new(proc, saw))))
+    goto done;
+  saw = (action_t){0};
 
   // if it succeeded, update our cwd
   if (err == 0) {

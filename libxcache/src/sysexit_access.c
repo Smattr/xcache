@@ -17,7 +17,7 @@ int sysexit_access(proc_t *proc) {
 
   char *path = NULL;
   char *abs = NULL;
-  action_t *saw = NULL;
+  action_t saw = {0};
   int rc = 0;
 
   // extract the path
@@ -56,9 +56,9 @@ int sysexit_access(proc_t *proc) {
   if (ERROR((rc = action_new_access(&saw, err, abs, (int)flags))))
     goto done;
 
-  saw->previous = proc->actions;
-  proc->actions = saw;
-  saw = NULL;
+  if (ERROR((rc = proc_action_new(proc, saw))))
+    goto done;
+  saw = (action_t){0};
 
   // restart the process
   if (proc->mode == XC_SYSCALL) {
