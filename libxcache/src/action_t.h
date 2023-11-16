@@ -35,7 +35,6 @@ typedef struct action {
       uid_t uid;            ///< user ID
       gid_t gid;            ///< group ID
       size_t size;          ///< on-disk size in bytes
-      struct timespec atim; ///< access time
       struct timespec mtim; ///< modification time
       struct timespec ctim; ///< creation time
     } stat;

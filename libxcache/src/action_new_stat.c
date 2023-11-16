@@ -50,7 +50,6 @@ int action_new_stat(action_t **action, int expected_err, const char *path,
       a->stat.uid = st.st_uid;
       a->stat.gid = st.st_gid;
       a->stat.size = (size_t)st.st_size;
-      a->stat.atim = st.st_atim;
       a->stat.mtim = st.st_mtim;
       a->stat.ctim = st.st_ctim;
     }
