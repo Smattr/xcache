@@ -12,7 +12,7 @@ int cbor_read_u64_raw(FILE *stream, uint64_t *value, uint8_t bias) {
   const uint8_t tag = (uint8_t)tag_int;
 
   if (0x0 + bias <= tag && tag <= 0x17 + bias) {
-    *value = tag;
+    *value = tag - bias;
     return 0;
   }
 

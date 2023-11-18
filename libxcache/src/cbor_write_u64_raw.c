@@ -22,7 +22,7 @@ int cbor_write_u64_raw(FILE *stream, uint64_t value, uint8_t bias) {
     const uint8_t tag = 0x18 + bias;
     if (ERROR(putc(tag, stream) < 0))
       return EIO;
-    if (ERROR(putc(tag, stream) < 0))
+    if (ERROR(putc((int)value, stream) < 0))
       return EIO;
     return 0;
   }
@@ -50,7 +50,8 @@ int cbor_write_u64_raw(FILE *stream, uint64_t value, uint8_t bias) {
   const uint8_t tag = 0x1b + bias;
   if (ERROR(putc(tag, stream) < 0))
     return EIO;
-  if (ERROR(fwrite(&value, sizeof(value), 1, stream) != 1))
+  const uint64_t payload = htobe64(value);
+  if (ERROR(fwrite(&payload, sizeof(payload), 1, stream) != 1))
     return EIO;
 
   return 0;
