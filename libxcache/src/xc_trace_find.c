@@ -105,7 +105,7 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
     }
 
     xc_trace_t trace = {0};
-    rc = trace_read(&trace, trace_f);
+    rc = trace_load(&trace, trace_f);
     (void)fclose(trace_f);
     if (ERROR(rc))
       goto done;

@@ -8,8 +8,8 @@ add_library(libxcache
   src/cbor_write_str.c
   src/cbor_write_u64.c
   src/cbor_write_u64_raw.c
-  src/cmd_read.c
-  src/cmd_write.c
+  src/cmd_load.c
+  src/cmd_save.c
   src/cp.c
   src/db_trace_root.c
   src/fd_free.c
@@ -18,7 +18,7 @@ add_library(libxcache
   src/hash_data.c
   src/hash_eq.c
   src/hash_file.c
-  src/hash_read.c
+  src/hash_load.c
   src/input_eq.c
   src/input_free.c
   src/input_is_valid.c
@@ -28,7 +28,7 @@ add_library(libxcache
   src/input_save.c
   src/openflags_to_str.c
   src/output_free.c
-  src/output_read.c
+  src/output_load.c
   src/output_replay.c
   src/page_size.c
   src/path_absolute.c
@@ -57,7 +57,7 @@ add_library(libxcache
   src/sysexit_close.c
   src/sysexit_open.c
   src/sysexit_stat.c
-  src/trace_read.c
+  src/trace_load.c
   src/trace_save.c
   src/xc_cmd_eq.c
   src/xc_cmd_exec.c

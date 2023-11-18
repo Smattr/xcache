@@ -26,7 +26,7 @@ struct xc_trace {
  * \param stream File to read from
  * \return 0 on success or an errno on failure
  */
-INTERNAL int trace_read(xc_trace_t *trace, FILE *stream);
+INTERNAL int trace_load(xc_trace_t *trace, FILE *stream);
 
 /** serialise a trace to a file
  *

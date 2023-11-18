@@ -10,7 +10,7 @@
  * \param stream File to read from
  * \return 0 on success or an errno on failure
  */
-INTERNAL int cmd_read(xc_cmd_t *cmd, FILE *stream);
+INTERNAL int cmd_load(xc_cmd_t *cmd, FILE *stream);
 
 /** serialise a command to a file
  *
@@ -18,4 +18,4 @@ INTERNAL int cmd_read(xc_cmd_t *cmd, FILE *stream);
  * \param stream File to write to
  * \return 0 on success or an errno on failure
  */
-INTERNAL int cmd_write(const xc_cmd_t cmd, FILE *stream);
+INTERNAL int cmd_save(const xc_cmd_t cmd, FILE *stream);

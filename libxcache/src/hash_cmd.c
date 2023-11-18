@@ -24,7 +24,7 @@ int hash_cmd(const xc_cmd_t cmd, hash_t *hash) {
   }
 
   // serialise the command into this buffer
-  if (ERROR((rc = cmd_write(cmd, stream))))
+  if (ERROR((rc = cmd_save(cmd, stream))))
     goto done;
 
   // finalise the stream

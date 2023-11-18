@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <xcache/cmd.h>
 
-int cmd_write(const xc_cmd_t cmd, FILE *stream) {
+int cmd_save(const xc_cmd_t cmd, FILE *stream) {
 
   assert(stream != NULL);
 

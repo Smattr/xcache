@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <xcache/cmd.h>
 
-int cmd_read(xc_cmd_t *cmd, FILE *stream) {
+int cmd_load(xc_cmd_t *cmd, FILE *stream) {
 
   assert(cmd != NULL);
   assert(stream != NULL);

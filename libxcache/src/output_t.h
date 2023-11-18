@@ -19,7 +19,7 @@ typedef struct {
  * \param stream File to read from
  * \return 0 on success or an errno on failure
  */
-INTERNAL int output_read(output_t *output, FILE *stream);
+INTERNAL int output_load(output_t *output, FILE *stream);
 
 /** re-run the effects of an output
  *

@@ -75,7 +75,7 @@ INTERNAL int input_new_stat(input_t *input, int expected_err, const char *path,
  * \param stream File to read from
  * \return 0 on success or an errno on failure
  */
-INTERNAL int input_read(input_t *input, FILE *stream);
+INTERNAL int input_load(input_t *input, FILE *stream);
 
 /** serialise an input to a file
  *

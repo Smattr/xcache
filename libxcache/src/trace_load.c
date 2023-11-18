@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <xcache/trace.h>
 
-int trace_read(xc_trace_t *trace, FILE *stream) {
+int trace_load(xc_trace_t *trace, FILE *stream) {
 
   assert(trace != NULL);
   assert(stream != NULL);
@@ -52,7 +52,7 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
     }
   }
 
-  if (ERROR((rc = cmd_read(&t.cmd, stream))))
+  if (ERROR((rc = cmd_load(&t.cmd, stream))))
     goto done;
 
   {
@@ -97,7 +97,7 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
   }
 
   for (size_t i = 0; i < t.n_outputs; ++i) {
-    if (ERROR((rc = output_read(&t.outputs[i], stream))))
+    if (ERROR((rc = output_load(&t.outputs[i], stream))))
       goto done;
   }
 

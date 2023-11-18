@@ -26,7 +26,7 @@ int trace_save(const xc_trace_t trace, FILE *stream) {
       goto done;
   }
 
-  if (ERROR((rc = cmd_write(trace.cmd, stream))))
+  if (ERROR((rc = cmd_save(trace.cmd, stream))))
     goto done;
 
   assert(trace.n_inputs <= UINT64_MAX);

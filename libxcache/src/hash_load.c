@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int hash_read(hash_t *hash, FILE *stream) {
+int hash_load(hash_t *hash, FILE *stream) {
 
   assert(hash != NULL);
   assert(stream != NULL);

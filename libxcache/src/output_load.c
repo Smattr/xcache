@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int output_read(output_t *output, FILE *stream) {
+int output_load(output_t *output, FILE *stream) {
 
   assert(output != NULL);
   assert(stream != NULL);

@@ -53,4 +53,4 @@ INTERNAL int hash_file(const char *path, hash_t *hash);
  * \param stream File to read from
  * \return 0 on success or an errno on failure
  */
-INTERNAL int hash_read(hash_t *hash, FILE *stream);
+INTERNAL int hash_load(hash_t *hash, FILE *stream);
