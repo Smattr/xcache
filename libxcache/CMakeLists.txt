@@ -25,6 +25,7 @@ add_library(libxcache
   src/input_new_access.c
   src/input_new_read.c
   src/input_new_stat.c
+  src/input_save.c
   src/openflags_to_str.c
   src/output_free.c
   src/output_read.c

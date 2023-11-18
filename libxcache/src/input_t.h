@@ -77,6 +77,14 @@ INTERNAL int input_new_stat(input_t *input, int expected_err, const char *path,
  */
 INTERNAL int input_read(input_t *input, FILE *stream);
 
+/** serialise an input to a file
+ *
+ * \param input Input to write out
+ * \param stream File to write to
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int input_save(const input_t input, FILE *stream);
+
 /** is this input still consistent with how it was originally perceived?
  *
  * \param input Input to examine
