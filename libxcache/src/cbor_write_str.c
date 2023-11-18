@@ -20,7 +20,6 @@ int cbor_write_str(FILE *stream, const char *value) {
 
   if (ERROR((rc = cbor_write_u64_raw(stream, (uint64_t)len, 0x60))))
     goto done;
-  return rc;
   if (ERROR(fwrite(value, len, 1, stream) < 1)) {
     rc = EIO;
     goto done;
