@@ -103,6 +103,8 @@ int trace_load(xc_trace_t *trace, FILE *stream) {
   t = (xc_trace_t){0};
 
 done:
+  if (rc)
+    DEBUG("failed parsing at byte %zu", (size_t)ftell(stream));
   xc_trace_free(&t);
 
   return rc;
