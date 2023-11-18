@@ -1,5 +1,5 @@
-#include "action_t.h"
 #include "debug.h"
+#include "input_t.h"
 #include "path.h"
 #include "peek.h"
 #include "proc_t.h"
@@ -20,7 +20,7 @@ int sysexit_newfstatat(proc_t *proc) {
 
   char *path = NULL;
   char *abs = NULL;
-  action_t saw = {0};
+  input_t saw = {0};
   int rc = 0;
 
   // extract the file descriptor
@@ -90,13 +90,13 @@ int sysexit_newfstatat(proc_t *proc) {
   // record it
   {
     const bool is_lstat = !!(flags & AT_SYMLINK_NOFOLLOW);
-    if (ERROR((rc = action_new_stat(&saw, err, abs, is_lstat))))
+    if (ERROR((rc = input_new_stat(&saw, err, abs, is_lstat))))
       goto done;
   }
 
-  if (ERROR((rc = proc_action_new(proc, saw))))
+  if (ERROR((rc = proc_input_new(proc, saw))))
     goto done;
-  saw = (action_t){0};
+  saw = (input_t){0};
 
   // restart the process
   if (proc->mode == XC_SYSCALL) {
@@ -108,7 +108,7 @@ int sysexit_newfstatat(proc_t *proc) {
   }
 
 done:
-  action_free(saw);
+  input_free(saw);
   free(abs);
   free(path);
 

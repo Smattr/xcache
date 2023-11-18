@@ -1,4 +1,4 @@
-#include "action_t.h"
+#include "input_t.h"
 #include "proc_t.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,9 +7,9 @@ void proc_free(proc_t proc) {
 
   proc_end(&proc);
 
-  for (size_t i = 0; i < proc.n_actions; ++i)
-    action_free(proc.actions[i]);
-  free(proc.actions);
+  for (size_t i = 0; i < proc.n_inputs; ++i)
+    input_free(proc.inputs[i]);
+  free(proc.inputs);
 
   proc_fds_free(&proc);
 

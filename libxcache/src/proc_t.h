@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
-#include "action_t.h"
+#include "input_t.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
@@ -42,9 +42,9 @@ typedef struct {
   fd_t **fds;   ///< file descriptor table
   size_t n_fds; ///< number of entries in `fds`
 
-  action_t *actions; ///< list of actions observed
-  size_t n_actions;  ///< number of entries in `actions`
-  size_t c_actions;  ///< number of allocated slots in `actions`
+  input_t *inputs; ///< list of input actions observed
+  size_t n_inputs; ///< number of entries in `inputs`
+  size_t c_inputs; ///< number of allocated slots in `inputs`
 } proc_t;
 
 /** create a new process
@@ -78,13 +78,13 @@ INTERNAL const fd_t *proc_fd(const proc_t *proc, int fd);
  */
 INTERNAL void proc_fds_free(proc_t *proc);
 
-/** append a new action
+/** append a new input
  *
- * \param proc Process to append action to
- * \param action Action to append
+ * \param proc Process to append input to
+ * \param input Input to append
  * \return 0 on success or an errno on failure
  */
-INTERNAL int proc_action_new(proc_t *proc, const action_t action);
+INTERNAL int proc_input_new(proc_t *proc, const input_t input);
 
 /** start a process running
  *

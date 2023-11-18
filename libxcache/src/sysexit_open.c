@@ -1,5 +1,5 @@
-#include "action_t.h"
 #include "debug.h"
+#include "input_t.h"
 #include "path.h"
 #include "peek.h"
 #include "proc_t.h"
@@ -18,7 +18,7 @@ int sysexit_openat(proc_t *proc) {
 
   char *path = NULL;
   char *abs = NULL;
-  action_t saw = {0};
+  input_t saw = {0};
   int rc = 0;
 
   // extract the file descriptor
@@ -79,12 +79,12 @@ int sysexit_openat(proc_t *proc) {
   }
 
   // record it
-  if (ERROR((rc = action_new_read(&saw, err, abs))))
+  if (ERROR((rc = input_new_read(&saw, err, abs))))
     goto done;
 
-  if (ERROR((rc = proc_action_new(proc, saw))))
+  if (ERROR((rc = proc_input_new(proc, saw))))
     goto done;
-  saw = (action_t){0};
+  saw = (input_t){0};
 
   // if it succeeded, update the file descriptor table
   if (err == 0) {
@@ -106,7 +106,7 @@ int sysexit_openat(proc_t *proc) {
   }
 
 done:
-  action_free(saw);
+  input_free(saw);
   free(abs);
   free(path);
 

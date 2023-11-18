@@ -1,5 +1,5 @@
-#include "action_t.h"
 #include "debug.h"
+#include "input_t.h"
 #include "path.h"
 #include "peek.h"
 #include "proc_t.h"
@@ -17,7 +17,7 @@ int sysexit_access(proc_t *proc) {
 
   char *path = NULL;
   char *abs = NULL;
-  action_t saw = {0};
+  input_t saw = {0};
   int rc = 0;
 
   // extract the path
@@ -53,12 +53,12 @@ int sysexit_access(proc_t *proc) {
         flags, err == 0 ? 0 : -1, err);
 
   // record it
-  if (ERROR((rc = action_new_access(&saw, err, abs, (int)flags))))
+  if (ERROR((rc = input_new_access(&saw, err, abs, (int)flags))))
     goto done;
 
-  if (ERROR((rc = proc_action_new(proc, saw))))
+  if (ERROR((rc = proc_input_new(proc, saw))))
     goto done;
-  saw = (action_t){0};
+  saw = (input_t){0};
 
   // restart the process
   if (proc->mode == XC_SYSCALL) {
@@ -70,7 +70,7 @@ int sysexit_access(proc_t *proc) {
   }
 
 done:
-  action_free(saw);
+  input_free(saw);
   free(abs);
   free(path);
 

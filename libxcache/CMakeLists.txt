@@ -37,7 +37,6 @@ add_library(libxcache
   src/path_absolute.c
   src/path_join.c
   src/peek_str.c
-  src/proc_action_new.c
   src/proc_cont.c
   src/proc_end.c
   src/proc_exec.c
@@ -45,6 +44,7 @@ add_library(libxcache
   src/proc_fd_new.c
   src/proc_fds_free.c
   src/proc_free.c
+  src/proc_input_new.c
   src/proc_new.c
   src/proc_signal.c
   src/proc_start.c

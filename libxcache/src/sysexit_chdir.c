@@ -1,5 +1,5 @@
-#include "action_t.h"
 #include "debug.h"
+#include "input_t.h"
 #include "path.h"
 #include "peek.h"
 #include "proc_t.h"
@@ -17,7 +17,7 @@ int sysexit_chdir(proc_t *proc) {
 
   char *path = NULL;
   char *abs = NULL;
-  action_t saw = {0};
+  input_t saw = {0};
   int rc = 0;
 
   // extract the path
@@ -44,12 +44,12 @@ int sysexit_chdir(proc_t *proc) {
         err == 0 ? 0 : -1, err);
 
   // record chdir() as if it were access()
-  if (ERROR((rc = action_new_access(&saw, err, abs, R_OK))))
+  if (ERROR((rc = input_new_access(&saw, err, abs, R_OK))))
     goto done;
 
-  if (ERROR((rc = proc_action_new(proc, saw))))
+  if (ERROR((rc = proc_input_new(proc, saw))))
     goto done;
-  saw = (action_t){0};
+  saw = (input_t){0};
 
   // if it succeeded, update our cwd
   if (err == 0) {
@@ -68,7 +68,7 @@ int sysexit_chdir(proc_t *proc) {
   }
 
 done:
-  action_free(saw);
+  input_free(saw);
   free(abs);
   free(path);
 
