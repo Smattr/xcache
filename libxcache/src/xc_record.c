@@ -3,7 +3,6 @@
 #include "event.h"
 #include "proc_t.h"
 #include "syscall.h"
-#include "trace_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -34,7 +33,6 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
     return EINVAL;
 
   char *trace_root = NULL;
-  xc_trace_t *trace = NULL;
   proc_t proc = {0};
   int rc = 0;
 
@@ -154,11 +152,12 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
     }
   }
 
-  rc = ENOSYS;
+  // save the result
+  if (ERROR((rc = proc_save(proc, cmd, trace_root))))
+    goto done;
 
 done:
   proc_free(proc);
-  xc_trace_free(trace);
   free(trace_root);
 
   return rc;
