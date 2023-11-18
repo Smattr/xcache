@@ -1,3 +1,4 @@
+#include "db_t.h"
 #include "debug.h"
 #include "event.h"
 #include "proc_t.h"
@@ -6,6 +7,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <xcache/cmd.h>
 #include <xcache/db.h>
@@ -31,6 +33,7 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
   if (ERROR((mode & XC_MODE_AUTO) == 0))
     return EINVAL;
 
+  char *trace_root = NULL;
   xc_trace_t *trace = NULL;
   proc_t proc = {0};
   int rc = 0;
@@ -40,6 +43,18 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
   if (ERROR(mode == 0)) {
     rc = ENOSYS;
     goto done;
+  }
+
+  // derive the trace root directory
+  if (ERROR((rc = db_trace_root(*db, cmd, &trace_root))))
+    goto done;
+
+  // create it if it does not exist
+  if (mkdir(trace_root, 0755) < 0) {
+    if (ERROR(errno != EEXIST)) {
+      rc = errno;
+      goto done;
+    }
   }
 
   if (ERROR((rc = proc_new(&proc, mode))))
@@ -144,6 +159,7 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
 done:
   proc_free(proc);
   xc_trace_free(trace);
+  free(trace_root);
 
   return rc;
 }
