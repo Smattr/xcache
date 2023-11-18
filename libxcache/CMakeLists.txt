@@ -1,12 +1,6 @@
 project(libxcache LANGUAGES C)
 
 add_library(libxcache
-  src/action_eq.c
-  src/action_free.c
-  src/action_is_valid.c
-  src/action_new_access.c
-  src/action_new_read.c
-  src/action_new_stat.c
   src/atfd_to_str.c
   src/cbor_read_str.c
   src/cbor_read_u64.c
