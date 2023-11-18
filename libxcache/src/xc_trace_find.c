@@ -90,6 +90,8 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
       goto done;
     }
 
+    DEBUG("reading trace %s…", trace_file);
+
     int trace_fd = open(trace_file, O_RDONLY | O_CLOEXEC);
     if (ERROR(trace_fd < 0)) {
       rc = errno;
