@@ -138,6 +138,16 @@ INTERNAL int proc_syscall(const proc_t proc);
  */
 INTERNAL void proc_end(proc_t *proc);
 
+/** write out a completed process result to a trace file
+ *
+ * \param proc Completed process
+ * \param cmd Command that initiated this process
+ * \param trace_root Directory in which to write the trace file
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int proc_save(const proc_t proc, const xc_cmd_t cmd,
+                       const char *trace_root);
+
 /** destroy a process
  *
  * \param proc Process to destroy
