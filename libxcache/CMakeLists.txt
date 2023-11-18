@@ -6,6 +6,7 @@ add_library(libxcache
   src/cbor_read_u64.c
   src/cbor_read_u64_raw.c
   src/cbor_write_str.c
+  src/cbor_write_u64.c
   src/cbor_write_u64_raw.c
   src/cmd_read.c
   src/cmd_write.c

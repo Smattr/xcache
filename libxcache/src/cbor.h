@@ -49,6 +49,16 @@ INTERNAL int cbor_write_str(FILE *stream, const char *value);
  *
  * \param stream File to write to
  * \param value Value to write
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int cbor_write_u64(FILE *stream, uint64_t value);
+
+/** write a ≤64-bit unsigned integer
+ *
+ * Same as `cbor_write_u64` but supports tweaking how tags are interpreted.
+ *
+ * \param stream File to write to
+ * \param value Value to write
  * \param bias Offset to apply when writing tags
  * \return 0 on success or an errno on failure
  */
