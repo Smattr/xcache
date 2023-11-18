@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <xcache/cmd.h>
 
 /** summary digest of some data
@@ -34,6 +35,9 @@ INTERNAL int hash_cmd(const xc_cmd_t cmd, hash_t *hash);
  * \return Hash of the data
  */
 INTERNAL hash_t hash_data(const void *base, size_t size);
+
+/// derive the hash of a string
+static inline hash_t hash_str(const char *s) { return hash_data(s, strlen(s)); }
 
 /** derive the hash of a given file
  *
