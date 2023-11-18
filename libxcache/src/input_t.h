@@ -7,25 +7,67 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+/// type of a recorded file system read
+typedef enum {
+  INP_ACCESS, ///< access()
+  INP_READ,   ///< open() with O_RDONLY or O_RDWR
+  INP_STAT,   ///< stat()
+} input_type_t;
+
 /// a file/directory that was read
 typedef struct {
-  char *path;     ///< absolute path to the target
-  int stat_errno; ///< errno from `stat(path)`
-  mode_t st_mode; ///< stat-ed mode
-  uid_t st_uid;   ///< stat-ed uid
-  gid_t st_gid;   ///< stat-ed gid
-  size_t st_size; ///< on-disk size
-  int open_errno; ///< errno from `open(path, …)`
-  hash_t digest;  ///< hash of the file’s contents
+  input_type_t tag; ///< discriminator of the union
+  char *path;       ///< absolute path to the target of this action
+  int err;          ///< any errno that resulted
+  union {
+    struct {
+      int flags; ///< mask of F_OK, R_OK, W_OK, X_OK
+    } access;
+    struct {
+      hash_t hash; ///< hash of the file’s content
+    } read;
+    struct {
+      bool is_lstat : 1;    ///< were symlinks not followed?
+      mode_t mode;          ///< mode of the file/directory
+      uid_t uid;            ///< user ID
+      gid_t gid;            ///< group ID
+      size_t size;          ///< on-disk size in bytes
+      struct timespec mtim; ///< modification time
+      struct timespec ctim; ///< creation time
+    } stat;
+  };
 } input_t;
 
-/** create a new input
+/** create an input for an access() call
  *
  * \param input [out] Created input on success
- * \param path Absolute path to the input
- * \return 0 on success or errno on failure
+ * \param expected_err Expected error result
+ * \param path Absolute path to the target file/directory
+ * \param flags Flags to access()
+ * \return 0 on success or an errno on failure
  */
-INTERNAL int input_new(input_t *input, const char *path);
+INTERNAL int input_new_access(input_t *input, int expected_err,
+                              const char *path, int flags);
+
+/** create an input for a read open() call
+ *
+ * \param input [out] Created input on success
+ * \param expected_err Expected error result
+ * \param path Absolute path to the target file/directory
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int input_new_read(input_t *input, int expected_err, const char *path);
+
+/** create an input for a stat() call
+ *
+ * \param input [out] Created input on success
+ * \param expected_err Expected error result
+ * \param path Absolute path to the target file/directory
+ * \param is_lstat Whether to use `stat` or `lstat`
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int input_new_stat(input_t *input, int expected_err, const char *path,
+                            bool is_lstat);
 
 /** deserialise an input from a file
  *
@@ -40,6 +82,14 @@ INTERNAL int input_read(input_t *input, FILE *stream);
  * \param input Input to examine
  */
 INTERNAL bool input_is_valid(const input_t input);
+
+/** compare two input actions for equality
+ *
+ * \param a First operand to ==
+ * \param b Second operand to ==
+ * \return True if the input actions are identical
+ */
+INTERNAL bool input_eq(const input_t a, const input_t b);
 
 /** destroy an input
  *

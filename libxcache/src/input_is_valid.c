@@ -1,43 +1,37 @@
-#include "hash_t.h"
 #include "input_t.h"
-#include <assert.h>
-#include <errno.h>
 #include <stdbool.h>
-#include <sys/stat.h>
 
 bool input_is_valid(const input_t input) {
 
-  assert(input.path != NULL);
+  input_t attempt = {0};
 
-  // read the target’s attributes
-  {
-    struct stat st = {0};
-    if (stat(input.path, &st) < 0) {
-      if (input.stat_errno != errno)
-        return false;
-    } else {
-      if (input.stat_errno != 0)
-        return false;
-      if (input.st_mode != st.st_mode)
-        return false;
-      if (input.st_uid != st.st_uid)
-        return false;
-      if (input.st_gid != st.st_gid)
-        return false;
-      if (input.st_size != (size_t)st.st_size)
-        return false;
-    }
+  switch (input.tag) {
+
+  case INP_ACCESS: {
+    const int r =
+        input_new_access(&attempt, input.err, input.path, input.access.flags);
+    if (r != 0)
+      return false;
+    break;
   }
 
-  // hash it
-  if (input.stat_errno == 0 && S_ISREG(input.st_mode) && input.st_size > 0) {
-    hash_t digest = {0};
-    int rc = hash_file(input.path, &digest);
-    if (input.open_errno != rc)
+  case INP_READ: {
+    const int r = input_new_read(&attempt, input.err, input.path);
+    if (r != 0)
       return false;
-    if (rc == 0 && !hash_eq(input.digest, digest))
-      return false;
+    break;
   }
 
-  return true;
+  case INP_STAT: {
+    const int r =
+        input_new_stat(&attempt, input.err, input.path, input.stat.is_lstat);
+    if (r != 0)
+      return false;
+    break;
+  }
+  }
+
+  const bool is_valid = input_eq(input, attempt);
+  input_free(input);
+  return is_valid;
 }

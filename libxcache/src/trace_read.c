@@ -72,10 +72,12 @@ int trace_read(xc_trace_t *trace, FILE *stream) {
     }
   }
 
+#if 0
   for (size_t i = 0; i < t.n_inputs; ++i) {
     if (ERROR((rc = input_read(&t.inputs[i], stream))))
       goto done;
   }
+#endif
 
   {
     uint64_t n_outputs = 0;

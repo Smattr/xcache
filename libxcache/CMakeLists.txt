@@ -23,10 +23,12 @@ add_library(libxcache
   src/hash_eq.c
   src/hash_file.c
   src/hash_read.c
+  src/input_eq.c
   src/input_free.c
   src/input_is_valid.c
-  src/input_new.c
-  src/input_read.c
+  src/input_new_access.c
+  src/input_new_read.c
+  src/input_new_stat.c
   src/openflags_to_str.c
   src/output_free.c
   src/output_read.c
