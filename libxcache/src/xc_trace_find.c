@@ -53,23 +53,8 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
   char *trace_root = NULL;
   int rc = 0;
 
-  {
-    // hash the command
-    hash_t hash = {0};
-    if (ERROR((rc = hash_cmd(query, &hash))))
-      goto done;
-
-    // stringise the hash
-    char stem[sizeof(hash_t) * 2 + 1] = {0};
-    snprintf(stem, sizeof(stem), "%016" PRIx64, hash.data);
-
-    // construct a path to this trace’s root
-    trace_root = path_join(db->root, stem);
-    if (ERROR(trace_root == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-  }
+  if (ERROR((rc = db_trace_root(*db, query, &trace_root))))
+    goto done;
 
   dir = opendir(trace_root);
   if (dir == NULL) {

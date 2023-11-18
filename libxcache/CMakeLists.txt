@@ -10,6 +10,7 @@ add_library(libxcache
   src/cmd_read.c
   src/cmd_write.c
   src/cp.c
+  src/db_trace_root.c
   src/fd_free.c
   src/fd_new.c
   src/hash_cmd.c
