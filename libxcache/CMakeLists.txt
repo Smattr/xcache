@@ -22,6 +22,7 @@ add_library(libxcache
   src/input_eq.c
   src/input_free.c
   src/input_is_valid.c
+  src/input_load.c
   src/input_new_access.c
   src/input_new_read.c
   src/input_new_stat.c
