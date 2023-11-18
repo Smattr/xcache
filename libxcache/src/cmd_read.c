@@ -1,5 +1,6 @@
 #include "cbor.h"
 #include "cmd_t.h"
+#include "debug.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>
@@ -18,13 +19,13 @@ int cmd_read(xc_cmd_t *cmd, FILE *stream) {
 
   {
     uint64_t argc = 0;
-    if ((rc = cbor_read_u64_raw(stream, &argc, 0x80)))
+    if (ERROR((rc = cbor_read_u64_raw(stream, &argc, 0x80))))
       goto done;
-    if (argc > SIZE_MAX)
+    if (ERROR(argc > SIZE_MAX))
       return EOVERFLOW;
 
     c.argv = calloc(argc + 1, sizeof(c.argv[0]));
-    if (c.argv == NULL) {
+    if (ERROR(c.argv == NULL)) {
       rc = ENOMEM;
       goto done;
     }
@@ -32,11 +33,11 @@ int cmd_read(xc_cmd_t *cmd, FILE *stream) {
   }
 
   for (size_t i = 0; i < c.argc; ++i) {
-    if ((rc = cbor_read_str(stream, &c.argv[i])))
+    if (ERROR((rc = cbor_read_str(stream, &c.argv[i]))))
       goto done;
   }
 
-  if ((rc = cbor_read_str(stream, &c.cwd)))
+  if (ERROR((rc = cbor_read_str(stream, &c.cwd))))
     goto done;
 
   *cmd = c;
