@@ -27,3 +27,11 @@ struct xc_trace {
  * \return 0 on success or an errno on failure
  */
 INTERNAL int trace_read(xc_trace_t *trace, FILE *stream);
+
+/** serialise a trace to a file
+ *
+ * \param trace Trace to write out
+ * \param stream File to write to
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int trace_save(const xc_trace_t trace, FILE *stream);
