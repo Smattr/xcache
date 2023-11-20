@@ -138,6 +138,12 @@ INTERNAL int proc_syscall(const proc_t proc);
  */
 INTERNAL void proc_end(proc_t *proc);
 
+/** release a child, letting it run to completion
+ *
+ * \param proc Process to release
+ */
+INTERNAL void proc_detach(proc_t *proc);
+
 /** write out a completed process result to a trace file
  *
  * \param proc Completed process

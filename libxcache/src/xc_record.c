@@ -157,6 +157,11 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
     goto done;
 
 done:
+  // if the child did something unsupported, let it run uninstrumented to
+  // completion
+  if (rc == ECHILD || rc == ESRCH)
+    proc_detach(&proc);
+
   proc_free(proc);
   free(trace_root);
 

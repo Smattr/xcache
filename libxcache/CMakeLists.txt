@@ -39,6 +39,7 @@ add_library(libxcache
   src/path_join.c
   src/peek_str.c
   src/proc_cont.c
+  src/proc_detach.c
   src/proc_end.c
   src/proc_exec.c
   src/proc_fd.c
