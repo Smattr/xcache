@@ -18,24 +18,24 @@ int output_load(output_t *output, FILE *stream) {
     goto done;
 
   {
-    uint64_t st_mode = 0;
-    if ((rc = cbor_read_u64(stream, &st_mode)))
+    uint64_t mode = 0;
+    if ((rc = cbor_read_u64(stream, &mode)))
       goto done;
-    o.st_mode = (mode_t)st_mode;
+    o.mode = (mode_t)mode;
   }
 
   {
-    uint64_t st_uid = 0;
-    if ((rc = cbor_read_u64(stream, &st_uid)))
+    uint64_t uid = 0;
+    if ((rc = cbor_read_u64(stream, &uid)))
       goto done;
-    o.st_uid = (uid_t)st_uid;
+    o.uid = (uid_t)uid;
   }
 
   {
-    uint64_t st_gid = 0;
-    if ((rc = cbor_read_u64(stream, &st_gid)))
+    uint64_t gid = 0;
+    if ((rc = cbor_read_u64(stream, &gid)))
       goto done;
-    o.st_gid = (gid_t)st_gid;
+    o.gid = (gid_t)gid;
   }
 
   if ((rc = cbor_read_str(stream, &o.cached_copy)))

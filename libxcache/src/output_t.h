@@ -7,10 +7,10 @@
 
 typedef struct {
   char *path;        ///< absolute path to target
-  mode_t st_mode;    ///< chmod-ed mode to set
-  uid_t st_uid;      ///< chown-ed uid to set
-  gid_t st_gid;      ///< chown-ed gid to set
-  char *cached_copy; ///< related path to cached content, if not directory
+  mode_t mode;       ///< chmod-ed mode to set
+  uid_t uid;         ///< chown-ed uid to set
+  gid_t gid;         ///< chown-ed gid to set
+  char *cached_copy; ///< relative path to cached content, if not directory
 } output_t;
 
 /** deserialise an output from a file

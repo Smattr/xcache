@@ -15,12 +15,12 @@ static const mode_t CHMOD_BITS = PERMISSION_BITS | S_ISUID | S_ISGID | S_ISVTX;
 
 static int replay_dir(const output_t output) {
 
-  assert(S_ISDIR(output.st_mode));
+  assert(S_ISDIR(output.mode));
   assert(output.cached_copy == NULL);
 
   int rc = 0;
 
-  if (mkdir(output.path, output.st_mode & PERMISSION_BITS) < 0) {
+  if (mkdir(output.path, output.mode & PERMISSION_BITS) < 0) {
     // allow directory to already exist
     if (errno != EEXIST) {
       rc = errno;
@@ -34,7 +34,7 @@ done:
 
 static int replay_file(const output_t output, const xc_trace_t *owner) {
 
-  assert(S_ISREG(output.st_mode));
+  assert(S_ISREG(output.mode));
   assert(output.cached_copy != NULL);
 
   int src = -1;
@@ -48,7 +48,7 @@ static int replay_file(const output_t output, const xc_trace_t *owner) {
   }
 
   dst = open(output.path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
-             output.st_mode & CHMOD_BITS);
+             output.mode & CHMOD_BITS);
   if (dst < 0) {
     rc = errno;
     goto done;
@@ -69,14 +69,14 @@ done:
 int output_replay(const output_t output, const xc_trace_t *owner) {
 
   assert(output.path != NULL);
-  assert((S_ISDIR(output.st_mode) && output.cached_copy == NULL) ||
-         (S_ISREG(output.st_mode) && output.cached_copy != NULL));
+  assert((S_ISDIR(output.mode) && output.cached_copy == NULL) ||
+         (S_ISREG(output.mode) && output.cached_copy != NULL));
   assert(owner != NULL);
 
   int rc = 0;
 
   // create the output
-  if (S_ISDIR(output.st_mode)) {
+  if (S_ISDIR(output.mode)) {
     if ((rc = replay_dir(output)))
       goto done;
   } else {
@@ -92,14 +92,14 @@ int output_replay(const output_t output, const xc_trace_t *owner) {
   }
 
   // adjust any as needed
-  if (st.st_mode != output.st_mode) {
-    if (chmod(output.path, output.st_mode & CHMOD_BITS) < 0) {
+  if (st.st_mode != output.mode) {
+    if (chmod(output.path, output.mode & CHMOD_BITS) < 0) {
       rc = errno;
       goto done;
     }
   }
-  if (st.st_uid != output.st_uid || st.st_gid != output.st_gid) {
-    if (chown(output.path, output.st_uid, output.st_gid) < 0) {
+  if (st.st_uid != output.uid || st.st_gid != output.gid) {
+    if (chown(output.path, output.uid, output.gid) < 0) {
       rc = errno;
       goto done;
     }
