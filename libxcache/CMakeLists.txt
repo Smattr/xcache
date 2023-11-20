@@ -2,6 +2,7 @@ project(libxcache LANGUAGES C)
 
 add_library(libxcache
   src/atfd_to_str.c
+  src/cbor_read_opt_str.c
   src/cbor_read_str.c
   src/cbor_read_u64.c
   src/cbor_read_u64_raw.c
