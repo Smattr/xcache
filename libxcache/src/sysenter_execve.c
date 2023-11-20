@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int sysenter_execve(proc_t *proc) {
 
@@ -37,10 +38,16 @@ int sysenter_execve(proc_t *proc) {
 
   DEBUG("pid %ld, execve(\"%s\", …)", (long)proc->pid, path);
 
-  // record execve() as a read, assuming success
+  // infer a read() from execve()
   if (ERROR((rc = input_new_read(&saw, 0, abs))))
     goto done;
+  if (ERROR((rc = proc_input_new(proc, saw))))
+    goto done;
+  saw = (input_t){0};
 
+  // infer an access() with X_OK from execve()
+  if (ERROR((rc = input_new_access(&saw, 0, abs, X_OK))))
+    goto done;
   if (ERROR((rc = proc_input_new(proc, saw))))
     goto done;
   saw = (input_t){0};
