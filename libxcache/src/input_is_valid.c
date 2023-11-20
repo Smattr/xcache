@@ -32,6 +32,6 @@ bool input_is_valid(const input_t input) {
   }
 
   const bool is_valid = input_eq(input, attempt);
-  input_free(input);
+  input_free(attempt);
   return is_valid;
 }
