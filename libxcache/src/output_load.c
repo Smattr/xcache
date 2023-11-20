@@ -38,7 +38,7 @@ int output_load(output_t *output, FILE *stream) {
     o.gid = (gid_t)gid;
   }
 
-  if ((rc = cbor_read_str(stream, &o.cached_copy)))
+  if ((rc = cbor_read_opt_str(stream, &o.cached_copy)))
     goto done;
 
   *output = o;
