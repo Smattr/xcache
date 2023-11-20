@@ -14,6 +14,8 @@ void proc_end(proc_t *proc) {
   }
   proc->pid = 0;
 
+  proc_fds_free(proc);
+
   free(proc->cwd);
   proc->cwd = NULL;
 }
