@@ -33,6 +33,7 @@ add_library(libxcache
   src/output_free.c
   src/output_load.c
   src/output_replay.c
+  src/output_save.c
   src/page_size.c
   src/path_absolute.c
   src/path_join.c

@@ -21,6 +21,14 @@ typedef struct {
  */
 INTERNAL int output_load(output_t *output, FILE *stream);
 
+/** serialise an output to a file
+ *
+ * \param output Output to write out
+ * \param stream File to write to
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int output_save(const output_t output, FILE *stream);
+
 /** re-run the effects of an output
  *
  * \param output Output to replay
