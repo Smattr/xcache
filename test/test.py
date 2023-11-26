@@ -2,9 +2,10 @@
 Xcache test suite
 """
 
-import tempfile
 import subprocess
+import tempfile
 from pathlib import Path
+
 import pytest
 
 
@@ -21,6 +22,23 @@ def test_no_dir(debug: bool):
             args += ["--debug"]
         with pytest.raises(subprocess.CalledProcessError):
             subprocess.check_call(args + ["--", "my-echo", "foo", "bar"])
+
+
+@pytest.mark.parametrize("debug", (False, True))
+def test_nonexistent(debug: bool, tmp_path: Path):
+    """
+    running something that does not exist should fail
+    """
+    args = ["xcache"]
+    if debug:
+        args += ["--debug"]
+    args += [f"--dir={tmp_path}/database", "--", tmp_path / "nonexistent"]
+    with pytest.raises(subprocess.CalledProcessError):
+        subprocess.check_call(args)
+
+    # even if we cached it, replay should return failure
+    with pytest.raises(subprocess.CalledProcessError):
+        subprocess.check_call(args)
 
 
 @pytest.mark.parametrize("debug", (False, True))
