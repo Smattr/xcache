@@ -84,7 +84,43 @@ def test_nop(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--disable"]
     args += ["--", "nop"]
 
-    subprocess.check_call(args)
+    output = subprocess.check_output(
+        args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
+    )
+
+    if debug:
+        if replay:
+            assert "replay failed" in output, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in output, "replay incorrectly enabled"
+            assert "replay succeeded" not in output, "replay incorrectly enabled"
+        if record:
+            assert "record succeeded" in output, "record of no-op failed"
+        else:
+            assert "record failed" not in output, "record incorrectly enabled"
+            assert "record succeeded" not in output, "record incorrectly enabled"
+
+    # try it again to see if we can replay
+    output = subprocess.check_output(
+        args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
+    )
+
+    if debug:
+        if record and replay:
+            assert "replay succeeded" in output, "replay of no-op failed"
+        elif replay:
+            assert "replay failed" in output, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in output, "replay incorrectly enabled"
+            assert "replay succeeded" not in output, "replay incorrectly enabled"
+        if record and replay:
+            assert "record failed" not in output, "record still attempted after replay"
+            assert "record succeeded" not in output, "record after successful replay"
+        elif record:
+            assert "record succeeded" in output, "record of no-op failed"
+        else:
+            assert "record failed" not in output, "record incorrectly enabled"
+            assert "record succeeded" not in output, "record incorrectly enabled"
 
 
 @pytest.mark.parametrize("debug", (False, True))
