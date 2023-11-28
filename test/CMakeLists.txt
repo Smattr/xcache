@@ -1,4 +1,5 @@
 add_executable(my-echo my-echo.c)
+add_executable(nop nop.c)
 
 find_package(Python3 COMPONENTS Interpreter)
 if(NOT Python3_FOUND)
@@ -25,5 +26,6 @@ add_custom_target(check
 )
 add_dependencies(check
   my-echo
+  nop
   xcache
 )
