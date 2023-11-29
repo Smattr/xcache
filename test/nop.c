@@ -4,6 +4,4 @@
 ///
 /// If we cannot record and replay this, we cannot do anything.
 
-int main(void) {
-  return 0;
-}
+int main(void) { return 0; }
