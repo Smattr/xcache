@@ -49,7 +49,7 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
     }
 
     if (pid == 0) {
-      proc_exec(proc, cmd);
+      proc_exec(proc, cmd, spy);
       // unreachable
     }
 

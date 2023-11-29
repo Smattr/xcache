@@ -9,7 +9,8 @@
 #include <unistd.h>
 #include <xcache/cmd.h>
 
-_Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd) {
+_Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd,
+                         const char *spy) {
 
   assert(proc != NULL);
   assert(proc->outfd[1] > 0);
@@ -20,6 +21,7 @@ _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd) {
   for (size_t i = 0; i < cmd.argc; ++i)
     assert(cmd.argv[i] != NULL);
   assert(cmd.argv[cmd.argc] == NULL);
+  assert(spy != NULL);
 
   int rc = 0;
 
@@ -48,6 +50,12 @@ _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd) {
 
   // LeakSanitizer does not work under ptrace (as we will be), so disable it
   if (setenv("ASAN_OPTIONS", "detect_leaks=0", 1) < 0) {
+    rc = errno;
+    goto fail;
+  }
+
+  // setup our spy to be injected
+  if (setenv("LD_PRELOAD", spy, 1) < 0) {
     rc = errno;
     goto fail;
   }

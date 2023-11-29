@@ -103,8 +103,10 @@ INTERNAL int proc_start(proc_t *proc, const xc_cmd_t cmd);
  *
  * \param proc Process to run
  * \param cmd Command describing what to `exec`
+ * \param spy Absolute path to parasite library to inject
  */
-INTERNAL _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd);
+INTERNAL _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd,
+                                  const char *spy);
 
 /** resume a stopped process, running it until the next event
  *
