@@ -3,6 +3,7 @@ Xcache test suite
 """
 
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -121,6 +122,79 @@ def test_nop(debug: bool, record: bool, replay: bool, tmp_path: Path):
         else:
             assert "record failed" not in output, "record incorrectly enabled"
             assert "record succeeded" not in output, "record incorrectly enabled"
+
+
+@pytest.mark.parametrize("debug", (False, True))
+@pytest.mark.parametrize("record", (False, True))
+@pytest.mark.parametrize("replay", (False, True))
+@pytest.mark.parametrize("stream", ("stdout", "stderr"))
+def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: Path):
+    """
+    can we handle something that prints to a standard stream?
+    """
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace([f"print-{stream}"])
+
+    args = ["xcache"]
+    if debug:
+        args += ["--debug"]
+    args += [f"--dir={tmp_path}/database"]
+    if record:
+        if replay:
+            args += ["--read-write"]
+        else:
+            args += ["--write-only"]
+    else:
+        if replay:
+            args += ["--read-only"]
+        else:
+            args += ["--disable"]
+    args += ["--", "print-stdout"]
+
+    output = subprocess.check_output(
+        args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
+    )
+
+    if debug:
+        if replay:
+            assert "replay failed" in output, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in output, "replay incorrectly enabled"
+            assert "replay succeeded" not in output, "replay incorrectly enabled"
+        if record:
+            assert "record succeeded" in output, f"record of {stream} user failed"
+        else:
+            assert "record failed" not in output, "record incorrectly enabled"
+            assert "record succeeded" not in output, "record incorrectly enabled"
+
+    assert re.search("\\bhello\nworld\\b", output), f"missing {stream}"
+
+    # try it again to see if we can replay
+    output = subprocess.check_output(
+        args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
+    )
+
+    if debug:
+        if record and replay:
+            assert "replay succeeded" in output, f"replay of {stream} user failed"
+        elif replay:
+            assert "replay failed" in output, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in output, "replay incorrectly enabled"
+            assert "replay succeeded" not in output, "replay incorrectly enabled"
+        if record and replay:
+            assert "record failed" not in output, "record still attempted after replay"
+            assert "record succeeded" not in output, "record after successful replay"
+        elif record:
+            assert "record succeeded" in output, f"record of {stream} user failed"
+        else:
+            assert "record failed" not in output, "record incorrectly enabled"
+            assert "record succeeded" not in output, "record incorrectly enabled"
+
+    assert re.search("\\bhello\nworld\\b", output), f"missing {stream}"
 
 
 @pytest.mark.parametrize("debug", (False, True))
