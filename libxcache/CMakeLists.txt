@@ -14,6 +14,9 @@ add_library(libxcache
   src/cmd_save.c
   src/cp.c
   src/db_trace_root.c
+  src/find_exe.c
+  src/find_lib.c
+  src/find_spy.c
   src/fd_free.c
   src/fd_new.c
   src/hash_cmd.c

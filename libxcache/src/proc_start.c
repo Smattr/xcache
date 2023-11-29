@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "find_me.h"
 #include "proc_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -18,7 +19,11 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
   assert(proc != NULL);
   assert(proc->pid == 0 && "proc already started?");
 
+  char *spy = NULL;
   int rc = 0;
+
+  if (ERROR((rc = find_spy(&spy))))
+    goto done;
 
   free(proc->cwd);
   proc->cwd = strdup(cmd.cwd);
@@ -115,5 +120,7 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
   }
 
 done:
+  free(spy);
+
   return rc;
 }

@@ -1,6 +1,6 @@
 project(libxcache-spy LANGUAGES C)
 
-add_library(libxcache-spy
+add_library(libxcache-spy SHARED
   src/init.c
 )
 
