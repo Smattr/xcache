@@ -59,6 +59,7 @@ add_library(libxcache
   src/syscall_to_str.c
   src/sysenter.c
   src/sysenter_execve.c
+  src/sysenter_ioctl.c
   src/sysexit.c
   src/sysexit_access.c
   src/sysexit_chdir.c

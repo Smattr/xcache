@@ -17,6 +17,13 @@ INTERNAL int sysenter(proc_t *proc);
  */
 INTERNAL int sysenter_execve(proc_t *proc);
 
+/** handle start of `ioctl`
+ *
+ * \param proc Process that made this syscall
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int sysenter_ioctl(proc_t *proc);
+
 /** handle end of a syscall
  *
  * \param proc Process that made this syscall

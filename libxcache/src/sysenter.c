@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stddef.h>
 #include <sys/syscall.h>
+#include <xcache/record.h>
 
 int sysenter(proc_t *proc) {
 
@@ -29,6 +30,26 @@ int sysenter(proc_t *proc) {
       goto done;                                                               \
     }                                                                          \
   } while (0)
+
+  // handle ioctl before checking whether we are ignoring, because the ioctl
+  // might be an instruction to stop ignoring
+  DO(ioctl);
+
+  if (proc->ignoring) {
+    DEBUG("ignoring %s«%lu» on spy’s instruction", syscall_to_str(syscall_no),
+          syscall_no);
+
+    // restart the process
+    if (proc->mode == XC_SYSCALL) {
+      if (ERROR((rc = proc_syscall(*proc))))
+        goto done;
+    } else {
+      if (ERROR((rc = proc_cont(*proc))))
+        goto done;
+    }
+
+    goto done;
+  }
 
 // skip ignored syscalls and run them to their sysexit
 #define SYSENTER_IGNORE(call)                                                  \

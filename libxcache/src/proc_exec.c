@@ -1,3 +1,4 @@
+#include "../../common/proccall.h"
 #include "proc_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -44,6 +45,12 @@ _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd,
     goto fail;
   }
   if (dup2(proc->errfd[1], STDERR_FILENO) < 0) {
+    rc = errno;
+    goto fail;
+  }
+
+  // setup our bridge for out-of-band messages
+  if (dup2(proc->proccall[1], XCACHE_FILENO) < 0) {
     rc = errno;
     goto fail;
   }

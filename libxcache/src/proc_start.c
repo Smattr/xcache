@@ -1,3 +1,4 @@
+#include "../../common/proccall.h"
 #include "debug.h"
 #include "find_me.h"
 #include "proc_t.h"
@@ -39,6 +40,8 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
   if (ERROR((rc = proc_fd_new(proc, STDOUT_FILENO, "/dev/stdout"))))
     goto done;
   if (ERROR((rc = proc_fd_new(proc, STDERR_FILENO, "/dev/stderr"))))
+    goto done;
+  if (ERROR((rc = proc_fd_new(proc, XCACHE_FILENO, ""))))
     goto done;
 
   {

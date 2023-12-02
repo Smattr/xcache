@@ -1,3 +1,4 @@
+#include "../../common/proccall.h"
 #include "debug.h"
 #include "peek.h"
 #include "proc_t.h"
@@ -20,6 +21,12 @@ int sysexit_close(proc_t *proc) {
 
   DEBUG("pid %ld, close(%ld) = %d, errno == %d", (long)proc->pid, fd,
         err == 0 ? 0 : -1, err);
+
+  // if the child closed our spy’s channel back to us, consider this unsupported
+  if (ERROR(fd == XCACHE_FILENO)) {
+    rc = ECHILD;
+    goto done;
+  }
 
   // if it succeeded, drop this from our tracking table
   if (err == 0) {

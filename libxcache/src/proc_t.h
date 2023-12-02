@@ -34,10 +34,14 @@ typedef struct {
   int outfd[2]; ///< pipe for communicating stdout content
   int errfd[2]; ///< pipe for communicating stderr content
 
+  int proccall[2]; ///< pipe for subprocess to message its parent
+
   char *cwd; ///< current working directory
 
   pid_t pid;                ///< process ID of the child
   bool pending_sysexit : 1; ///< is this process mid-syscall?
+
+  bool ignoring : 1; ///< has the spy told us to ignore syscalls?
 
   fd_t **fds;   ///< file descriptor table
   size_t n_fds; ///< number of entries in `fds`

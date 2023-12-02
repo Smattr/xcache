@@ -66,6 +66,12 @@ int proc_new(proc_t *proc, unsigned mode) {
   if (ERROR((rc = set_nonblock(p.errfd[0]))))
     goto done;
 
+  // setup a bridge the subprocess will use to send us out-of-band messages
+  if (ERROR(pipe(p.proccall) < 0)) {
+    rc = errno;
+    goto done;
+  }
+
   *proc = p;
   p = (proc_t){0};
 

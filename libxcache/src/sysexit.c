@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stddef.h>
 #include <sys/syscall.h>
+#include <xcache/record.h>
 
 int sysexit(proc_t *proc) {
 
@@ -16,6 +17,22 @@ int sysexit(proc_t *proc) {
   const unsigned long syscall_no = peek_syscall_no(proc->pid);
   DEBUG("pid %ld, sysexit %s«%lu»", (long)proc->pid, syscall_to_str(syscall_no),
         syscall_no);
+
+  if (proc->ignoring) {
+    DEBUG("ignoring %s«%lu» on spy’s instruction", syscall_to_str(syscall_no),
+          syscall_no);
+
+    // restart the process
+    if (proc->mode == XC_SYSCALL) {
+      if (ERROR((rc = proc_syscall(*proc))))
+        goto done;
+    } else {
+      if (ERROR((rc = proc_cont(*proc))))
+        goto done;
+    }
+
+    goto done;
+  }
 
 // skip ignored syscalls and run them to their next event
 #define SYSENTER_IGNORE(call) // notthing

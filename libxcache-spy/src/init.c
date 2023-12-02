@@ -1,10 +1,12 @@
+#include "../../common/proccall.h"
+#include "call.h"
 #include <stdlib.h>
 
 /// actions to perform before entering main
 static __attribute__((constructor)) void init(void) {
 
-  // TODO: signal an “ignore window”, otherwise we will have false positives
-  // when _not_ using Glibc
+  // tell our tracer to ignore any syscalls that occur below
+  call(CALL_OFF, NULL);
 
   // Glibc’s allocator implements a thread-local cache it calls “tcache”. During
   // its initialisation, it calls `getrandom`, a function Xcache would usually
@@ -23,4 +25,7 @@ static __attribute__((constructor)) void init(void) {
     abort();
   *ignored = 0;
   free((char *)ignored);
+
+  // tell our tracer to resume paying attention
+  call(CALL_ON, NULL);
 }

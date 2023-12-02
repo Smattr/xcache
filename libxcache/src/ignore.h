@@ -33,6 +33,9 @@ IGNORE(munmap)
 #ifdef __NR_brk
 IGNORE(brk)
 #endif
+#ifdef __NR_ioctl
+SYSEXIT_IGNORE(ioctl) // handled or gave up in sysenter
+#endif
 #ifdef __NR_pread64
 IGNORE(pread64)
 #endif

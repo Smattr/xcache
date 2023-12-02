@@ -11,6 +11,11 @@ void proc_free(proc_t proc) {
     input_free(proc.inputs[i]);
   free(proc.inputs);
 
+  if (proc.proccall[0] > 0)
+    (void)close(proc.proccall[0]);
+  if (proc.proccall[1] > 0)
+    (void)close(proc.proccall[1]);
+
   if (proc.errfd[0] > 0)
     (void)close(proc.errfd[0]);
   if (proc.errfd[1] > 0)

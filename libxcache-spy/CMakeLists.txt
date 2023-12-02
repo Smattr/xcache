@@ -1,12 +1,18 @@
 project(libxcache-spy LANGUAGES C)
 
 add_library(libxcache-spy SHARED
+  src/call.c
   src/init.c
 )
 
 if(APPLE)
   target_compile_options(libxcache-spy PRIVATE -fno-common)
 endif()
+
+target_include_directories(libxcache-spy
+  PRIVATE
+    src
+)
 
 set_target_properties(libxcache-spy PROPERTIES PREFIX "")
 
