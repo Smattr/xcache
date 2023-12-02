@@ -18,6 +18,6 @@ void proc_free(proc_t proc) {
 
   if (proc.outfd[0] > 0)
     (void)close(proc.outfd[0]);
-  if (proc.outfd[1] > 1)
+  if (proc.outfd[1] > 0)
     (void)close(proc.outfd[1]);
 }
