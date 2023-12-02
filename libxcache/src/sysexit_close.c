@@ -21,7 +21,7 @@ int sysexit_close(proc_t *proc) {
   DEBUG("pid %ld, close(%ld) = %d, errno == %d", (long)proc->pid, fd,
         err == 0 ? 0 : -1, err);
 
-  // if it succeede, drop this from our tracking table
+  // if it succeeded, drop this from our tracking table
   if (err == 0) {
     if (ERROR(fd < 0 || (size_t)fd >= proc->n_fds || proc->fds[fd] == NULL)) {
       // the child somehow successfully closed something they did not have open
