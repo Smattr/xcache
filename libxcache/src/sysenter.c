@@ -37,13 +37,11 @@ int sysenter(proc_t *proc) {
   // `execve` is one of the few syscalls we must handle on enter because the
   // caller’s address space does not exist at exit, making it impossible for us
   // to peek its arguments
-#ifdef __NR_execve
   if (syscall_no == __NR_execve) {
     if (ERROR((rc = sysenter_execve(proc))))
       goto done;
     goto done;
   }
-#endif
 
   rc = ENOTSUP;
 done:
