@@ -20,6 +20,16 @@ int sysenter(proc_t *proc) {
   // the vast majority of syscalls either (1) have no relevance to us or (2) we
   // prefer to handle at exit because the return value is available
 
+#define DO(call)                                                               \
+  do {                                                                         \
+    if (syscall_no == __NR_##call) {                                           \
+      if (ERROR((rc = sysenter_##call(proc)))) {                               \
+        goto done;                                                             \
+      }                                                                        \
+      goto done;                                                               \
+    }                                                                          \
+  } while (0)
+
 // skip ignored syscalls and run them to their sysexit
 #define SYSENTER_IGNORE(call)                                                  \
   do {                                                                         \
@@ -37,11 +47,7 @@ int sysenter(proc_t *proc) {
   // `execve` is one of the few syscalls we must handle on enter because the
   // caller’s address space does not exist at exit, making it impossible for us
   // to peek its arguments
-  if (syscall_no == __NR_execve) {
-    if (ERROR((rc = sysenter_execve(proc))))
-      goto done;
-    goto done;
-  }
+  DO(execve);
 
   rc = ENOTSUP;
 done:
