@@ -18,6 +18,9 @@
 #ifdef __NR_read
 IGNORE(read)
 #endif
+#ifdef __NR_write
+IGNORE(write)
+#endif
 #ifdef __NR_close
 SYSENTER_IGNORE(close)
 #endif
