@@ -35,7 +35,7 @@ int proc_new(proc_t *proc, unsigned mode, const char *trace_root) {
     goto done;
 
   // setup a bridge the subprocess will use to send us out-of-band messages
-  if (ERROR(pipe(p.proccall) < 0)) {
+  if (ERROR(pipe2(p.proccall, O_CLOEXEC) < 0)) {
     rc = errno;
     goto done;
   }
