@@ -14,8 +14,8 @@ _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd,
                          const char *spy) {
 
   assert(proc != NULL);
-  assert(proc->outfd[1] > 0);
-  assert(proc->errfd[1] > 0);
+  assert(proc->t_out->pipe[1] > 0);
+  assert(proc->t_err->pipe[1] > 0);
   assert(cmd.cwd != NULL);
   assert(cmd.argv != NULL);
   assert(cmd.argc > 0);
@@ -40,11 +40,11 @@ _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd,
   }
 
   // replace our stdout, stderr with pipes to the parent
-  if (dup2(proc->outfd[1], STDOUT_FILENO) < 0) {
+  if (dup2(proc->t_out->pipe[1], STDOUT_FILENO) < 0) {
     rc = errno;
     goto fail;
   }
-  if (dup2(proc->errfd[1], STDERR_FILENO) < 0) {
+  if (dup2(proc->t_err->pipe[1], STDERR_FILENO) < 0) {
     rc = errno;
     goto fail;
   }

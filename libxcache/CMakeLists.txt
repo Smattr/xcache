@@ -66,6 +66,9 @@ add_library(libxcache
   src/sysexit_close.c
   src/sysexit_open.c
   src/sysexit_stat.c
+  src/tee_cancel.c
+  src/tee_join.c
+  src/tee_new.c
   src/trace_load.c
   src/trace_save.c
   src/xc_cmd_eq.c
@@ -115,6 +118,9 @@ target_include_directories(libxcache
   PRIVATE
     src
 )
+
+find_package(Threads REQUIRED)
+target_link_libraries(libxcache PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
 set_target_properties(libxcache PROPERTIES PREFIX "")
 

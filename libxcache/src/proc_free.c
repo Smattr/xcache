@@ -1,5 +1,6 @@
 #include "input_t.h"
 #include "proc_t.h"
+#include "tee_t.h"
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -16,13 +17,6 @@ void proc_free(proc_t proc) {
   if (proc.proccall[1] > 0)
     (void)close(proc.proccall[1]);
 
-  if (proc.errfd[0] > 0)
-    (void)close(proc.errfd[0]);
-  if (proc.errfd[1] > 0)
-    (void)close(proc.errfd[1]);
-
-  if (proc.outfd[0] > 0)
-    (void)close(proc.outfd[0]);
-  if (proc.outfd[1] > 0)
-    (void)close(proc.outfd[1]);
+  tee_cancel(proc.t_err);
+  tee_cancel(proc.t_out);
 }

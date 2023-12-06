@@ -2,6 +2,7 @@
 
 #include "../../common/compiler.h"
 #include "input_t.h"
+#include "tee_t.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
@@ -31,8 +32,8 @@ INTERNAL void fd_free(fd_t *fd);
 typedef struct {
   xc_record_mode_t mode;
 
-  int outfd[2]; ///< pipe for communicating stdout content
-  int errfd[2]; ///< pipe for communicating stderr content
+  tee_t *t_out; ///< pipe for communicating stdout content
+  tee_t *t_err; ///< pipe for communicating stderr content
 
   int proccall[2]; ///< pipe for subprocess to message its parent
 
@@ -55,9 +56,10 @@ typedef struct {
  *
  * \param proc [out] Created process on success
  * \param mode Acceptable modes
+ * \param trace_root Directory traces will be stored in
  * \return 0 on success or an errno on failure
  */
-INTERNAL int proc_new(proc_t *proc, unsigned mode);
+INTERNAL int proc_new(proc_t *proc, unsigned mode, const char *trace_root);
 
 /** register a new open file descriptor
  *
@@ -157,7 +159,7 @@ INTERNAL void proc_detach(proc_t *proc);
  * \param trace_root Directory in which to write the trace file
  * \return 0 on success or an errno on failure
  */
-INTERNAL int proc_save(const proc_t proc, const xc_cmd_t cmd,
+INTERNAL int proc_save(proc_t *proc, const xc_cmd_t cmd,
                        const char *trace_root);
 
 /** destroy a process

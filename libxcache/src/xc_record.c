@@ -55,7 +55,7 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
     }
   }
 
-  if (ERROR((rc = proc_new(&proc, mode))))
+  if (ERROR((rc = proc_new(&proc, mode, trace_root))))
     goto done;
 
   if (ERROR((rc = proc_start(&proc, cmd))))
@@ -153,7 +153,7 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
   }
 
   // save the result
-  if (ERROR((rc = proc_save(proc, cmd, trace_root))))
+  if (ERROR((rc = proc_save(&proc, cmd, trace_root))))
     goto done;
 
 done:
