@@ -8,40 +8,47 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <xcache/trace.h>
 
-int trace_load(xc_trace_t *trace, FILE *stream) {
+int trace_load(xc_trace_t *trace, const char *trace_root, const char *trace_file) {
 
   assert(trace != NULL);
-  assert(stream != NULL);
+  assert(trace_root != NULL);
+  assert(trace_file != NULL);
 
   *trace = (xc_trace_t){0};
+  FILE *trace_f = NULL;
   xc_trace_t t = {0};
   int rc = 0;
 
-  {
-    // acquire a file descriptor for the source of the trace
-    int fd = fileno(stream);
-    if (ERROR(fd < 0)) {
+    int trace_fd = open(trace_file, O_RDONLY | O_CLOEXEC);
+    if (ERROR(trace_fd < 0)) {
       rc = errno;
       goto done;
     }
 
-    // replicate it into the trace object
-    t.root = dup(fd);
+    trace_f = fdopen(trace_fd, "r");
+    if (ERROR(trace_f == NULL)) {
+      rc = errno;
+      (void)close(trace_fd);
+      goto done;
+    }
+
+    // acquire a file descriptor for the directory
+    t.root = open(trace_root, O_RDONLY|O_DIRECTORY);
     if (ERROR(t.root < 0)) {
       rc = errno;
       goto done;
     }
-  }
 
   // check the leading tag confirms this is a serialised input
   {
     uint64_t tag = 0;
-    if (ERROR((rc = cbor_read_u64_raw(stream, &tag, 0xc0))))
+    if (ERROR((rc = cbor_read_u64_raw(trace_f, &tag, 0xc0))))
       goto done;
     // “trace”, remembering CBOR stores data big endian
     const char expected[sizeof(uint64_t)] = {'\0', '\0', '\0', 'e',
@@ -52,12 +59,12 @@ int trace_load(xc_trace_t *trace, FILE *stream) {
     }
   }
 
-  if (ERROR((rc = cmd_load(&t.cmd, stream))))
+  if (ERROR((rc = cmd_load(&t.cmd, trace_f))))
     goto done;
 
   {
     uint64_t n_inputs = 0;
-    if (ERROR((rc = cbor_read_u64_raw(stream, &n_inputs, 0x80))))
+    if (ERROR((rc = cbor_read_u64_raw(trace_f, &n_inputs, 0x80))))
       goto done;
     if (ERROR(n_inputs > SIZE_MAX))
       return EOVERFLOW;
@@ -73,13 +80,13 @@ int trace_load(xc_trace_t *trace, FILE *stream) {
   }
 
   for (size_t i = 0; i < t.n_inputs; ++i) {
-    if (ERROR((rc = input_load(&t.inputs[i], stream))))
+    if (ERROR((rc = input_load(&t.inputs[i], trace_f))))
       goto done;
   }
 
   {
     uint64_t n_outputs = 0;
-    if (ERROR((rc = cbor_read_u64_raw(stream, &n_outputs, 0x80))))
+    if (ERROR((rc = cbor_read_u64_raw(trace_f, &n_outputs, 0x80))))
       goto done;
     if (ERROR(n_outputs > SIZE_MAX))
       return EOVERFLOW;
@@ -95,7 +102,7 @@ int trace_load(xc_trace_t *trace, FILE *stream) {
   }
 
   for (size_t i = 0; i < t.n_outputs; ++i) {
-    if (ERROR((rc = output_load(&t.outputs[i], stream))))
+    if (ERROR((rc = output_load(&t.outputs[i], trace_f))))
       goto done;
   }
 
@@ -103,9 +110,11 @@ int trace_load(xc_trace_t *trace, FILE *stream) {
   t = (xc_trace_t){0};
 
 done:
-  if (rc)
-    DEBUG("failed parsing at byte %zu", (size_t)ftell(stream));
+  if (rc && trace_f != NULL)
+    DEBUG("failed parsing at byte %zu", (size_t)ftell(trace_f));
   xc_trace_free(&t);
+  if (trace_f != NULL)
+    (void)fclose(trace_f);
 
   return rc;
 }

@@ -92,23 +92,9 @@ int xc_trace_find(const xc_db_t *db, const xc_cmd_t query,
 
     DEBUG("reading trace %s…", trace_file);
 
-    int trace_fd = open(trace_file, O_RDONLY | O_CLOEXEC);
-    if (ERROR(trace_fd < 0)) {
-      rc = errno;
-      free(trace_file);
-      goto done;
-    }
-    free(trace_file);
-    FILE *trace_f = fdopen(trace_fd, "r");
-    if (ERROR(trace_f == NULL)) {
-      rc = errno;
-      (void)close(trace_fd);
-      goto done;
-    }
-
     xc_trace_t trace = {0};
-    rc = trace_load(&trace, trace_f);
-    (void)fclose(trace_f);
+    rc = trace_load(&trace, trace_root, trace_file);
+    free(trace_file);
     if (ERROR(rc))
       goto done;
 
