@@ -1,4 +1,5 @@
 #include "cp.h"
+#include "debug.h"
 #include "output_t.h"
 #include "trace_t.h"
 #include <assert.h>
@@ -9,20 +10,51 @@
 #include <unistd.h>
 #include <xcache/trace.h>
 
-static const mode_t PERMISSION_BITS = S_IRWXU | S_IRWXG | S_IRWXO;
+static int replay_chmod(const output_t output) {
 
-static const mode_t CHMOD_BITS = PERMISSION_BITS | S_ISUID | S_ISGID | S_ISVTX;
-
-static int replay_dir(const output_t output) {
-
-  assert(S_ISDIR(output.mode));
-  assert(output.cached_copy == NULL);
+  assert(output.tag == OUT_CHMOD);
 
   int rc = 0;
 
-  if (mkdir(output.path, output.mode & PERMISSION_BITS) < 0) {
+  if (ERROR(chmod(output.path, output.chmod.mode) < 0)) {
+    rc = errno;
+    goto done;
+  }
+
+done:
+  return rc;
+}
+
+static int replay_chown(const output_t output) {
+
+  assert(output.tag == OUT_CHOWN);
+
+  int rc = 0;
+
+  if (ERROR(chown(output.path, output.chown.uid, output.chown.gid) < 0)) {
+    rc = errno;
+    goto done;
+  }
+
+done:
+  return rc;
+}
+
+static int replay_mkdir(const output_t output) {
+
+  assert(output.tag == OUT_MKDIR);
+
+  int rc = 0;
+
+  if (ERROR(mkdir(output.path, output.mkdir.mode) < 0)) {
     // allow directory to already exist
-    if (errno != EEXIST) {
+    if (ERROR(errno != EEXIST)) {
+      rc = errno;
+      goto done;
+    }
+
+    // if the directory existed, try to enforce our mode
+    if (ERROR(chmod(output.path, output.mkdir.mode) < 0)) {
       rc = errno;
       goto done;
     }
@@ -32,29 +64,32 @@ done:
   return rc;
 }
 
-static int replay_file(const output_t output, const xc_trace_t *owner) {
+static int replay_write(const output_t output, const xc_trace_t *owner) {
 
-  assert(S_ISREG(output.mode));
-  assert(output.cached_copy != NULL);
+  assert(output.tag == OUT_WRITE);
+
+  if (ERROR(output.write.cached_copy == NULL))
+    return EINVAL;
 
   int src = -1;
   int dst = -1;
   int rc = 0;
 
-  src = openat(owner->root, output.cached_copy, O_RDONLY | O_CLOEXEC);
-  if (src < 0) {
+  src = openat(owner->root, output.write.cached_copy, O_RDONLY | O_CLOEXEC);
+  if (ERROR(src < 0)) {
     rc = errno;
     goto done;
   }
 
-  dst = open(output.path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
-             output.mode & CHMOD_BITS);
-  if (dst < 0) {
+  // we do not care so much about the mode because anything that was opened
+  // `O_CREAT` will have a following `chmod` action recorded too
+  dst = open(output.path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
+  if (ERROR(dst < 0)) {
     rc = errno;
     goto done;
   }
 
-  if ((rc = cp(dst, src)))
+  if (ERROR((rc = cp(dst, src))))
     goto done;
 
 done:
@@ -69,40 +104,31 @@ done:
 int output_replay(const output_t output, const xc_trace_t *owner) {
 
   assert(output.path != NULL);
-  assert((S_ISDIR(output.mode) && output.cached_copy == NULL) ||
-         (S_ISREG(output.mode) && output.cached_copy != NULL));
   assert(owner != NULL);
 
   int rc = 0;
 
-  // create the output
-  if (S_ISDIR(output.mode)) {
-    if ((rc = replay_dir(output)))
-      goto done;
-  } else {
-    if ((rc = replay_file(output, owner)))
-      goto done;
-  }
+  switch (output.tag) {
 
-  // read its properties
-  struct stat st;
-  if (stat(output.path, &st) < 0) {
-    rc = errno;
-    goto done;
-  }
+  case OUT_CHMOD:
+    if (ERROR((rc = replay_chmod(output))))
+      goto done;
+    break;
 
-  // adjust any as needed
-  if (st.st_mode != output.mode) {
-    if (chmod(output.path, output.mode & CHMOD_BITS) < 0) {
-      rc = errno;
+  case OUT_CHOWN:
+    if (ERROR((rc = replay_chown(output))))
       goto done;
-    }
-  }
-  if (st.st_uid != output.uid || st.st_gid != output.gid) {
-    if (chown(output.path, output.uid, output.gid) < 0) {
-      rc = errno;
+    break;
+
+  case OUT_MKDIR:
+    if (ERROR((rc = replay_mkdir(output))))
       goto done;
-    }
+    break;
+
+  case OUT_WRITE:
+    if (ERROR((rc = replay_write(output, owner))))
+      goto done;
+    break;
   }
 
 done:

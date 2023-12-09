@@ -5,12 +5,31 @@
 #include <sys/stat.h>
 #include <xcache/trace.h>
 
+typedef enum {
+  OUT_CHMOD, ///< chmod()
+  OUT_CHOWN, ///< chown()
+  OUT_MKDIR, ///< mkdir()
+  OUT_WRITE, ///< open() with O_WRONLY or O_RDWR
+} output_type_t;
+
 typedef struct {
+  output_type_t tag; ///< discriminator of the union
   char *path;        ///< absolute path to target
-  mode_t mode;       ///< chmod-ed mode to set
-  uid_t uid;         ///< chown-ed uid to set
-  gid_t gid;         ///< chown-ed gid to set
-  char *cached_copy; ///< relative path to cached content, if not directory
+  union {
+    struct {
+      mode_t mode; ///< chmod-ed mode to set
+    } chmod;
+    struct {
+      uid_t uid; ///< chown-ed uid to set
+      gid_t gid; ///< chown-ed gid to set
+    } chown;
+    struct {
+      mode_t mode; ///< mkdir mode to set
+    } mkdir;
+    struct {
+      char *cached_copy; ///< relative path to cached content
+    } write;
+  };
 } output_t;
 
 /** deserialise an output from a file

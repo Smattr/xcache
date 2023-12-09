@@ -3,5 +3,7 @@
 
 void output_free(output_t output) {
   free(output.path);
-  free(output.cached_copy);
+
+  if (output.tag == OUT_WRITE)
+    free(output.write.cached_copy);
 }
