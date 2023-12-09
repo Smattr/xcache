@@ -5,6 +5,7 @@
 #include "syscall.h"
 #include <assert.h>
 #include <errno.h>
+#include "tee_t.h"
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -152,9 +153,21 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
     }
   }
 
+  // coalesce the stdout and stderr threads
+  if (ERROR((rc = tee_join(proc.t_out))))
+    goto done;
+  if (ERROR((rc = tee_join(proc.t_err))))
+    goto done;
+
   // save the result
   if (ERROR((rc = proc_save(&proc, cmd, trace_root))))
     goto done;
+
+  // blank the stdout and stderr saved paths so they are retained
+  free(proc.t_out->copy_path);
+  proc.t_out->copy_path = NULL;
+  free(proc.t_err->copy_path);
+  proc.t_err->copy_path = NULL;
 
 done:
   // if the child did something unsupported, let it run uninstrumented to
