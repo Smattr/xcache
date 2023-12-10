@@ -14,13 +14,12 @@
 #include <unistd.h>
 #include <xcache/cmd.h>
 
-static int append_stream(output_t **outputs, size_t *n_outputs,
+static int append_stream(output_t *outputs, size_t *n_outputs,
                          const char *target, const char *copy,
                          const char *trace_root) {
 
   assert(outputs != NULL);
   assert(n_outputs != NULL);
-  assert(*outputs != NULL || *n_outputs == 0);
   assert(target != NULL);
   assert(copy != NULL);
   assert(trace_root != NULL);
@@ -57,16 +56,8 @@ static int append_stream(output_t **outputs, size_t *n_outputs,
     goto done;
   }
 
-  // expand outputs
-  output_t *os = realloc(*outputs, (*n_outputs + 1) * sizeof(**outputs));
-  if (ERROR(os == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-  *outputs = os;
-
   // append this output
-  (*outputs)[*n_outputs] = o;
+  outputs[*n_outputs] = o;
   ++*n_outputs;
   o = (output_t){0};
 
@@ -112,11 +103,18 @@ int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
   }
   fd = 0;
 
+  // account for the outputs we saw + stdout and stderr
+  outputs = calloc(proc->n_outputs + 2, sizeof(outputs[0]));
+  if (ERROR(outputs == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
   // determine whether stdout and stderr need to be saved
-  if (ERROR((rc = append_stream(&outputs, &n_outputs, "/dev/stdout",
+  if (ERROR((rc = append_stream(outputs, &n_outputs, "/dev/stdout",
                                 proc->t_out->copy_path, trace_root))))
     goto done;
-  if (ERROR((rc = append_stream(&outputs, &n_outputs, "/dev/stderr",
+  if (ERROR((rc = append_stream(outputs, &n_outputs, "/dev/stderr",
                                 proc->t_err->copy_path, trace_root))))
     goto done;
 
