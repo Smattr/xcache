@@ -33,6 +33,17 @@ typedef struct {
   };
 } output_t;
 
+/** create a new write output
+ *
+ * This does not populate the `cached_copy` member, assuming it will be
+ * populated later.
+ *
+ * \param output [out] Created output on success
+ * \param path Path being written
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int output_new_write(output_t *output, const char *path);
+
 /** deserialise an output from a file
  *
  * \param output [out] Reconstructed output on success
