@@ -1,3 +1,4 @@
+#include "cp.h"
 #include "debug.h"
 #include "output_t.h"
 #include "path.h"
@@ -109,6 +110,38 @@ int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
   if (ERROR((rc = append_stream(outputs, &n_outputs, "/dev/stderr",
                                 proc->t_err->copy_path, trace_root))))
     goto done;
+
+  // finalise our other outputs
+  for (size_t i = 0; i < proc->n_outputs; ++i) {
+    if (ERROR((rc = output_dup(&outputs[n_outputs], proc->outputs[i]))))
+      goto done;
+    ++n_outputs;
+
+    // if this was a file write, finalise it now
+    if (outputs[i].tag == OUT_WRITE) {
+      assert(outputs[i].write.cached_copy == NULL &&
+             "output already has saved copy prior to finalisation");
+
+      int src = open(outputs[i].path, O_RDONLY | O_CLOEXEC);
+      if (ERROR(src < 0)) {
+        rc = errno;
+        goto done;
+      }
+
+      int dst = -1;
+      if (ERROR((rc = path_make(trace_root, NULL, &dst,
+                                &outputs[i].write.cached_copy)))) {
+        (void)close(src);
+        goto done;
+      }
+
+      rc = cp(dst, src);
+      (void)close(dst);
+      (void)close(src);
+      if (ERROR(rc))
+        goto done;
+    }
+  }
 
   // construct a trace object to write out
   const xc_trace_t trace = {.cmd = cmd,
