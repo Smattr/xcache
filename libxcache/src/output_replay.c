@@ -32,7 +32,8 @@ static int replay_chown(const output_t output) {
 
   int rc = 0;
 
-  DEBUG("replaying chown(\"%s\", %ld, %ld)", output.path, (long)output.chown.uid, (long)output.chown.gid);
+  DEBUG("replaying chown(\"%s\", %ld, %ld)", output.path,
+        (long)output.chown.uid, (long)output.chown.gid);
   if (ERROR(chown(output.path, output.chown.uid, output.chown.gid) < 0)) {
     rc = errno;
     goto done;

@@ -27,7 +27,8 @@ struct xc_trace {
  * \param trace_file Path to file containing the trace record
  * \return 0 on success or an errno on failure
  */
-INTERNAL int trace_load(xc_trace_t *trace, const char *trace_root, const char *trace_file);
+INTERNAL int trace_load(xc_trace_t *trace, const char *trace_root,
+                        const char *trace_file);
 
 /** serialise a trace to a file
  *

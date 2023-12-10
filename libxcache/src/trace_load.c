@@ -6,15 +6,16 @@
 #include "trace_t.h"
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <xcache/trace.h>
 
-int trace_load(xc_trace_t *trace, const char *trace_root, const char *trace_file) {
+int trace_load(xc_trace_t *trace, const char *trace_root,
+               const char *trace_file) {
 
   assert(trace != NULL);
   assert(trace_root != NULL);
@@ -25,25 +26,25 @@ int trace_load(xc_trace_t *trace, const char *trace_root, const char *trace_file
   xc_trace_t t = {0};
   int rc = 0;
 
-    int trace_fd = open(trace_file, O_RDONLY | O_CLOEXEC);
-    if (ERROR(trace_fd < 0)) {
-      rc = errno;
-      goto done;
-    }
+  int trace_fd = open(trace_file, O_RDONLY | O_CLOEXEC);
+  if (ERROR(trace_fd < 0)) {
+    rc = errno;
+    goto done;
+  }
 
-    trace_f = fdopen(trace_fd, "r");
-    if (ERROR(trace_f == NULL)) {
-      rc = errno;
-      (void)close(trace_fd);
-      goto done;
-    }
+  trace_f = fdopen(trace_fd, "r");
+  if (ERROR(trace_f == NULL)) {
+    rc = errno;
+    (void)close(trace_fd);
+    goto done;
+  }
 
-    // acquire a file descriptor for the directory
-    t.root = open(trace_root, O_RDONLY|O_DIRECTORY);
-    if (ERROR(t.root < 0)) {
-      rc = errno;
-      goto done;
-    }
+  // acquire a file descriptor for the directory
+  t.root = open(trace_root, O_RDONLY | O_DIRECTORY);
+  if (ERROR(t.root < 0)) {
+    rc = errno;
+    goto done;
+  }
 
   // check the leading tag confirms this is a serialised input
   {

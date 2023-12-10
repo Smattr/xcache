@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "output_t.h"
 #include "path.h"
 #include "proc_t.h"
 #include "tee_t.h"
@@ -8,65 +9,66 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "output_t.h"
+#include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <xcache/cmd.h>
-#include <sys/stat.h>
-#include <string.h>
 
-static int append_stream(output_t **outputs, size_t *n_outputs, const char *target, const char *copy, const char *trace_root) {
+static int append_stream(output_t **outputs, size_t *n_outputs,
+                         const char *target, const char *copy,
+                         const char *trace_root) {
 
   assert(outputs != NULL);
   assert(n_outputs != NULL);
   assert(*outputs != NULL || *n_outputs == 0);
   assert(target != NULL);
-    assert(copy != NULL);
-    assert(trace_root != NULL);
-    assert(strncmp(copy, trace_root, strlen(trace_root)) == 0);
-    assert(copy[strlen(trace_root)] == '/');
+  assert(copy != NULL);
+  assert(trace_root != NULL);
+  assert(strncmp(copy, trace_root, strlen(trace_root)) == 0);
+  assert(copy[strlen(trace_root)] == '/');
 
-    output_t o = {0};
-    int rc = 0;
+  output_t o = {0};
+  int rc = 0;
 
-    // how many bytes were written?
-    struct stat st;
-    if (ERROR(stat(copy, &st) < 0)) {
-      rc = errno;
-      goto done;
-    }
+  // how many bytes were written?
+  struct stat st;
+  if (ERROR(stat(copy, &st) < 0)) {
+    rc = errno;
+    goto done;
+  }
 
-    // if nothing was written, no need to save this output
-    if (st.st_size == 0) {
-      DEBUG("no bytes written to %s, so no need to save", target);
-      (void)unlink(copy);
-      goto done;
-    }
+  // if nothing was written, no need to save this output
+  if (st.st_size == 0) {
+    DEBUG("no bytes written to %s, so no need to save", target);
+    (void)unlink(copy);
+    goto done;
+  }
 
-    // construct an output for this
-    o.tag = OUT_WRITE;
-    o.path = strdup(target);
-    if (ERROR(o.path == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-    o.write.cached_copy = strdup(&copy[strlen(trace_root) + 1]);
-    if (ERROR(o.write.cached_copy == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
+  // construct an output for this
+  o.tag = OUT_WRITE;
+  o.path = strdup(target);
+  if (ERROR(o.path == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+  o.write.cached_copy = strdup(&copy[strlen(trace_root) + 1]);
+  if (ERROR(o.write.cached_copy == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
 
-    // expand outputs
-    output_t *os = realloc(*outputs, (*n_outputs + 1) * sizeof(**outputs));
-    if (ERROR(os == NULL)) {
-      rc =ENOMEM;
-      goto done;
-    }
-    *outputs = os;
+  // expand outputs
+  output_t *os = realloc(*outputs, (*n_outputs + 1) * sizeof(**outputs));
+  if (ERROR(os == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+  *outputs = os;
 
-    // append this output
-    (*outputs)[*n_outputs] = o;
-    ++*n_outputs;
-    o = (output_t){0};
+  // append this output
+  (*outputs)[*n_outputs] = o;
+  ++*n_outputs;
+  o = (output_t){0};
 
 done:
   output_free(o);
@@ -111,14 +113,19 @@ int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
   fd = 0;
 
   // determine whether stdout and stderr need to be saved
-  if (ERROR((rc = append_stream(&outputs, &n_outputs, "/dev/stdout", proc->t_out->copy_path, trace_root))))
+  if (ERROR((rc = append_stream(&outputs, &n_outputs, "/dev/stdout",
+                                proc->t_out->copy_path, trace_root))))
     goto done;
-  if (ERROR((rc = append_stream(&outputs, &n_outputs, "/dev/stderr", proc->t_err->copy_path, trace_root))))
+  if (ERROR((rc = append_stream(&outputs, &n_outputs, "/dev/stderr",
+                                proc->t_err->copy_path, trace_root))))
     goto done;
 
   // construct a trace object to write out
-  const xc_trace_t trace = {
-      .cmd = cmd, .inputs = proc->inputs, .n_inputs = proc->n_inputs, .outputs = outputs, .n_outputs = n_outputs};
+  const xc_trace_t trace = {.cmd = cmd,
+                            .inputs = proc->inputs,
+                            .n_inputs = proc->n_inputs,
+                            .outputs = outputs,
+                            .n_outputs = n_outputs};
 
   if (ERROR((rc = trace_save(trace, f))))
     goto done;

@@ -3,9 +3,9 @@
 #include "event.h"
 #include "proc_t.h"
 #include "syscall.h"
+#include "tee_t.h"
 #include <assert.h>
 #include <errno.h>
-#include "tee_t.h"
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
