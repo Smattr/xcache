@@ -41,6 +41,7 @@ add_library(libxcache
   src/page_size.c
   src/path_absolute.c
   src/path_join.c
+  src/path_make.c
   src/peek_str.c
   src/proc_cont.c
   src/proc_detach.c
