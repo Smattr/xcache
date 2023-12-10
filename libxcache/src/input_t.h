@@ -104,3 +104,12 @@ INTERNAL bool input_eq(const input_t a, const input_t b);
  * \param i Input whose backing memory to deallocate
  */
 INTERNAL void input_free(input_t i);
+
+/** convert an input to a string representation
+ *
+ * This function heap-allocates. Do not call it on a hot path.
+ *
+ * \param input Input to translate
+ * \return A string representation of `NULL` on out-of-memory
+ */
+INTERNAL char *input_to_str(const input_t input);
