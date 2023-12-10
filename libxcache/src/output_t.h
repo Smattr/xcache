@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <xcache/trace.h>
@@ -55,6 +56,17 @@ INTERNAL int output_save(const output_t output, FILE *stream);
  * \return 0 on success or an errno on failure
  */
 INTERNAL int output_replay(const output_t output, const xc_trace_t *owner);
+
+/** compare two outputs for equality
+ *
+ * For `OUT_WRITE` outputs, this ignores the `cached_copy` member that may not
+ * be populated or may point to disparate data.
+ *
+ * \param a First operand to the comparison
+ * \param b Second operand to the comparison
+ * \return True if equal
+ */
+INTERNAL bool output_eq(const output_t a, const output_t b);
 
 /** copy an output
  *

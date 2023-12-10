@@ -34,6 +34,7 @@ add_library(libxcache
   src/input_save.c
   src/openflags_to_str.c
   src/output_dup.c
+  src/output_eq.c
   src/output_free.c
   src/output_load.c
   src/output_replay.c
