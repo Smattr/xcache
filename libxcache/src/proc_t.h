@@ -102,6 +102,14 @@ INTERNAL void proc_fds_free(proc_t *proc);
  */
 INTERNAL int proc_input_new(proc_t *proc, const input_t input);
 
+/** append a new output
+ *
+ * \param proc Process to append output to
+ * \param output Output to append
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int proc_output_new(proc_t *proc, const output_t output);
+
 /** start a process running
  *
  * This function `fork`s.

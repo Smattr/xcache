@@ -55,6 +55,7 @@ add_library(libxcache
   src/proc_free.c
   src/proc_input_new.c
   src/proc_new.c
+  src/proc_output_new.c
   src/proc_save.c
   src/proc_signal.c
   src/proc_start.c
