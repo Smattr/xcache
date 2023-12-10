@@ -22,7 +22,7 @@ int sysexit_openat(proc_t *proc) {
   int rc = 0;
 
   // extract the file descriptor
-  const long fd = peek_reg(proc->pid, REG(rdi));
+  const int fd = (int)peek_reg(proc->pid, REG(rdi));
 
   // extract the path
   const uintptr_t path_ptr = (uintptr_t)peek_reg(proc->pid, REG(rsi));

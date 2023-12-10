@@ -14,12 +14,12 @@ int sysexit_close(proc_t *proc) {
   int rc = 0;
 
   // extract the file descriptor
-  const long fd = peek_reg(proc->pid, REG(rdi));
+  const int fd = (int)peek_reg(proc->pid, REG(rdi));
 
   // extract the result
   const int err = peek_errno(proc->pid);
 
-  DEBUG("pid %ld, close(%ld) = %d, errno == %d", (long)proc->pid, fd,
+  DEBUG("pid %ld, close(%d) = %d, errno == %d", (long)proc->pid, fd,
         err == 0 ? 0 : -1, err);
 
   // if the child closed our spy’s channel back to us, consider this unsupported

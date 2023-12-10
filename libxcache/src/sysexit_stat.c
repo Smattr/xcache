@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -24,7 +23,7 @@ int sysexit_newfstatat(proc_t *proc) {
   int rc = 0;
 
   // extract the file descriptor
-  const long fd = peek_reg(proc->pid, REG(rdi));
+  const int fd = (int)peek_reg(proc->pid, REG(rdi));
 
   // extract the path
   const uintptr_t path_ptr = (uintptr_t)peek_reg(proc->pid, REG(rsi));
@@ -67,11 +66,11 @@ int sysexit_newfstatat(proc_t *proc) {
       rc = ENOMEM;
       goto done;
     }
-  } else if (ERROR(fd < 0 || fd > INT_MAX)) {
+  } else if (ERROR(fd < 0)) {
     rc = ECHILD;
     goto done;
   } else {
-    const fd_t *dirfd = proc_fd(proc, (int)fd);
+    const fd_t *dirfd = proc_fd(proc, fd);
     if (ERROR(dirfd == NULL)) {
       rc = ECHILD;
       goto done;

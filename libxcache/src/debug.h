@@ -41,7 +41,7 @@ extern FILE *xc_debug INTERNAL;
  * \param fd Descriptor to translate
  * \return A string representation or `NULL` on out-of-memory
  */
-INTERNAL char *atfd_to_str(long fd);
+INTERNAL char *atfd_to_str(int fd);
 
 /** convert flags from an open() call to a string
  *

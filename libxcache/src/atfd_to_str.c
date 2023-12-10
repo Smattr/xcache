@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *atfd_to_str(long fd) {
+char *atfd_to_str(int fd) {
 
   char *buffer = NULL;
   size_t buffer_size = 0;
@@ -18,7 +18,7 @@ char *atfd_to_str(long fd) {
     if (fputs("AT_FDCWD", stream) < 0)
       goto done;
   } else {
-    if (fprintf(stream, "%ld", fd) < 0)
+    if (fprintf(stream, "%d", fd) < 0)
       goto done;
   }
 
