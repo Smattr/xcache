@@ -88,6 +88,13 @@ int sysexit_openat(proc_t *proc) {
     break;
 
   case O_WRONLY | O_TRUNC:
+  case O_WRONLY | O_CREAT | O_TRUNC:
+    // for now, do not support failing writes
+    if (err < 0) {
+      rc = ECHILD;
+      goto done;
+    }
+
     // record it
     if (ERROR((rc = output_new_write(&seen_write, abs))))
       goto done;
@@ -95,6 +102,18 @@ int sysexit_openat(proc_t *proc) {
     if (ERROR((rc = proc_output_new(proc, seen_write))))
       goto done;
     seen_write = (output_t){0};
+
+    // if this was creation, record a post-chmod too
+    if (flags_relevant & O_CREAT) {
+      const mode_t mode = (mode_t)peek_reg(proc->pid, REG(r10));
+
+      if (ERROR((rc = output_new_chmod(&seen_write, abs, mode))))
+        goto done;
+
+      if (ERROR((rc = proc_output_new(proc, seen_write))))
+        goto done;
+      seen_write = (output_t){0};
+    }
 
     break;
 
