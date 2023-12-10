@@ -79,7 +79,6 @@ int tee_new(tee_t **tee, int output_fd, const char *trace_root) {
 
   *tee = NULL;
   tee_t *t = NULL;
-  char *template = NULL;
   int rc = 0;
 
   t = calloc(1, sizeof(*t));
@@ -95,21 +94,10 @@ int tee_new(tee_t **tee, int output_fd, const char *trace_root) {
 
   t->output_fd = output_fd;
 
-  template = path_join(trace_root, "XXXXXX");
-  if (ERROR(template == NULL)) {
-    rc = ENOMEM;
+  if (ERROR((rc = path_make(trace_root, NULL, &t->copy_fd, &t->copy_path))))
     goto done;
-  }
 
-  DEBUG("piping file descriptor %d to %s", output_fd, template);
-
-  t->copy_fd = mkstemp(template);
-  if (ERROR(t->copy_fd < 0)) {
-    rc = errno;
-    goto done;
-  }
-  t->copy_path = template;
-  template = NULL;
+  DEBUG("piping file descriptor %d to %s", output_fd, t->copy_path);
 
   if (ERROR((rc = pthread_create(&t->forwarder, NULL, forward, t))))
     goto done;
@@ -120,7 +108,6 @@ int tee_new(tee_t **tee, int output_fd, const char *trace_root) {
 
 done:
   tee_cancel(t);
-  free(template);
 
   return rc;
 }

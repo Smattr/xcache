@@ -85,16 +85,8 @@ int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
     goto done;
 
   // create a new trace file to save to
-  path = path_join(trace_root, "XXXXXX.trace");
-  if (ERROR(path == NULL)) {
-    rc = ENOMEM;
+  if (ERROR((rc = path_make(trace_root, ".trace", &fd, NULL))))
     goto done;
-  }
-  fd = mkostemps(path, strlen(".trace"), O_CLOEXEC);
-  if (ERROR(fd < 0)) {
-    rc = errno;
-    goto done;
-  }
 
   f = fdopen(fd, "w");
   if (ERROR(f == NULL)) {
