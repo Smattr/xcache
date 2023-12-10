@@ -1,5 +1,6 @@
 #include "debug.h"
 #include "input_t.h"
+#include "output_t.h"
 #include "path.h"
 #include "peek.h"
 #include "proc_t.h"
@@ -18,7 +19,8 @@ int sysexit_openat(proc_t *proc) {
 
   char *path = NULL;
   char *abs = NULL;
-  input_t saw = {0};
+  input_t seen_read = {0};
+  output_t seen_write = {0};
   int rc = 0;
 
   // extract the file descriptor
@@ -72,19 +74,35 @@ int sysexit_openat(proc_t *proc) {
       flags & ~(O_ASYNC | O_CLOEXEC | O_DIRECT | O_DSYNC | O_LARGEFILE |
                 O_NOCTTY | O_NONBLOCK | O_NDELAY | O_SYNC);
 
-  // TODO
-  if (ERROR(flags_relevant != O_RDONLY)) {
+  switch (flags_relevant) {
+
+  case O_RDONLY:
+    // record it
+    if (ERROR((rc = input_new_read(&seen_read, err, abs))))
+      goto done;
+
+    if (ERROR((rc = proc_input_new(proc, seen_read))))
+      goto done;
+    seen_read = (input_t){0};
+
+    break;
+
+  case O_WRONLY | O_TRUNC:
+    // record it
+    if (ERROR((rc = output_new_write(&seen_write, abs))))
+      goto done;
+
+    if (ERROR((rc = proc_output_new(proc, seen_write))))
+      goto done;
+    seen_write = (output_t){0};
+
+    break;
+
+  default:
+    // TODO
     rc = ENOTSUP;
     goto done;
   }
-
-  // record it
-  if (ERROR((rc = input_new_read(&saw, err, abs))))
-    goto done;
-
-  if (ERROR((rc = proc_input_new(proc, saw))))
-    goto done;
-  saw = (input_t){0};
 
   // if it succeeded, update the file descriptor table
   if (err == 0) {
@@ -106,7 +124,8 @@ int sysexit_openat(proc_t *proc) {
   }
 
 done:
-  input_free(saw);
+  input_free(seen_read);
+  output_free(seen_write);
   free(abs);
   free(path);
 
