@@ -1,4 +1,5 @@
 #include "input_t.h"
+#include "output_t.h"
 #include "proc_t.h"
 #include "tee_t.h"
 #include <stdlib.h>
@@ -7,6 +8,10 @@
 void proc_free(proc_t proc) {
 
   proc_end(&proc);
+
+  for (size_t i = 0; i < proc.n_outputs; ++i)
+    output_free(proc.outputs[i]);
+  free(proc.outputs);
 
   for (size_t i = 0; i < proc.n_inputs; ++i)
     input_free(proc.inputs[i]);

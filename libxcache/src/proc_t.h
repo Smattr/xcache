@@ -2,6 +2,7 @@
 
 #include "../../common/compiler.h"
 #include "input_t.h"
+#include "output_t.h"
 #include "tee_t.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -50,6 +51,15 @@ typedef struct {
   input_t *inputs; ///< list of input actions observed
   size_t n_inputs; ///< number of entries in `inputs`
   size_t c_inputs; ///< number of allocated slots in `inputs`
+
+  /** list of output actions observed
+   *
+   * For `OUT_WRITE` items, the `cached_copy` member is not populated. That
+   * will be done during finalisation, when the trace record is being written.
+   */
+  output_t *outputs;
+  size_t n_outputs; ///< number of entries in `outputs`
+  size_t c_outputs; ///< number of allocated slots in `outputs`
 } proc_t;
 
 /** create a new process
