@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <xcache/trace.h>
 
 typedef enum {
@@ -32,6 +33,15 @@ typedef struct {
     } write;
   };
 } output_t;
+
+/** create a new chmod output
+ *
+ * \param output [out] Created output on success
+ * \param path Path being chmod-ed
+ * \param mode Mode being set
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int output_new_chmod(output_t *output, const char *path, mode_t mode);
 
 /** create a new write output
  *

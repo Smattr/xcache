@@ -37,6 +37,7 @@ add_library(libxcache
   src/output_eq.c
   src/output_free.c
   src/output_load.c
+  src/output_new_chmod.c
   src/output_new_write.c
   src/output_replay.c
   src/output_save.c
