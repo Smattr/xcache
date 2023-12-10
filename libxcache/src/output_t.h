@@ -56,6 +56,14 @@ INTERNAL int output_save(const output_t output, FILE *stream);
  */
 INTERNAL int output_replay(const output_t output, const xc_trace_t *owner);
 
+/** copy an output
+ *
+ * \param dst Copied output on success
+ * \param src Output to copy
+ * \return 0 on success or an errno on failure
+ */
+INTERNAL int output_dup(output_t *dst, const output_t src);
+
 /** destroy an output
  *
  * \param output Output whose backing memory to deallocate
