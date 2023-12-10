@@ -7,12 +7,12 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import pytest
 
 
-def strace(args: list[Union[Path | str]]):
+def strace(args: list[Union[Path | str]], cwd: Optional[Path] = None):
     """
     `strace` a process, expecting it to succeed
     """
@@ -21,7 +21,11 @@ def strace(args: list[Union[Path | str]]):
     env = os.environ.copy()
     env["ASAN_OPTIONS"] = "detect_leaks=0"
 
-    subprocess.check_call(["strace", "-f", "--"] + args, env=env)
+    kwargs = {}
+    if cwd is not None:
+        kwargs["cwd"] = cwd
+
+    subprocess.check_call(["strace", "-f", "--"] + args, env=env, **kwargs)
 
 
 @pytest.mark.parametrize("debug", (False, True))
@@ -195,6 +199,90 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
             assert "record succeeded" not in output, "record incorrectly enabled"
 
     assert re.search("\\bhello\nworld\\b", output), f"missing {stream}"
+
+
+@pytest.mark.parametrize("debug", (False, True))
+@pytest.mark.parametrize("record", (False, True))
+@pytest.mark.parametrize("replay", (False, True))
+def test_write_file(debug: bool, record: bool, replay: bool, tmp_path: Path):
+    """
+    can we handle something that writes a file?
+    """
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(["write-file"], tmp_path)
+    (tmp_path / "foo").unlink()
+
+    args = ["xcache"]
+    if debug:
+        args += ["--debug"]
+    args += [f"--dir={tmp_path}/database"]
+    if record:
+        if replay:
+            args += ["--read-write"]
+        else:
+            args += ["--write-only"]
+    else:
+        if replay:
+            args += ["--read-only"]
+        else:
+            args += ["--disable"]
+    args += ["--", "write-file"]
+
+    output = subprocess.check_output(
+        args,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        universal_newlines=True,
+        timeout=120,
+    )
+
+    if debug:
+        if replay:
+            assert "replay failed" in output, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in output, "replay incorrectly enabled"
+            assert "replay succeeded" not in output, "replay incorrectly enabled"
+        if record:
+            assert "record succeeded" in output, f"record of file write failed"
+        else:
+            assert "record failed" not in output, "record incorrectly enabled"
+            assert "record succeeded" not in output, "record incorrectly enabled"
+
+    assert (tmp_path / "foo").exists(), "file not written"
+    assert (tmp_path / "foo").read_text() == "hello world", "file contents not written"
+
+    # try it again to see if we can replay
+    (tmp_path / "foo").unlink()
+    output = subprocess.check_output(
+        args,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        universal_newlines=True,
+        timeout=120,
+    )
+
+    if debug:
+        if record and replay:
+            assert "replay succeeded" in output, f"replay of file write failed"
+        elif replay:
+            assert "replay failed" in output, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in output, "replay incorrectly enabled"
+            assert "replay succeeded" not in output, "replay incorrectly enabled"
+        if record and replay:
+            assert "record failed" not in output, "record still attempted after replay"
+            assert "record succeeded" not in output, "record after successful replay"
+        elif record:
+            assert "record succeeded" in output, f"record of file write failed"
+        else:
+            assert "record failed" not in output, "record incorrectly enabled"
+            assert "record succeeded" not in output, "record incorrectly enabled"
+
+    assert (tmp_path / "foo").exists(), "file not written"
+    assert (tmp_path / "foo").read_text() == "hello world", "file contents not written"
 
 
 @pytest.mark.parametrize("debug", (False, True))

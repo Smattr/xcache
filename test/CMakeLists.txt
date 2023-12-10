@@ -2,6 +2,7 @@ add_executable(my-echo my-echo.c)
 add_executable(nop nop.c)
 add_executable(print-stderr print-stderr.c)
 add_executable(print-stdout print-stdout.c)
+add_executable(write-file write-file.c)
 
 find_package(Python3 COMPONENTS Interpreter)
 if(NOT Python3_FOUND)
@@ -31,5 +32,6 @@ add_dependencies(check
   nop
   print-stderr
   print-stdout
+  write-file
   xcache
 )
