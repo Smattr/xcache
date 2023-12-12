@@ -17,6 +17,12 @@ int trace_save(const xc_trace_t trace, FILE *stream) {
 
   int rc = 0;
 
+  // write the magic
+  if (ERROR(fputs(CBOR_MAGIC, stream) < 0)) {
+    rc = EIO;
+    goto done;
+  }
+
   // write the leading tag
   {
     const char tag[sizeof(uint64_t)] = {'\0', '\0', '\0', 'e',

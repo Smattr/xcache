@@ -46,6 +46,19 @@ int trace_load(xc_trace_t *trace, const char *trace_root,
     goto done;
   }
 
+  // check the magic
+  {
+    char magic[sizeof(CBOR_MAGIC) - 1] = {0};
+    if (ERROR(fread(magic, sizeof(magic), 1, trace_f) < 1)) {
+      rc = EIO;
+      goto done;
+    }
+    if (ERROR(memcmp(magic, CBOR_MAGIC, sizeof(magic)) != 0)) {
+      rc = EPROTO;
+      goto done;
+    }
+  }
+
   // check the leading tag confirms this is a serialised input
   {
     uint64_t tag = 0;

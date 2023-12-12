@@ -10,6 +10,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/** “self-described CBOR” tag
+ *
+ * See RFC8949 §3.4.6. Writing this as a prefix to our data files lets tools
+ * like `file` identify what they are.
+ */
+#define CBOR_MAGIC "\xd9\xd9\xf7"
+
 /** read a possibly null string
  *
  * \param stream File to read from
