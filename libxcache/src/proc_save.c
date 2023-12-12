@@ -85,17 +85,6 @@ int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
   if (ERROR((rc = tee_join(proc->t_err))))
     goto done;
 
-  // create a new trace file to save to
-  if (ERROR((rc = path_make(trace_root, ".trace", &fd, NULL))))
-    goto done;
-
-  f = fdopen(fd, "w");
-  if (ERROR(f == NULL)) {
-    rc = errno;
-    goto done;
-  }
-  fd = 0;
-
   // account for the outputs we saw + stdout and stderr
   outputs = calloc(proc->n_outputs + 2, sizeof(outputs[0]));
   if (ERROR(outputs == NULL)) {
@@ -142,6 +131,17 @@ int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
         goto done;
     }
   }
+
+  // create a new trace file to save to
+  if (ERROR((rc = path_make(trace_root, ".trace", &fd, NULL))))
+    goto done;
+
+  f = fdopen(fd, "w");
+  if (ERROR(f == NULL)) {
+    rc = errno;
+    goto done;
+  }
+  fd = 0;
 
   // construct a trace object to write out
   const xc_trace_t trace = {.cmd = cmd,
