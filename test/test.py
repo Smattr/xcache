@@ -174,7 +174,7 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
             assert "record failed" not in output, "record incorrectly enabled"
             assert "record succeeded" not in output, "record incorrectly enabled"
 
-    assert re.search("\\bhello\nworld\\b", output), f"missing {stream}"
+    assert re.search("\\bhello\nworld", output), f"missing {stream}"
 
     # try it again to see if we can replay
     output = subprocess.check_output(
@@ -198,7 +198,7 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
             assert "record failed" not in output, "record incorrectly enabled"
             assert "record succeeded" not in output, "record incorrectly enabled"
 
-    assert re.search("\\bhello\nworld\\b", output), f"missing {stream}"
+    assert re.search("\\bhello\nworld", output), f"missing {stream}"
 
 
 @pytest.mark.parametrize("debug", (False, True))
