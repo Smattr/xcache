@@ -87,5 +87,12 @@ _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd,
 fail:
   assert(rc != 0 && "reached child failure without failing status");
 
+  // replicate some common Linux behaviour
+  if (rc == ENOENT || rc == ENOTDIR) {
+    rc = 127;
+  } else if (rc == EACCES || rc == ENOEXEC || rc == EPERM) {
+    rc = 126;
+  }
+
   exit(rc);
 }
