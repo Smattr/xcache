@@ -162,6 +162,8 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
         args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
     )
 
+    print(f"output:\n{output}\n")
+
     if debug:
         if replay:
             assert "replay failed" in output, "replay succeeded with no trace"
@@ -180,6 +182,8 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
     output = subprocess.check_output(
         args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
     )
+
+    print(f"output:\n{output}\n")
 
     if debug:
         if record and replay:
