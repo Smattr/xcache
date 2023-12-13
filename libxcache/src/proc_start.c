@@ -80,7 +80,7 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
     }
     if (ERROR(WIFSIGNALED(status))) {
       DEBUG("child died with signal %d", WTERMSIG(status));
-      errno = ECHILD;
+      rc = ECHILD;
       proc->pid = 0;
       goto done;
     }
