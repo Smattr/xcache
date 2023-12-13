@@ -14,7 +14,7 @@ void proc_detach(proc_t *proc) {
     return;
 
   if (ERROR(ptrace(PTRACE_DETACH, proc->pid, NULL, NULL) < 0)) {
-    // ignore
+    goto done;
   }
 
   {
