@@ -34,7 +34,13 @@ int peek_str(char **out, pid_t pid, uintptr_t addr) {
     ;
     ssize_t r = process_vm_readv(pid, &ours, 1, &theirs, 1, 0);
     if (ERROR(r < 0)) {
-      rc = errno;
+      // if the process’ address space was torn down while we were trying to
+      // read from it, treat this as unsupported
+      if (errno == ESRCH) {
+        rc = ECHILD;
+      } else {
+        rc = errno;
+      }
       goto done;
     }
 

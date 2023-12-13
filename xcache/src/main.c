@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
   if (record_enabled) {
     DEBUG("attempting record");
     if ((rc = xc_record(db, cmd, XC_SYSCALL, &exit_status))) {
-      if (rc == ECHILD || rc == ESRCH) {
+      if (rc == ECHILD) {
         DEBUG("record failed: child did something unsupported");
       } else {
         fprintf(stderr, "xc_record: %s\n", strerror(rc));

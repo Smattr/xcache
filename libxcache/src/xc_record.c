@@ -175,10 +175,10 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode, int *exit_status) {
 done:
   // if the child did something unsupported, let it run uninstrumented to
   // completion
-  if (rc == ECHILD || rc == ESRCH)
+  if (rc == ECHILD)
     proc_detach(&proc);
 
-  if (rc == 0 || rc == ECHILD || rc == ESRCH)
+  if (rc == 0 || rc == ECHILD)
     *exit_status = proc.exit_status;
 
   proc_free(proc);
