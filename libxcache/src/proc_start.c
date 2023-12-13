@@ -82,6 +82,7 @@ int proc_start(proc_t *proc, const xc_cmd_t cmd) {
       DEBUG("child died with signal %d", WTERMSIG(status));
       rc = ECHILD;
       proc->pid = 0;
+      proc->exit_status = 128 + WTERMSIG(status);
       goto done;
     }
     assert(WIFSTOPPED(status));
