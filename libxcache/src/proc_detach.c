@@ -17,12 +17,24 @@ void proc_detach(proc_t *proc) {
     // ignore
   }
 
-  if (ERROR(waitpid(proc->pid, NULL, 0) < 0)) {
-    // ignore
+  {
+    int status = 0;
+    if (ERROR(waitpid(proc->pid, &status, 0) < 0)) {
+      goto done;
+    }
+
+    assert(!WIFSTOPPED(status) && "saw child stop while untrace");
+    if (WIFEXITED(status)) {
+      proc->exit_status = WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+      // replicate Linux conventions
+      proc->exit_status = 128 + WTERMSIG(status);
+    }
   }
 
   proc->pid = 0;
 
+done:
   // cleanup child state in proc_t
   proc_end(proc);
 }

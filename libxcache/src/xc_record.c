@@ -82,8 +82,8 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
     // did the child exit?
     if (WIFEXITED(status)) {
       proc.pid = 0;
-      const int exit_status = WEXITSTATUS(status);
-      if (ERROR(exit_status != EXIT_SUCCESS)) {
+      proc.exit_status = WEXITSTATUS(status);
+      if (ERROR(proc.exit_status != EXIT_SUCCESS)) {
         rc = ECHILD;
         goto done;
       }

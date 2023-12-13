@@ -45,6 +45,8 @@ typedef struct {
 
   bool ignoring : 1; ///< has the spy told us to ignore syscalls?
 
+  int exit_status; ///< exit status on completion
+
   fd_t **fds;   ///< file descriptor table
   size_t n_fds; ///< number of entries in `fds`
 
