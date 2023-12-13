@@ -52,12 +52,12 @@ def test_nonexistent(debug: bool, tmp_path: Path):
     if debug:
         args += ["--debug"]
     args += [f"--dir={tmp_path}/database", "--", tmp_path / "nonexistent"]
-    with pytest.raises(subprocess.CalledProcessError):
-        subprocess.check_call(args)
+    ret = subprocess.call(args)
+    assert ret == 127, "unexpected return from non-existent exec"
 
     # even if we cached it, replay should return failure
-    with pytest.raises(subprocess.CalledProcessError):
-        subprocess.check_call(args)
+    ret = subprocess.call(args)
+    assert ret == 127, "unexpected return from non-existent exec"
 
 
 @pytest.mark.parametrize("debug", (False, True))

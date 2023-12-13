@@ -50,12 +50,18 @@ XCACHE_API unsigned xc_record_modes(unsigned request);
  *
  * `mode` is expected to be a bitmask of `xc_record_mode_t` values.
  *
+ * The `exit_status` is always set when the command runs to completion. That is,
+ * it is set both when 0 is returned and when `ECHILD` is returned indicating
+ * the command could not be recorded due to it doing something unsupported.
+ *
  * \param db Database to record results into
  * \param cmd Command to run
  * \param mode Acceptable modes in which to record
+ * \param exit_status [out] Exit status of the command on success
  * \return 0 on success or an errno on failure
  */
-XCACHE_API int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode);
+XCACHE_API int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
+                         int *exit_status);
 
 #ifdef __cplusplus
 }

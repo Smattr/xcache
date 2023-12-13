@@ -14,7 +14,7 @@
 #include <xcache/record.h>
 #include <xcache/trace.h>
 
-int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
+int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode, int *exit_status) {
 
   if (ERROR(db == NULL))
     return EINVAL;
@@ -31,6 +31,9 @@ int xc_record(xc_db_t *db, xc_cmd_t cmd, unsigned mode) {
   }
 
   if (ERROR((mode & XC_MODE_AUTO) == 0))
+    return EINVAL;
+
+  if (ERROR(exit_status == NULL))
     return EINVAL;
 
   char *trace_root = NULL;
@@ -174,6 +177,9 @@ done:
   // completion
   if (rc == ECHILD || rc == ESRCH)
     proc_detach(&proc);
+
+  if (rc == 0 || rc == ECHILD || rc == ESRCH)
+    *exit_status = proc.exit_status;
 
   proc_free(proc);
   free(trace_root);

@@ -169,6 +169,7 @@ static int replay_callback(const xc_trace_t *trace, void *state) {
 
 int main(int argc, char **argv) {
 
+  int exit_status = EXIT_SUCCESS;
   int rc = 0;
 
   if ((rc = parse_args(argc, argv)))
@@ -222,7 +223,7 @@ int main(int argc, char **argv) {
 
   if (record_enabled) {
     DEBUG("attempting record");
-    if ((rc = xc_record(db, cmd, XC_SYSCALL))) {
+    if ((rc = xc_record(db, cmd, XC_SYSCALL, &exit_status))) {
       if (rc == ECHILD || rc == ESRCH) {
         DEBUG("record failed: child did something unsupported");
       } else {
@@ -246,6 +247,9 @@ done:
   xc_db_close(db);
   xc_cmd_free(cmd);
   free(cache_dir);
+
+  if (exit_status != EXIT_SUCCESS)
+    return exit_status;
 
   return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }
