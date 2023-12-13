@@ -37,5 +37,6 @@ static inline int peek_errno(pid_t pid) {
  * \param out [out] Read string on success
  * \param pid Process to read from
  * \param addr Address to read from
+ * \return 0 on success or an errno on failure
  */
 INTERNAL int peek_str(char **out, pid_t pid, uintptr_t addr);
