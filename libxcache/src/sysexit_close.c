@@ -6,20 +6,23 @@
 #include <assert.h>
 #include <stddef.h>
 #include <xcache/record.h>
+#include "inferior_t.h"
 
-int sysexit_close(proc_t *proc) {
+int sysexit_close(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
+assert(inf != NULL);
   assert(proc != NULL);
+  assert(thread != NULL);
 
   int rc = 0;
 
   // extract the file descriptor
-  const int fd = (int)peek_reg(proc->pid, REG(rdi));
+  const int fd = (int)peek_reg(thread, REG(rdi));
 
   // extract the result
-  const int err = peek_errno(proc->pid);
+  const int err = peek_errno(thread);
 
-  DEBUG("pid %ld, close(%d) = %d, errno == %d", (long)proc->pid, fd,
+  DEBUG("TID %ld, close(%d) = %d, errno == %d", (long)thread->id, fd,
         err == 0 ? 0 : -1, err);
 
   // if the child closed our spy’s channel back to us, consider this unsupported
@@ -38,15 +41,6 @@ int sysexit_close(proc_t *proc) {
 
     fd_free(proc->fds[fd]);
     proc->fds[fd] = NULL;
-  }
-
-  // restart the process
-  if (proc->mode == XC_SYSCALL) {
-    if (ERROR((rc = proc_syscall(*proc))))
-      goto done;
-  } else {
-    if (ERROR((rc = proc_cont(*proc))))
-      goto done;
   }
 
 done:

@@ -8,11 +8,16 @@ void proc_end(proc_t *proc) {
   assert(proc != NULL);
 
   // the process may have already terminated (or never started)
-  if (proc->pid != 0) {
-    (void)kill(proc->pid, SIGKILL);
+  if (proc->id != 0) {
+    (void)kill(proc->id, SIGKILL);
     // TODO: wait() on the process
   }
-  proc->pid = 0;
+  proc->id = 0;
+
+  free(proc->threads);
+  proc->threads = NULL;
+  proc->n_threads = 0;
+  proc->c_threads = 0;
 
   proc_fds_free(proc);
 

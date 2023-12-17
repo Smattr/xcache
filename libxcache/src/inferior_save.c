@@ -2,8 +2,8 @@
 #include "debug.h"
 #include "output_t.h"
 #include "path.h"
-#include "proc_t.h"
 #include "tee_t.h"
+#include "inferior_t.h"
 #include "trace_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -68,7 +68,7 @@ done:
   return rc;
 }
 
-int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
+int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
 
   assert(trace_root != NULL);
 
@@ -80,13 +80,13 @@ int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
   int rc = 0;
 
   // drain stdout and stderr
-  if (ERROR((rc = tee_join(proc->t_out))))
+  if (ERROR((rc = tee_join(inf->t_out))))
     goto done;
-  if (ERROR((rc = tee_join(proc->t_err))))
+  if (ERROR((rc = tee_join(inf->t_err))))
     goto done;
 
   // account for the outputs we saw + stdout and stderr
-  outputs = calloc(proc->n_outputs + 2, sizeof(outputs[0]));
+  outputs = calloc(inf->n_outputs + 2, sizeof(outputs[0]));
   if (ERROR(outputs == NULL)) {
     rc = ENOMEM;
     goto done;
@@ -94,15 +94,15 @@ int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
 
   // determine whether stdout and stderr need to be saved
   if (ERROR((rc = append_stream(outputs, &n_outputs, "/dev/stdout",
-                                proc->t_out->copy_path, trace_root))))
+                                inf->t_out->copy_path, trace_root))))
     goto done;
   if (ERROR((rc = append_stream(outputs, &n_outputs, "/dev/stderr",
-                                proc->t_err->copy_path, trace_root))))
+                                inf->t_err->copy_path, trace_root))))
     goto done;
 
   // finalise our other outputs
-  for (size_t i = 0; i < proc->n_outputs; ++i) {
-    if (ERROR((rc = output_dup(&outputs[n_outputs], proc->outputs[i]))))
+  for (size_t i = 0; i < inf->n_outputs; ++i) {
+    if (ERROR((rc = output_dup(&outputs[n_outputs], inf->outputs[i]))))
       goto done;
     ++n_outputs;
 
@@ -145,8 +145,8 @@ int proc_save(proc_t *proc, const xc_cmd_t cmd, const char *trace_root) {
 
   // construct a trace object to write out
   const xc_trace_t trace = {.cmd = cmd,
-                            .inputs = proc->inputs,
-                            .n_inputs = proc->n_inputs,
+                            .inputs = inf->inputs,
+                            .n_inputs = inf->n_inputs,
                             .outputs = outputs,
                             .n_outputs = n_outputs};
 

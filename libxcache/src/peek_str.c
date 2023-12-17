@@ -7,8 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/uio.h>
+#include "proc_t.h"
 
-int peek_str(char **out, pid_t pid, uintptr_t addr) {
+int peek_str(char **out, const proc_t *proc, uintptr_t addr) {
 
   assert(out != NULL);
 
@@ -32,7 +33,7 @@ int peek_str(char **out, pid_t pid, uintptr_t addr) {
     struct iovec ours = {.iov_base = chunk, .iov_len = sizeof(chunk)};
     struct iovec theirs = {.iov_base = (void *)base, .iov_len = len};
     ;
-    ssize_t r = process_vm_readv(pid, &ours, 1, &theirs, 1, 0);
+    ssize_t r = process_vm_readv(proc->id, &ours, 1, &theirs, 1, 0);
     if (ERROR(r < 0)) {
       // if the process’ address space was torn down while we were trying to
       // read from it, treat this as unsupported

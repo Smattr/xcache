@@ -9,10 +9,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "inferior_t.h"
 
-int sysenter_execve(proc_t *proc) {
+int sysenter_execve(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
+assert(inf != NULL);
   assert(proc != NULL);
+  assert(thread != NULL);
 
   char *path = NULL;
   char *abs = NULL;
@@ -20,8 +23,8 @@ int sysenter_execve(proc_t *proc) {
   int rc = 0;
 
   // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_reg(proc->pid, REG(rdi));
-  if (ERROR((rc = peek_str(&path, proc->pid, path_ptr)))) {
+  const uintptr_t path_ptr = (uintptr_t)peek_reg(thread, REG(rdi));
+  if (ERROR((rc = peek_str(&path, proc, path_ptr)))) {
     // if the read faulted, assume our side was correct and the tracee used a
     // bad pointer, something we do not support recording
     if (rc == EFAULT)
@@ -36,30 +39,21 @@ int sysenter_execve(proc_t *proc) {
     goto done;
   }
 
-  DEBUG("pid %ld, execve(\"%s\", …)", (long)proc->pid, path);
+  DEBUG("TID %ld, execve(\"%s\", …)", (long)thread->id, path);
 
   // infer a read() from execve()
   if (ERROR((rc = input_new_read(&saw, 0, abs))))
     goto done;
-  if (ERROR((rc = proc_input_new(proc, saw))))
+  if (ERROR((rc = inferior_input_new(inf, saw))))
     goto done;
   saw = (input_t){0};
 
   // infer an access() with X_OK from execve()
   if (ERROR((rc = input_new_access(&saw, 0, abs, X_OK))))
     goto done;
-  if (ERROR((rc = proc_input_new(proc, saw))))
+  if (ERROR((rc = inferior_input_new(inf, saw))))
     goto done;
   saw = (input_t){0};
-
-  // restart the process
-  if (proc->mode == XC_SYSCALL) {
-    if (ERROR((rc = proc_syscall(*proc))))
-      goto done;
-  } else {
-    if (ERROR((rc = proc_cont(*proc))))
-      goto done;
-  }
 
 done:
   input_free(saw);

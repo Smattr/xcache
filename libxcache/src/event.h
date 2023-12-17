@@ -62,3 +62,22 @@ static inline bool is_vfork_done(int status) {
     return true;
   return false;
 }
+
+/// is this a traditional `WIFSTOPPED` (a signal)?
+static inline bool is_signal(int status) {
+  if (!WIFSTOPPED(status))
+    return false;
+  if (is_exec(status))
+    return false;
+  if (is_exit(status))
+    return false;
+  if (is_fork(status))
+    return false;
+  if (is_seccomp(status))
+    return false;
+  if (is_syscall(status))
+    return false;
+  if (is_vfork_done(status))
+    return false;
+  return true;
+}

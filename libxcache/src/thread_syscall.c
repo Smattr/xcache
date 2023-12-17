@@ -4,12 +4,12 @@
 #include <errno.h>
 #include <sys/ptrace.h>
 
-int proc_syscall(const proc_t proc) {
+int thread_syscall(thread_t thread) {
 
-  assert(proc.pid > 0);
+  assert(thread.id > 0);
 
-  if (ERROR(ptrace(PTRACE_SYSCALL, proc.pid, NULL, NULL) < 0)) {
-    // if the child disappeared when we were trying to resume it (can happen),
+  if (ERROR(ptrace(PTRACE_SYSCALL, thread.id, NULL, NULL) < 0)) {
+    // if the thread disappeared when we were trying to resume it (can happen),
     // treat this as unsupported
     if (errno == ESRCH)
       return ECHILD;

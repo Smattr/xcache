@@ -4,12 +4,12 @@
 #include <errno.h>
 #include <sys/ptrace.h>
 
-int proc_signal(const proc_t proc, int sig) {
+int thread_signal(thread_t thread, int sig) {
 
-  assert(proc.pid > 0);
+  assert(thread.id > 0);
 
-  if (ERROR(ptrace(PTRACE_CONT, proc.pid, NULL, sig) < 0)) {
-    // if the child disappeared when we were trying to signal it (can happen),
+  if (ERROR(ptrace(PTRACE_CONT, thread.id, NULL, sig) < 0)) {
+    // if the thread disappeared when we were trying to signal it (can happen),
     // treat this as unsupported
     if (errno == ESRCH)
       return ECHILD;

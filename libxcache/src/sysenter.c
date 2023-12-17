@@ -7,15 +7,18 @@
 #include <stddef.h>
 #include <sys/syscall.h>
 #include <xcache/record.h>
+#include "inferior_t.h"
 
-int sysenter(proc_t *proc) {
+int sysenter(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
+  assert(inf != NULL);
   assert(proc != NULL);
+  assert(thread!= NULL);
 
   int rc = 0;
 
-  const unsigned long syscall_no = peek_syscall_no(proc->pid);
-  DEBUG("pid %ld, sysenter %s«%lu»", (long)proc->pid,
+  const unsigned long syscall_no = peek_syscall_no(thread);
+  DEBUG("TID %ld, sysenter %s«%lu»", (long)thread->id,
         syscall_to_str(syscall_no), syscall_no);
 
   // the vast majority of syscalls either (1) have no relevance to us or (2) we
@@ -24,10 +27,20 @@ int sysenter(proc_t *proc) {
 #define DO(call)                                                               \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
-      if (ERROR((rc = sysenter_##call(proc)))) {                               \
+      if (ERROR((rc = sysenter_##call(inf, proc, thread)))) {                               \
         goto done;                                                             \
       }                                                                        \
-      goto done;                                                               \
+\
+    /* restart the process */ \
+    if (inf->mode == XC_SYSCALL) {\
+      if (ERROR((rc = thread_syscall(*thread))))\
+        goto done;\
+    } else {\
+      if (ERROR((rc = thread_cont(*thread))))\
+        goto done;\
+    }\
+\
+goto done; \
     }                                                                          \
   } while (0)
 
@@ -35,16 +48,16 @@ int sysenter(proc_t *proc) {
   // might be an instruction to stop ignoring
   DO(ioctl);
 
-  if (proc->ignoring) {
+  if (thread->ignoring) {
     DEBUG("ignoring %s«%lu» on spy’s instruction", syscall_to_str(syscall_no),
           syscall_no);
 
     // restart the process
-    if (proc->mode == XC_SYSCALL) {
-      if (ERROR((rc = proc_syscall(*proc))))
+    if (inf->mode == XC_SYSCALL) {
+      if (ERROR((rc = thread_syscall(*thread))))
         goto done;
     } else {
-      if (ERROR((rc = proc_cont(*proc))))
+      if (ERROR((rc = thread_cont(*thread))))
         goto done;
     }
 
@@ -56,7 +69,7 @@ int sysenter(proc_t *proc) {
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
       DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
-      if (ERROR((rc = proc_syscall(*proc)))) {                                 \
+      if (ERROR((rc = thread_syscall(*thread)))) {                                 \
         goto done;                                                             \
       }                                                                        \
       goto done;                                                               \

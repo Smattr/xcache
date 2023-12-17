@@ -12,10 +12,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <xcache/record.h>
+#include "inferior_t.h"
 
-int sysexit_openat(proc_t *proc) {
+int sysexit_openat(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
+  assert(inf != NULL);
   assert(proc != NULL);
+  assert(thread != NULL);
 
   char *path = NULL;
   char *abs = NULL;
@@ -24,11 +27,11 @@ int sysexit_openat(proc_t *proc) {
   int rc = 0;
 
   // extract the file descriptor
-  const int fd = (int)peek_reg(proc->pid, REG(rdi));
+  const int fd = (int)peek_reg(thread, REG(rdi));
 
   // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_reg(proc->pid, REG(rsi));
-  if (ERROR((rc = peek_str(&path, proc->pid, path_ptr)))) {
+  const uintptr_t path_ptr = (uintptr_t)peek_reg(thread, REG(rsi));
+  if (ERROR((rc = peek_str(&path, proc, path_ptr)))) {
     // if the read faulted, assume our side was correct and the tracee used a
     // bad pointer, something we do not support recording
     if (rc == EFAULT)
@@ -37,16 +40,16 @@ int sysexit_openat(proc_t *proc) {
   }
 
   // extract the flags
-  const long flags = peek_reg(proc->pid, REG(rdx));
+  const long flags = peek_reg(thread, REG(rdx));
 
   // extract the result
-  const int err = peek_errno(proc->pid);
+  const int err = peek_errno(thread);
 
   if (UNLIKELY(xc_debug != NULL)) {
     char *fd_str = atfd_to_str(fd);
     char *flags_str = openflags_to_str(flags);
-    DEBUG("pid %ld, openat(%s, \"%s\", %s, …) = %d, errno == %d",
-          (long)proc->pid, fd_str == NULL ? "<oom>" : fd_str, path,
+    DEBUG("TID %ld, openat(%s, \"%s\", %s, …) = %d, errno == %d",
+          (long)thread->id, fd_str == NULL ? "<oom>" : fd_str, path,
           flags_str == NULL ? "<oom>" : flags_str, err == 0 ? 0 : -1, err);
     free(flags_str);
     free(fd_str);
@@ -81,7 +84,7 @@ int sysexit_openat(proc_t *proc) {
     if (ERROR((rc = input_new_read(&seen_read, err, abs))))
       goto done;
 
-    if (ERROR((rc = proc_input_new(proc, seen_read))))
+    if (ERROR((rc = inferior_input_new(inf, seen_read))))
       goto done;
     seen_read = (input_t){0};
 
@@ -99,18 +102,18 @@ int sysexit_openat(proc_t *proc) {
     if (ERROR((rc = output_new_write(&seen_write, abs))))
       goto done;
 
-    if (ERROR((rc = proc_output_new(proc, seen_write))))
+    if (ERROR((rc = inferior_output_new(inf, seen_write))))
       goto done;
     seen_write = (output_t){0};
 
     // if this was creation, record a post-chmod too
     if (flags_relevant & O_CREAT) {
-      const mode_t mode = (mode_t)peek_reg(proc->pid, REG(r10));
+      const mode_t mode = (mode_t)peek_reg(thread, REG(r10));
 
       if (ERROR((rc = output_new_chmod(&seen_write, abs, mode))))
         goto done;
 
-      if (ERROR((rc = proc_output_new(proc, seen_write))))
+      if (ERROR((rc = inferior_output_new(inf, seen_write))))
         goto done;
       seen_write = (output_t){0};
     }
@@ -125,20 +128,11 @@ int sysexit_openat(proc_t *proc) {
 
   // if it succeeded, update the file descriptor table
   if (err == 0) {
-    const long ret = peek_ret(proc->pid);
+    const long ret = peek_ret(thread);
     assert(ret >= 0 && "logic error");
     assert(ret <= INT_MAX && "unexpected kernel return from openat");
-    DEBUG("pid %ld, updating FD %ld → \"%s\"", (long)proc->pid, ret, abs);
+    DEBUG("TID %ld PID %ld, updating FD %ld → \"%s\"", (long)thread->id, (long)proc->id, ret, abs);
     if (ERROR((rc = proc_fd_new(proc, (int)ret, abs))))
-      goto done;
-  }
-
-  // restart the process
-  if (proc->mode == XC_SYSCALL) {
-    if (ERROR((rc = proc_syscall(*proc))))
-      goto done;
-  } else {
-    if (ERROR((rc = proc_cont(*proc))))
       goto done;
   }
 

@@ -12,10 +12,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include "inferior_t.h"
 
-int sysexit_newfstatat(proc_t *proc) {
+int sysexit_newfstatat(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
+  assert(inf != NULL);
   assert(proc != NULL);
+  assert(thread != NULL);
 
   char *path = NULL;
   char *abs = NULL;
@@ -23,11 +26,11 @@ int sysexit_newfstatat(proc_t *proc) {
   int rc = 0;
 
   // extract the file descriptor
-  const int fd = (int)peek_reg(proc->pid, REG(rdi));
+  const int fd = (int)peek_reg(thread, REG(rdi));
 
   // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_reg(proc->pid, REG(rsi));
-  if (ERROR((rc = peek_str(&path, proc->pid, path_ptr)))) {
+  const uintptr_t path_ptr = (uintptr_t)peek_reg(thread, REG(rsi));
+  if (ERROR((rc = peek_str(&path, proc, path_ptr)))) {
     // if the read faulted, assume our side was correct and the tracee used a
     // bad pointer, something we do not support recording
     if (rc == EFAULT)
@@ -36,16 +39,16 @@ int sysexit_newfstatat(proc_t *proc) {
   }
 
   // extract the flags
-  const long flags = peek_reg(proc->pid, REG(r10));
+  const long flags = peek_reg(thread, REG(r10));
 
   // extract the result
-  const int err = peek_errno(proc->pid);
+  const int err = peek_errno(thread);
 
   if (UNLIKELY(xc_debug != NULL)) {
     char *fd_str = atfd_to_str(fd);
     char *flags_str = statflags_to_str(flags);
     DEBUG("pid %ld, newfstatat(%s, \"%s\", …, %s) = %d, errno == %d",
-          (long)proc->pid, fd_str == NULL ? "<oom>" : fd_str, path,
+          (long)thread->id, fd_str == NULL ? "<oom>" : fd_str, path,
           flags_str == NULL ? "<oom>" : flags_str, err == 0 ? 0 : -1, err);
     free(flags_str);
     free(fd_str);
@@ -93,18 +96,9 @@ int sysexit_newfstatat(proc_t *proc) {
       goto done;
   }
 
-  if (ERROR((rc = proc_input_new(proc, saw))))
+  if (ERROR((rc = inferior_input_new(inf, saw))))
     goto done;
   saw = (input_t){0};
-
-  // restart the process
-  if (proc->mode == XC_SYSCALL) {
-    if (ERROR((rc = proc_syscall(*proc))))
-      goto done;
-  } else {
-    if (ERROR((rc = proc_cont(*proc))))
-      goto done;
-  }
 
 done:
   input_free(saw);

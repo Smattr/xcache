@@ -7,15 +7,18 @@
 #include <errno.h>
 #include <stddef.h>
 #include <xcache/record.h>
+#include "inferior_t.h"
 
-int sysenter_ioctl(proc_t *proc) {
+int sysenter_ioctl(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
+  assert(inf != NULL);
   assert(proc != NULL);
+  assert(thread != NULL);
 
   int rc = 0;
 
   // extract the file descriptor
-  const int fd = (int)peek_reg(proc->pid, REG(rdi));
+  const int fd = (int)peek_reg(thread, REG(rdi));
 
   // any ioctl except a communication from the spy is unsupported
   if (ERROR(fd != XCACHE_FILENO)) {
@@ -24,35 +27,26 @@ int sysenter_ioctl(proc_t *proc) {
   }
 
   // extract the call number
-  const long callno = peek_reg(proc->pid, REG(rsi));
+  const long callno = peek_reg(thread, REG(rsi));
 
-  DEBUG("pid %ld, ioctl(%d (XCACHE_FILENO), 0x%lx (%s), …)", (long)proc->pid,
+  DEBUG("TID %ld, ioctl(%d (XCACHE_FILENO), 0x%lx (%s), …)", (long)thread->id,
         fd, callno, callno_to_str(callno));
 
   // dispatch call
   switch (callno) {
   case CALL_OFF:
-    assert(!proc->ignoring && "duplicate monitor disable messages");
-    proc->ignoring = true;
+    assert(!thread->ignoring && "duplicate monitor disable messages");
+    thread->ignoring = true;
     break;
 
   case CALL_ON:
-    assert(proc->ignoring && "duplicate monitor enable messages");
-    proc->ignoring = false;
+    assert(thread->ignoring && "duplicate monitor enable messages");
+    thread->ignoring = false;
     break;
 
   default:
     DEBUG("unrecognised message from libxcache-spy: %ld", callno);
     assert(callno == CALL_OFF || callno == CALL_ON);
-  }
-
-  // restart the process
-  if (proc->mode == XC_SYSCALL) {
-    if (ERROR((rc = proc_syscall(*proc))))
-      goto done;
-  } else {
-    if (ERROR((rc = proc_cont(*proc))))
-      goto done;
   }
 
 done:

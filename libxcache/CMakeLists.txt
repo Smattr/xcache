@@ -24,6 +24,14 @@ add_library(libxcache
   src/hash_eq.c
   src/hash_file.c
   src/hash_load.c
+  src/inferior_input_new.c
+  src/inferior_exec.c
+  src/inferior_free.c
+  src/inferior_kill.c
+  src/inferior_new.c
+  src/inferior_output_new.c
+  src/inferior_save.c
+  src/inferior_start.c
   src/input_eq.c
   src/input_free.c
   src/input_is_valid.c
@@ -47,21 +55,11 @@ add_library(libxcache
   src/path_join.c
   src/path_make.c
   src/peek_str.c
-  src/proc_cont.c
-  src/proc_detach.c
   src/proc_end.c
-  src/proc_exec.c
+  src/proc_exit.c
   src/proc_fd.c
   src/proc_fd_new.c
   src/proc_fds_free.c
-  src/proc_free.c
-  src/proc_input_new.c
-  src/proc_new.c
-  src/proc_output_new.c
-  src/proc_save.c
-  src/proc_signal.c
-  src/proc_start.c
-  src/proc_syscall.c
   src/statflags_to_str.c
   src/syscall_to_str.c
   src/sysenter.c
@@ -76,6 +74,10 @@ add_library(libxcache
   src/tee_cancel.c
   src/tee_join.c
   src/tee_new.c
+  src/thread_cont.c
+  src/thread_detach.c
+  src/thread_signal.c
+  src/thread_syscall.c
   src/trace_load.c
   src/trace_save.c
   src/xc_cmd_eq.c

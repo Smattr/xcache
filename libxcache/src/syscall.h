@@ -2,69 +2,88 @@
 
 #include "../../common/compiler.h"
 #include "proc_t.h"
+#include "inferior_t.h"
 
 /** handle start of a syscall
  *
+ * \param inf Tracee to which the target belongs
  * \param proc Process that made this syscall
+ * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysenter(proc_t *proc);
+INTERNAL int sysenter(inferior_t *inf, proc_t *proc, thread_t *thread);
 
 /** handle start of `execve`
  *
+ * \param inf Tracee to which the target belongs
  * \param proc Process that made this syscall
+ * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysenter_execve(proc_t *proc);
+INTERNAL int sysenter_execve(inferior_t *inf, proc_t *proc, thread_t *thread);
 
 /** handle start of `ioctl`
  *
+ * \param inf Tracee to which the target belongs
  * \param proc Process that made this syscall
+ * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysenter_ioctl(proc_t *proc);
+INTERNAL int sysenter_ioctl(inferior_t *inf, proc_t *proc, thread_t *thread);
 
 /** handle end of a syscall
  *
+ * \param inf Tracee to which the target belongs
  * \param proc Process that made this syscall
+ * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysexit(proc_t *proc);
+INTERNAL int sysexit(inferior_t *inf, proc_t *proc, thread_t *thread);
 
 /** handle end of `access`
  *
+ * \param inf Tracee to which the target belongs
  * \param proc Process that made this syscall
+ * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysexit_access(proc_t *proc);
+INTERNAL int sysexit_access(inferior_t *inf, proc_t *proc, thread_t *thread);
 
 /** handle end of `chdir`
  *
+ * \param inf Tracee to which the target belongs
  * \param proc Process that made this syscall
+ * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysexit_chdir(proc_t *proc);
+INTERNAL int sysexit_chdir(inferior_t *inf, proc_t *proc, thread_t *thread);
 
 /** handle end of `close`
  *
+ * \param inf Tracee to which the target belongs
  * \param proc Process that made this syscall
+ * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysexit_close(proc_t *proc);
+INTERNAL int sysexit_close(inferior_t *inf, proc_t *proc, thread_t *thread);
 
 /** handle end of `newfstatat`
  *
+ * \param inf Tracee to which the target belongs
  * \param proc Process that made this syscall
+ * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysexit_newfstatat(proc_t *proc);
+INTERNAL int sysexit_newfstatat(inferior_t *inf, proc_t *proc, thread_t *thread);
 
 /** handle end of `openat`
  *
+ * \param inf Tracee to which the target belongs
  * \param proc Process that made this syscall
+ * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysexit_openat(proc_t *proc);
+INTERNAL int sysexit_openat(inferior_t *inf, proc_t *proc, thread_t *thread);
 
 /** convert a syscall number to its name
  *

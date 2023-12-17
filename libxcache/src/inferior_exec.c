@@ -9,13 +9,15 @@
 #include <sys/ptrace.h>
 #include <unistd.h>
 #include <xcache/cmd.h>
+#include "inferior_t.h"
 
-_Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd,
+_Noreturn void inferior_exec(const inferior_t *inf, const proc_t *proc, const xc_cmd_t cmd,
                          const char *spy) {
 
+  assert(inf != NULL);
+  assert(inf->t_out->pipe[1] > 0);
+  assert(inf->t_err->pipe[1] > 0);
   assert(proc != NULL);
-  assert(proc->t_out->pipe[1] > 0);
-  assert(proc->t_err->pipe[1] > 0);
   assert(cmd.cwd != NULL);
   assert(cmd.argv != NULL);
   assert(cmd.argc > 0);
@@ -40,17 +42,17 @@ _Noreturn void proc_exec(const proc_t *proc, const xc_cmd_t cmd,
   }
 
   // replace our stdout, stderr with pipes to the parent
-  if (dup2(proc->t_out->pipe[1], STDOUT_FILENO) < 0) {
+  if (dup2(inf->t_out->pipe[1], STDOUT_FILENO) < 0) {
     rc = errno;
     goto fail;
   }
-  if (dup2(proc->t_err->pipe[1], STDERR_FILENO) < 0) {
+  if (dup2(inf->t_err->pipe[1], STDERR_FILENO) < 0) {
     rc = errno;
     goto fail;
   }
 
   // setup our bridge for out-of-band messages
-  if (dup2(proc->proccall[1], XCACHE_FILENO) < 0) {
+  if (dup2(inf->proccall[1], XCACHE_FILENO) < 0) {
     rc = errno;
     goto fail;
   }

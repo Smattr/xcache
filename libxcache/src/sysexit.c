@@ -7,27 +7,30 @@
 #include <stddef.h>
 #include <sys/syscall.h>
 #include <xcache/record.h>
+#include "inferior_t.h"
 
-int sysexit(proc_t *proc) {
+int sysexit(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
+  assert(inf != NULL);
   assert(proc != NULL);
+  assert(thread != NULL);
 
   int rc = 0;
 
-  const unsigned long syscall_no = peek_syscall_no(proc->pid);
-  DEBUG("pid %ld, sysexit %s«%lu»", (long)proc->pid, syscall_to_str(syscall_no),
+  const unsigned long syscall_no = peek_syscall_no(thread);
+  DEBUG("TID %ld, sysexit %s«%lu»", (long)thread->id, syscall_to_str(syscall_no),
         syscall_no);
 
-  if (proc->ignoring) {
+  if (thread->ignoring) {
     DEBUG("ignoring %s«%lu» on spy’s instruction", syscall_to_str(syscall_no),
           syscall_no);
 
     // restart the process
-    if (proc->mode == XC_SYSCALL) {
-      if (ERROR((rc = proc_syscall(*proc))))
+    if (inf->mode == XC_SYSCALL) {
+      if (ERROR((rc = thread_syscall(*thread))))
         goto done;
     } else {
-      if (ERROR((rc = proc_cont(*proc))))
+      if (ERROR((rc = thread_cont(*thread))))
         goto done;
     }
 
@@ -35,17 +38,17 @@ int sysexit(proc_t *proc) {
   }
 
 // skip ignored syscalls and run them to their next event
-#define SYSENTER_IGNORE(call) // notthing
+#define SYSENTER_IGNORE(call) // nothing
 #define SYSEXIT_IGNORE(call)                                                   \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
       DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
-      if (proc->mode == XC_SYSCALL) {                                          \
-        if (ERROR((rc = proc_syscall(*proc)))) {                               \
+      if (inf->mode == XC_SYSCALL) {                                          \
+        if (ERROR((rc = thread_syscall(*thread)))) {                               \
           goto done;                                                           \
         }                                                                      \
       } else {                                                                 \
-        if (ERROR((rc = proc_cont(*proc)))) {                                  \
+        if (ERROR((rc = thread_cont(*thread)))) {                                  \
           goto done;                                                           \
         }                                                                      \
       }                                                                        \
@@ -57,9 +60,19 @@ int sysexit(proc_t *proc) {
 #define DO(call)                                                               \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
-      if (ERROR((rc = sysexit_##call(proc)))) {                                \
+      if (ERROR((rc = sysexit_##call(inf, proc, thread)))) {                                \
         goto done;                                                             \
       }                                                                        \
+\
+    /* restart the process */ \
+    if (inf->mode == XC_SYSCALL) {\
+      if (ERROR((rc = thread_syscall(*thread))))\
+        goto done;\
+    } else {\
+      if (ERROR((rc = thread_cont(*thread))))\
+        goto done;\
+    }\
+\
       goto done;                                                               \
     }                                                                          \
   } while (0)

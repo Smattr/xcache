@@ -10,10 +10,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <xcache/record.h>
+#include "inferior_t.h"
 
-int sysexit_access(proc_t *proc) {
+int sysexit_access(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
+  assert(inf != NULL);
   assert(proc != NULL);
+  assert(thread != NULL);
 
   char *path = NULL;
   char *abs = NULL;
@@ -21,8 +24,8 @@ int sysexit_access(proc_t *proc) {
   int rc = 0;
 
   // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_reg(proc->pid, REG(rdi));
-  if (ERROR((rc = peek_str(&path, proc->pid, path_ptr)))) {
+  const uintptr_t path_ptr = (uintptr_t)peek_reg(thread, REG(rdi));
+  if (ERROR((rc = peek_str(&path, proc, path_ptr)))) {
     // if the read faulted, assume our side was correct and the tracee used a
     // bad pointer, something we do not support recording
     if (rc == EFAULT)
@@ -38,7 +41,7 @@ int sysexit_access(proc_t *proc) {
   }
 
   // extract the flags
-  const long flags = peek_reg(proc->pid, REG(rsi));
+  const long flags = peek_reg(thread, REG(rsi));
 
   // treat any flag we do not know as the child doing something unsupported
   if (ERROR(flags & ~(R_OK | W_OK | X_OK | F_OK))) {
@@ -47,27 +50,18 @@ int sysexit_access(proc_t *proc) {
   }
 
   // extract the result
-  const int err = peek_errno(proc->pid);
+  const int err = peek_errno(thread);
 
-  DEBUG("pid %ld, access(\"%s\", %ld) = %d, errno == %d", (long)proc->pid, path,
+  DEBUG("TID %ld, access(\"%s\", %ld) = %d, errno == %d", (long)thread->id, path,
         flags, err == 0 ? 0 : -1, err);
 
   // record it
   if (ERROR((rc = input_new_access(&saw, err, abs, (int)flags))))
     goto done;
 
-  if (ERROR((rc = proc_input_new(proc, saw))))
+  if (ERROR((rc = inferior_input_new(inf, saw))))
     goto done;
   saw = (input_t){0};
-
-  // restart the process
-  if (proc->mode == XC_SYSCALL) {
-    if (ERROR((rc = proc_syscall(*proc))))
-      goto done;
-  } else {
-    if (ERROR((rc = proc_cont(*proc))))
-      goto done;
-  }
 
 done:
   input_free(saw);
