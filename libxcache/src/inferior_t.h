@@ -1,13 +1,13 @@
 #pragma once
 
+#include "../../common/compiler.h"
+#include "input_t.h"
+#include "output_t.h"
+#include "proc_t.h"
+#include "tee_t.h"
+#include <stddef.h>
 #include <xcache/cmd.h>
 #include <xcache/record.h>
-#include "tee_t.h"
-#include "input_t.h"
-#include "proc_t.h"
-#include <stddef.h>
-#include "output_t.h"
-#include "../../common/compiler.h"
 
 /// a (potentially multi-threaded, multi-process) target being traced
 typedef struct {
@@ -20,7 +20,7 @@ typedef struct {
 
   int proccall[2]; ///< pipe for the libxcache-spy to message us
 
-  proc_t *procs; ///< processes belonging to this target
+  proc_t *procs;  ///< processes belonging to this target
   size_t n_procs; ///< number of entries in `procs`
   size_t c_procs; ///< number of allocated slots in `procs`
 
@@ -45,7 +45,8 @@ typedef struct {
  * \param trace_root Absolute path to trace output directory
  * \return 0 on success or an errno on failure
  */
-INTERNAL int inferior_new(inferior_t *inf, unsigned mode, const char *trace_root);
+INTERNAL int inferior_new(inferior_t *inf, unsigned mode,
+                          const char *trace_root);
 
 /** start a process running
  *
@@ -68,8 +69,8 @@ INTERNAL int inferior_start(inferior_t *inf, const xc_cmd_t cmd);
  * \param cmd Command describing what to `exec`
  * \param spy Absolute path to parasite library to inject
  */
-INTERNAL _Noreturn void inferior_exec(const inferior_t *inf, const proc_t *proc, const xc_cmd_t cmd,
-                                  const char *spy);
+INTERNAL _Noreturn void inferior_exec(const inferior_t *inf, const proc_t *proc,
+                                      const xc_cmd_t cmd, const char *spy);
 
 /** append a new input
  *
@@ -95,15 +96,16 @@ INTERNAL int inferior_output_new(inferior_t *inf, const output_t output);
  * \return 0 on success or an errno on failure
  */
 INTERNAL int inferior_save(inferior_t *proc, const xc_cmd_t cmd,
-                       const char *trace_root);
+                           const char *trace_root);
 
 /** SIGKILL all processes
- *
- * After a call to this function, the inferior’s (possibly zombie) processes
- * remain our children and need to be `wait`-ed on.
  *
  * \param inf Inferior whose processes to signal
  */
 INTERNAL void inferior_kill(inferior_t *inf);
 
+/** deallocate resources associated with an inferior
+ *
+ * \param inf Inferior to free
+ */
 INTERNAL void inferior_free(inferior_t *inf);

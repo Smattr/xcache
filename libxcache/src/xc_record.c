@@ -1,11 +1,11 @@
 #include "db_t.h"
 #include "debug.h"
 #include "event.h"
+#include "inferior_t.h"
 #include "proc_t.h"
 #include "syscall.h"
 #include "tee_t.h"
 #include <assert.h>
-#include "inferior_t.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -81,6 +81,7 @@ static void *monitor(void *state) {
 
     // did the child exit?
     if (WIFEXITED(status)) {
+      // FIXME: we should be noting the exit of a _thread_ here, not a process
       proc_exit(proc, WEXITSTATUS(status));
       if (ERROR(WEXITSTATUS(status) != EXIT_SUCCESS))
         inf->fate = inf->fate ? inf->fate : ECHILD;
@@ -89,7 +90,7 @@ static void *monitor(void *state) {
 
     // was the child killed by a signal?
     if (ERROR(WIFSIGNALED(status))) {
-      // todo
+      // FIXME: as above, we should be dealing with a _thread_ here
       DEBUG("TID %ld died with signal %d", (long)tid, WTERMSIG(status));
       proc_exit(proc, 128 + WTERMSIG(status));
       inf->fate = inf->fate ? inf->fate : ECHILD;
@@ -114,7 +115,9 @@ static void *monitor(void *state) {
       // `SIGSTOP` in the child before execution (handled below). It is simpler
       // to just ignore the `SIGTRAP` in the parent and start tracking the child
       // when we receive its initial `SIGSTOP`.
-      if (ERROR((rc = thread_cont(*thread))))
+      if (ERROR((rc = thread_cont(
+                     *thread)))) // FIXME: shouldn't we be `thread_syscall`-ing
+                                 // if mode == XC_SYSCALL?
         inf->fate = inf->fate ? inf->fate : rc;
       continue;
     }
@@ -232,9 +235,10 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
   ++inf->c_procs;
 
   // We want to wait on the tracee and any subprocesses and/or threads it spawns
-  // but not the tee threads we just created. Linux APIs do not seem to offer a
-  // way to do this directly. So spawn a separate thread that can wait on all of
-  // its children to exclude the tee threads.
+  // but not the tee threads we just created nor on any children of our caller.
+  // Linux APIs do not seem to offer a way to do this directly. So spawn a
+  // separate thread that can wait on all of its children to exclude the
+  // unwanted threads.
   {
     pthread_t mon;
     if (ERROR((rc = pthread_create(&mon, NULL, monitor, &st))))
@@ -272,7 +276,7 @@ done:
     assert(inf->procs[i].n_threads == 0 && "remaining tracee threads");
 
   if (rc == 0 || rc == ECHILD) {
-    assert(inf->n_procs >0 );
+    assert(inf->n_procs > 0);
     *exit_status = inf->procs[0].exit_status;
   }
 

@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "inferior_t.h"
 #include "input_t.h"
 #include "output_t.h"
 #include "path.h"
@@ -12,7 +13,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <xcache/record.h>
-#include "inferior_t.h"
 
 int sysexit_openat(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
@@ -131,7 +131,8 @@ int sysexit_openat(inferior_t *inf, proc_t *proc, thread_t *thread) {
     const long ret = peek_ret(thread);
     assert(ret >= 0 && "logic error");
     assert(ret <= INT_MAX && "unexpected kernel return from openat");
-    DEBUG("TID %ld PID %ld, updating FD %ld → \"%s\"", (long)thread->id, (long)proc->id, ret, abs);
+    DEBUG("TID %ld PID %ld, updating FD %ld → \"%s\"", (long)thread->id,
+          (long)proc->id, ret, abs);
     if (ERROR((rc = proc_fd_new(proc, (int)ret, abs))))
       goto done;
   }

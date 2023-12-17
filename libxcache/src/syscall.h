@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../../common/compiler.h"
-#include "proc_t.h"
 #include "inferior_t.h"
+#include "proc_t.h"
 
 /** handle start of a syscall
  *
@@ -74,7 +74,8 @@ INTERNAL int sysexit_close(inferior_t *inf, proc_t *proc, thread_t *thread);
  * \param thread Caller thread
  * \return 0 on success or an errno on failure
  */
-INTERNAL int sysexit_newfstatat(inferior_t *inf, proc_t *proc, thread_t *thread);
+INTERNAL int sysexit_newfstatat(inferior_t *inf, proc_t *proc,
+                                thread_t *thread);
 
 /** handle end of `openat`
  *

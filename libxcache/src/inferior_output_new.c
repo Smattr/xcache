@@ -1,7 +1,7 @@
 #include "debug.h"
+#include "inferior_t.h"
 #include "output_t.h"
 #include <assert.h>
-#include "inferior_t.h"
 #include <errno.h>
 #include <stdlib.h>
 

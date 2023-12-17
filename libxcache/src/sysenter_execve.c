@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "inferior_t.h"
 #include "input_t.h"
 #include "path.h"
 #include "peek.h"
@@ -9,11 +10,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "inferior_t.h"
 
 int sysenter_execve(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
-assert(inf != NULL);
+  assert(inf != NULL);
   assert(proc != NULL);
   assert(thread != NULL);
 

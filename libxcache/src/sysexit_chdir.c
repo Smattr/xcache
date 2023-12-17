@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "inferior_t.h"
 #include "input_t.h"
 #include "path.h"
 #include "peek.h"
@@ -10,7 +11,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <xcache/record.h>
-#include "inferior_t.h"
 
 int sysexit_chdir(inferior_t *inf, proc_t *proc, thread_t *thread) {
 

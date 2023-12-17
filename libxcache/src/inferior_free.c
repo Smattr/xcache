@@ -1,10 +1,10 @@
 #include "inferior_t.h"
+#include "input_t.h"
+#include "output_t.h"
 #include "proc_t.h"
+#include "tee_t.h"
 #include <assert.h>
 #include <stdlib.h>
-#include "tee_t.h"
-#include "output_t.h"
-#include "input_t.h"
 #include <unistd.h>
 
 void inferior_free(inferior_t *inf) {
@@ -13,9 +13,6 @@ void inferior_free(inferior_t *inf) {
 
   inferior_kill(inf);
 
-  for (size_t i = 0; i< inf->n_procs; ++i)
-    //proc_end(&inf->procs[i]);
-    //TODO: wait
   free(inf->procs);
   inf->n_procs = 0;
   inf->c_procs = 0;

@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "inferior_t.h"
 #include "input_t.h"
 #include "path.h"
 #include "peek.h"
@@ -10,7 +11,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <xcache/record.h>
-#include "inferior_t.h"
 
 int sysexit_access(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
@@ -52,8 +52,8 @@ int sysexit_access(inferior_t *inf, proc_t *proc, thread_t *thread) {
   // extract the result
   const int err = peek_errno(thread);
 
-  DEBUG("TID %ld, access(\"%s\", %ld) = %d, errno == %d", (long)thread->id, path,
-        flags, err == 0 ? 0 : -1, err);
+  DEBUG("TID %ld, access(\"%s\", %ld) = %d, errno == %d", (long)thread->id,
+        path, flags, err == 0 ? 0 : -1, err);
 
   // record it
   if (ERROR((rc = input_new_access(&saw, err, abs, (int)flags))))

@@ -9,9 +9,9 @@
 
 /// a thread within a process
 typedef struct {
-  pid_t id; ///< thread identifier
+  pid_t id;                 ///< thread identifier
   bool pending_sysexit : 1; ///< is this thread mid-syscall?
-  bool ignoring : 1; ///< has the spy told us to ignore syscalls?
+  bool ignoring : 1;        ///< has the spy told us to ignore syscalls?
 } thread_t;
 
 /** resume a stopped thread, running it until the next event
@@ -72,11 +72,11 @@ INTERNAL void fd_free(fd_t *fd);
 typedef struct {
   char *cwd; ///< current working directory
 
-  pid_t id;                ///< process identifier
+  pid_t id; ///< process identifier
 
   thread_t *threads; ///< threads running in this process
-  size_t n_threads; ///< number of entries in `threads`
-  size_t c_threads; ///< number of allocated slots in `threads`
+  size_t n_threads;  ///< number of entries in `threads`
+  size_t c_threads;  ///< number of allocated slots in `threads`
 
   int exit_status; ///< exit status on completion
 

@@ -1,10 +1,10 @@
 #include "debug.h"
+#include "inferior_t.h"
 #include "input_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include "inferior_t.h"
 
 int inferior_input_new(inferior_t *inf, const input_t input) {
 

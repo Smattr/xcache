@@ -1,13 +1,12 @@
-#include "inferior_t.h"
-#include <assert.h>
-#include <stdlib.h>
-#include "tee_t.h"
-#include <xcache/record.h>
 #include "debug.h"
+#include "inferior_t.h"
+#include "tee_t.h"
+#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include<errno.h>
-#include "proc_t.h"
+#include <xcache/record.h>
 
 int inferior_new(inferior_t *inf, unsigned mode, const char *trace_root) {
 

@@ -1,6 +1,7 @@
 #include "../../common/proccall.h"
 #include "debug.h"
 #include "find_me.h"
+#include "inferior_t.h"
 #include "proc_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -14,7 +15,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <xcache/cmd.h>
-#include "inferior_t.h"
 
 int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
 
@@ -59,11 +59,11 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
   // allocate space for the child’s thread before forking, to avoid dealing with
   // a messy ENOMEM after fork
   proc.threads = calloc(1, sizeof(proc.threads[0]));
-    if (ERROR(proc.threads == NULL)) {
-      rc= ENOMEM;
-      goto done;
-    }
-    proc.c_threads = 1;
+  if (ERROR(proc.threads == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+  proc.c_threads = 1;
 
   {
     pid_t pid = fork();
@@ -85,7 +85,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     ++proc.n_threads;
   }
 
-  DEBUG("waiting for the child (pid %ld) to SIGSTOP itself…", (long)proc.id);
+  DEBUG("waiting for the child (PID %ld) to SIGSTOP itself…", (long)proc.id);
   {
     int status;
     if (ERROR(waitpid(proc.threads[0].id, &status, 0) < 0)) {
@@ -100,6 +100,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     // if the child failed before it could SIGSTOP itself, it will have exited
     // with an errno as its status
     if (ERROR(WIFEXITED(status))) {
+      // FIXME: does this get confused about the 126/127 logic?
       rc = WEXITSTATUS(status);
       proc.id = 0;
       --proc.n_threads;

@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include "proc_t.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/user.h>
-#include "proc_t.h"
 
 /// read a register from a traced child
 static inline long peek_reg(const thread_t *thread, size_t offset) {
@@ -23,7 +23,9 @@ static inline unsigned long peek_syscall_no(const thread_t *thread) {
 }
 
 /// read the syscall return value at sysexit
-static inline long peek_ret(const thread_t *thread) { return peek_reg(thread, REG(rax)); }
+static inline long peek_ret(const thread_t *thread) {
+  return peek_reg(thread, REG(rax));
+}
 
 /// read the errno value at sysexit
 static inline int peek_errno(const thread_t *thread) {

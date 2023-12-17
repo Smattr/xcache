@@ -1,4 +1,5 @@
 #include "../../common/proccall.h"
+#include "inferior_t.h"
 #include "proc_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -9,10 +10,9 @@
 #include <sys/ptrace.h>
 #include <unistd.h>
 #include <xcache/cmd.h>
-#include "inferior_t.h"
 
-_Noreturn void inferior_exec(const inferior_t *inf, const proc_t *proc, const xc_cmd_t cmd,
-                         const char *spy) {
+_Noreturn void inferior_exec(const inferior_t *inf, const proc_t *proc,
+                             const xc_cmd_t cmd, const char *spy) {
 
   assert(inf != NULL);
   assert(inf->t_out->pipe[1] > 0);

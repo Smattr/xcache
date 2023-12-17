@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "inferior_t.h"
 #include "peek.h"
 #include "proc_t.h"
 #include "syscall.h"
@@ -7,13 +8,12 @@
 #include <stddef.h>
 #include <sys/syscall.h>
 #include <xcache/record.h>
-#include "inferior_t.h"
 
 int sysenter(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
   assert(inf != NULL);
   assert(proc != NULL);
-  assert(thread!= NULL);
+  assert(thread != NULL);
 
   int rc = 0;
 
@@ -27,20 +27,20 @@ int sysenter(inferior_t *inf, proc_t *proc, thread_t *thread) {
 #define DO(call)                                                               \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
-      if (ERROR((rc = sysenter_##call(inf, proc, thread)))) {                               \
+      if (ERROR((rc = sysenter_##call(inf, proc, thread)))) {                  \
         goto done;                                                             \
       }                                                                        \
-\
-    /* restart the process */ \
-    if (inf->mode == XC_SYSCALL) {\
-      if (ERROR((rc = thread_syscall(*thread))))\
-        goto done;\
-    } else {\
-      if (ERROR((rc = thread_cont(*thread))))\
-        goto done;\
-    }\
-\
-goto done; \
+                                                                               \
+      /* restart the process */                                                \
+      if (inf->mode == XC_SYSCALL) {                                           \
+        if (ERROR((rc = thread_syscall(*thread))))                             \
+          goto done;                                                           \
+      } else {                                                                 \
+        if (ERROR((rc = thread_cont(*thread))))                                \
+          goto done;                                                           \
+      }                                                                        \
+                                                                               \
+      goto done;                                                               \
     }                                                                          \
   } while (0)
 
@@ -69,7 +69,7 @@ goto done; \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
       DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
-      if (ERROR((rc = thread_syscall(*thread)))) {                                 \
+      if (ERROR((rc = thread_syscall(*thread)))) {                             \
         goto done;                                                             \
       }                                                                        \
       goto done;                                                               \

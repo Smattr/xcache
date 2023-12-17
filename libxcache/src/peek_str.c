@@ -1,13 +1,13 @@
 #include "debug.h"
 #include "page_size.h"
 #include "peek.h"
+#include "proc_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/uio.h>
-#include "proc_t.h"
 
 int peek_str(char **out, const proc_t *proc, uintptr_t addr) {
 

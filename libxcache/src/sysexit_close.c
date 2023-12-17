@@ -1,16 +1,16 @@
 #include "../../common/proccall.h"
 #include "debug.h"
+#include "inferior_t.h"
 #include "peek.h"
 #include "proc_t.h"
 #include "syscall.h"
 #include <assert.h>
 #include <stddef.h>
 #include <xcache/record.h>
-#include "inferior_t.h"
 
 int sysexit_close(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
-assert(inf != NULL);
+  assert(inf != NULL);
   assert(proc != NULL);
   assert(thread != NULL);
 

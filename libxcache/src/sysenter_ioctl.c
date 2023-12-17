@@ -1,13 +1,14 @@
 #include "../../common/proccall.h"
 #include "debug.h"
+#include "inferior_t.h"
 #include "peek.h"
 #include "proc_t.h"
 #include "syscall.h"
 #include <assert.h>
 #include <errno.h>
 #include <stddef.h>
+#include <sys/syscall.h>
 #include <xcache/record.h>
-#include "inferior_t.h"
 
 int sysenter_ioctl(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
@@ -22,6 +23,12 @@ int sysenter_ioctl(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
   // any ioctl except a communication from the spy is unsupported
   if (ERROR(fd != XCACHE_FILENO)) {
+    DEBUG("TID %ld, ioctl(%d, …)", (long)thread->id, fd);
+    if (thread->ignoring) {
+      DEBUG("ignoring ioctl«%lu» on spy’s instruction",
+            (unsigned long)__NR_ioctl);
+      goto done;
+    }
     rc = ECHILD;
     goto done;
   }

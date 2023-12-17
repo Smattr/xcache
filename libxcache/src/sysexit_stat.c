@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "inferior_t.h"
 #include "input_t.h"
 #include "path.h"
 #include "peek.h"
@@ -12,7 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include "inferior_t.h"
 
 int sysexit_newfstatat(inferior_t *inf, proc_t *proc, thread_t *thread) {
 

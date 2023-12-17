@@ -1,9 +1,9 @@
 #include "cp.h"
 #include "debug.h"
+#include "inferior_t.h"
 #include "output_t.h"
 #include "path.h"
 #include "tee_t.h"
-#include "inferior_t.h"
 #include "trace_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -70,9 +70,9 @@ done:
 
 int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
 
+  assert(inf != NULL);
   assert(trace_root != NULL);
 
-  char *path = NULL;
   int fd = 0;
   FILE *f = NULL;
   output_t *outputs = NULL;
@@ -154,14 +154,13 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
     goto done;
 
 done:
-  for (size_t i = 0; i < n_outputs; ++i)
-    output_free(outputs[i]);
-  free(outputs);
   if (f != NULL)
     (void)fclose(f);
   if (fd > 0)
     (void)close(fd);
-  free(path);
+  for (size_t i = 0; i < n_outputs; ++i)
+    output_free(outputs[i]);
+  free(outputs);
 
   return rc;
 }

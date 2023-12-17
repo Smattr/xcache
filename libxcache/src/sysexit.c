@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "inferior_t.h"
 #include "peek.h"
 #include "proc_t.h"
 #include "syscall.h"
@@ -7,7 +8,6 @@
 #include <stddef.h>
 #include <sys/syscall.h>
 #include <xcache/record.h>
-#include "inferior_t.h"
 
 int sysexit(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
@@ -18,8 +18,8 @@ int sysexit(inferior_t *inf, proc_t *proc, thread_t *thread) {
   int rc = 0;
 
   const unsigned long syscall_no = peek_syscall_no(thread);
-  DEBUG("TID %ld, sysexit %s«%lu»", (long)thread->id, syscall_to_str(syscall_no),
-        syscall_no);
+  DEBUG("TID %ld, sysexit %s«%lu»", (long)thread->id,
+        syscall_to_str(syscall_no), syscall_no);
 
   if (thread->ignoring) {
     DEBUG("ignoring %s«%lu» on spy’s instruction", syscall_to_str(syscall_no),
@@ -43,12 +43,12 @@ int sysexit(inferior_t *inf, proc_t *proc, thread_t *thread) {
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
       DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
-      if (inf->mode == XC_SYSCALL) {                                          \
-        if (ERROR((rc = thread_syscall(*thread)))) {                               \
+      if (inf->mode == XC_SYSCALL) {                                           \
+        if (ERROR((rc = thread_syscall(*thread)))) {                           \
           goto done;                                                           \
         }                                                                      \
       } else {                                                                 \
-        if (ERROR((rc = thread_cont(*thread)))) {                                  \
+        if (ERROR((rc = thread_cont(*thread)))) {                              \
           goto done;                                                           \
         }                                                                      \
       }                                                                        \
@@ -60,19 +60,19 @@ int sysexit(inferior_t *inf, proc_t *proc, thread_t *thread) {
 #define DO(call)                                                               \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
-      if (ERROR((rc = sysexit_##call(inf, proc, thread)))) {                                \
+      if (ERROR((rc = sysexit_##call(inf, proc, thread)))) {                   \
         goto done;                                                             \
       }                                                                        \
-\
-    /* restart the process */ \
-    if (inf->mode == XC_SYSCALL) {\
-      if (ERROR((rc = thread_syscall(*thread))))\
-        goto done;\
-    } else {\
-      if (ERROR((rc = thread_cont(*thread))))\
-        goto done;\
-    }\
-\
+                                                                               \
+      /* restart the process */                                                \
+      if (inf->mode == XC_SYSCALL) {                                           \
+        if (ERROR((rc = thread_syscall(*thread))))                             \
+          goto done;                                                           \
+      } else {                                                                 \
+        if (ERROR((rc = thread_cont(*thread))))                                \
+          goto done;                                                           \
+      }                                                                        \
+                                                                               \
       goto done;                                                               \
     }                                                                          \
   } while (0)
