@@ -26,6 +26,7 @@ add_custom_target(check
     env PATH=${CMAKE_CURRENT_BINARY_DIR}:${CMAKE_BINARY_DIR}/xcache:$ENV{PATH}
     ${Python3_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR}/test.py
     --verbose
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 add_dependencies(check
   my-echo
