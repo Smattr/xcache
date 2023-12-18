@@ -11,6 +11,7 @@ void proc_exit(proc_t *proc, int exit_status) {
   proc->exit_status = exit_status;
 
   free(proc->threads);
+  proc->threads = NULL;
   proc->n_threads = 0;
   proc->c_threads = 0;
 

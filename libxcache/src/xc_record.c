@@ -34,7 +34,6 @@ static void *monitor(void *state) {
   // start our initial process
   if (ERROR((rc = inferior_start(inf, st->cmd))))
     goto done;
-  ++inf->n_procs;
 
   while (true) {
     int status;

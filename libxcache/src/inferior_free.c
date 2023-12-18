@@ -14,8 +14,6 @@ void inferior_free(inferior_t *inf) {
   inferior_kill(inf);
 
   free(inf->procs);
-  inf->n_procs = 0;
-  inf->c_procs = 0;
 
   for (size_t i = 0; i < inf->n_outputs; ++i)
     output_free(inf->outputs[i]);
@@ -32,4 +30,6 @@ void inferior_free(inferior_t *inf) {
 
   tee_cancel(inf->t_err);
   tee_cancel(inf->t_out);
+
+  *inf = (inferior_t){0};
 }
