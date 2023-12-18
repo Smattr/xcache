@@ -65,12 +65,11 @@ INTERNAL int inferior_start(inferior_t *inf, const xc_cmd_t cmd);
  * calls `exit` with an errno.
  *
  * \param inf Tracee container for the new process
- * \param proc Process to run
  * \param cmd Command describing what to `exec`
  * \param spy Absolute path to parasite library to inject
  */
-INTERNAL _Noreturn void inferior_exec(const inferior_t *inf, const proc_t *proc,
-                                      const xc_cmd_t cmd, const char *spy);
+INTERNAL _Noreturn void inferior_exec(const inferior_t *inf, const xc_cmd_t cmd,
+                                      const char *spy);
 
 /** append a new input
  *

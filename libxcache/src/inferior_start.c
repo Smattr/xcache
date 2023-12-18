@@ -73,7 +73,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     }
 
     if (pid == 0) {
-      inferior_exec(inf, &proc, cmd, spy);
+      inferior_exec(inf, cmd, spy);
       // unreachable
     }
 
