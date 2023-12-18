@@ -80,6 +80,7 @@ static void *monitor(void *state) {
 
     // did the child exit?
     if (WIFEXITED(status)) {
+      DEBUG("TID %ld exited with %d", (long)tid, WEXITSTATUS(status));
       // FIXME: we should be noting the exit of a _thread_ here, not a process
       proc_exit(proc, WEXITSTATUS(status));
       if (ERROR(WEXITSTATUS(status) != EXIT_SUCCESS))
