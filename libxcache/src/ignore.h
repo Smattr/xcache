@@ -24,6 +24,9 @@ IGNORE(write)
 #ifdef __NR_close
 SYSENTER_IGNORE(close)
 #endif
+#ifdef __NR_fstat
+IGNORE(fstat)
+#endif
 #ifdef __NR_mmap
 IGNORE(mmap)
 #endif
