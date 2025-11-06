@@ -5,7 +5,6 @@ Xcache test suite
 import os
 import re
 import subprocess
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -28,18 +27,17 @@ def strace(args: list[Path | str], cwd: Path | None = None):
 
 
 @pytest.mark.parametrize("debug", (False, True))
-def test_no_dir(debug: bool):
+def test_no_dir(debug: bool, tmp_path: Path):
     """
     hosting the cache in a directory within a directory that does not exist
     should fail
     """
-    with tempfile.TemporaryDirectory() as tmp:
-        nested = Path(tmp) / "foo/bar"
-        args = ["xcache", f"--dir={nested}"]
-        if debug:
-            args += ["--debug"]
-        with pytest.raises(subprocess.CalledProcessError):
-            subprocess.run(args + ["--", "my-echo", "foo", "bar"], check=True)
+    nested = Path(tmp_path) / "foo/bar"
+    args = ["xcache", f"--dir={nested}"]
+    if debug:
+        args += ["--debug"]
+    with pytest.raises(subprocess.CalledProcessError):
+        subprocess.run(args + ["--", "my-echo", "foo", "bar"], check=True)
 
 
 @pytest.mark.parametrize("debug", (False, True))
