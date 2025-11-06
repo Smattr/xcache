@@ -24,7 +24,7 @@ def strace(args: list[Path | str], cwd: Path | None = None):
     if cwd is not None:
         kwargs["cwd"] = cwd
 
-    subprocess.check_call(["strace", "-f", "--"] + args, env=env, **kwargs)
+    subprocess.run(["strace", "-f", "--"] + args, env=env, check=True, **kwargs)
 
 
 @pytest.mark.parametrize("debug", (False, True))
@@ -39,7 +39,7 @@ def test_no_dir(debug: bool):
         if debug:
             args += ["--debug"]
         with pytest.raises(subprocess.CalledProcessError):
-            subprocess.check_call(args + ["--", "my-echo", "foo", "bar"])
+            subprocess.run(args + ["--", "my-echo", "foo", "bar"], check=True)
 
 
 @pytest.mark.parametrize("debug", (False, True))
