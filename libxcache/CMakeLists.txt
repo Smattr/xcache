@@ -133,6 +133,8 @@ target_link_libraries(libxcache PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
 set_target_properties(libxcache PROPERTIES PREFIX "")
 
+set_target_properties(libxcache PROPERTIES VERSION 0.0.0 SOVERSION 0)
+
 install(TARGETS libxcache EXPORT LibxcacheConfig
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
