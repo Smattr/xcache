@@ -249,7 +249,7 @@ def test_write_file(debug: bool, record: bool, replay: bool, tmp_path: Path):
             assert "replay failed" not in output, "replay incorrectly enabled"
             assert "replay succeeded" not in output, "replay incorrectly enabled"
         if record:
-            assert "record succeeded" in output, f"record of file write failed"
+            assert "record succeeded" in output, "record of file write failed"
         else:
             assert "record failed" not in output, "record incorrectly enabled"
             assert "record succeeded" not in output, "record incorrectly enabled"
@@ -269,7 +269,7 @@ def test_write_file(debug: bool, record: bool, replay: bool, tmp_path: Path):
 
     if debug:
         if record and replay:
-            assert "replay succeeded" in output, f"replay of file write failed"
+            assert "replay succeeded" in output, "replay of file write failed"
         elif replay:
             assert "replay failed" in output, "replay succeeded with no trace"
         else:
@@ -279,7 +279,7 @@ def test_write_file(debug: bool, record: bool, replay: bool, tmp_path: Path):
             assert "record failed" not in output, "record still attempted after replay"
             assert "record succeeded" not in output, "record after successful replay"
         elif record:
-            assert "record succeeded" in output, f"record of file write failed"
+            assert "record succeeded" in output, "record of file write failed"
         else:
             assert "record failed" not in output, "record incorrectly enabled"
             assert "record succeeded" not in output, "record incorrectly enabled"
