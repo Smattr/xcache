@@ -1,4 +1,4 @@
-/// \file
+/// @file
 ///
 /// a program that does almost nothing
 ///

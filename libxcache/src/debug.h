@@ -34,29 +34,26 @@ extern FILE *xc_debug INTERNAL;
     cond_;                                                                     \
   })
 
-/** convert the file descriptor from an openat() call to a string
- *
- * This function heap-allocates. Do not call it on a hot path.
- *
- * \param fd Descriptor to translate
- * \return A string representation or `NULL` on out-of-memory
- */
+/// convert the file descriptor from an openat() call to a string
+///
+/// This function heap-allocates. Do not call it on a hot path.
+///
+/// @param fd Descriptor to translate
+/// @return A string representation or `NULL` on out-of-memory
 INTERNAL char *atfd_to_str(int fd);
 
-/** convert flags from an open() call to a string
- *
- * This function heap-allocates. Do not call it on a hot path.
- *
- * \param flags Flags to translate
- * \return A string representation or `NULL` on out-of-memory
- */
+/// convert flags from an open() call to a string
+///
+/// This function heap-allocates. Do not call it on a hot path.
+///
+/// @param flags Flags to translate
+/// @return A string representation or `NULL` on out-of-memory
 INTERNAL char *openflags_to_str(long flags);
 
-/** convert flags from a newfstatat() call to a string
- *
- * This function heap-allocates. Do not call it on a hot path.
- *
- * \param flags Flags to translate
- * \return A string representation or `NULL` on out-of-memory
- */
+/// convert flags from a newfstatat() call to a string
+///
+/// This function heap-allocates. Do not call it on a hot path.
+///
+/// @param flags Flags to translate
+/// @return A string representation or `NULL` on out-of-memory
 INTERNAL char *statflags_to_str(long flags);

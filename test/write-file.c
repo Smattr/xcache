@@ -1,4 +1,4 @@
-/// \file
+/// @file
 ///
 /// a program that writes content to a file
 

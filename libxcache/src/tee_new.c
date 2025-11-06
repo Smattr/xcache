@@ -8,11 +8,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/** entry point of a child IO thread
- *
- * \param tee Thread self pointer
- * \return NULL on success or an errno on failure
- */
+/// entry point of a child IO thread
+///
+/// @param tee Thread self pointer
+/// @return NULL on success or an errno on failure
 static void *forward(void *tee) {
 
   assert(tee != NULL);

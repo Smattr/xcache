@@ -35,11 +35,10 @@ static inline int peek_errno(const thread_t *thread) {
   return (int)-ret;
 }
 
-/** read a NUL-terminated string out of a child’s address space
- *
- * \param out [out] Read string on success
- * \param proc Process to read from
- * \param addr Address to read from
- * \return 0 on success or an errno on failure
- */
+/// read a NUL-terminated string out of a child’s address space
+///
+/// @param out [out] Read string on success
+/// @param proc Process to read from
+/// @param addr Address to read from
+/// @return 0 on success or an errno on failure
 INTERNAL int peek_str(char **out, const proc_t *proc, uintptr_t addr);

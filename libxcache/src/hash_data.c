@@ -4,10 +4,9 @@
 #include <stdint.h>
 #include <string.h>
 
-/** MurmurHash by Austin Appleby
- *
- * more information on this at https://github.com/aappleby/smhasher/
- */
+/// MurmurHash by Austin Appleby
+///
+/// more information on this at https://github.com/aappleby/smhasher/
 static uint64_t MurmurHash64A(const void *key, size_t len) {
 
   const uint64_t seed = 0;

@@ -1,4 +1,4 @@
-/// \file
+/// @file
 ///
 /// our own implementation of `echo`
 ///

@@ -1,4 +1,4 @@
-/// \file
+/// @file
 ///
 /// a program that uses stderr
 
