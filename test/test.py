@@ -27,6 +27,103 @@ def strace(args: list[Path | str], cwd: Path | None = None):
 
 
 @pytest.mark.parametrize("debug", (False, True))
+@pytest.mark.parametrize(
+    "record", (False, pytest.param(True, marks=pytest.mark.xfail(strict=True)))
+)
+@pytest.mark.parametrize("replay", (False, True))
+def test_fork(debug: bool, record: bool, replay: bool, tmp_path: Path):
+    """
+    can we handle something that forks?
+    """
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(["forker"], tmp_path)
+    (tmp_path / "foo").unlink()
+
+    args = ["xcache"]
+    if debug:
+        args += ["--debug"]
+    args += [f"--dir={tmp_path}/database"]
+    if record:
+        if replay:
+            args += ["--read-write"]
+        else:
+            args += ["--write-only"]
+    else:
+        if replay:
+            args += ["--read-only"]
+        else:
+            args += ["--disable"]
+    args += ["--", "forker"]
+
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    print(f"output:\n{p.stdout}\n")
+    p.check_returncode()
+
+    if debug:
+        if replay:
+            assert "replay failed" in p.stdout, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in p.stdout, "replay incorrectly enabled"
+            assert "replay succeeded" not in p.stdout, "replay incorrectly enabled"
+        if record:
+            assert "record succeeded" in p.stdout, "record of file write failed"
+        else:
+            assert "record failed" not in p.stdout, "record incorrectly enabled"
+            assert "record succeeded" not in p.stdout, "record incorrectly enabled"
+
+    assert (tmp_path / "foo").exists(), "file not written"
+    assert (tmp_path / "foo").read_text() == "hello world", "file contents not written"
+
+    # try it again to see if we can replay
+    (tmp_path / "foo").unlink()
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    print(f"output:\n{p.stdout}\n")
+    p.check_returncode()
+
+    if debug:
+        if record and replay:
+            assert "replay succeeded" in p.stdout, "replay of file write failed"
+        elif replay:
+            assert "replay failed" in p.stdout, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in p.stdout, "replay incorrectly enabled"
+            assert "replay succeeded" not in p.stdout, "replay incorrectly enabled"
+        if record and replay:
+            assert (
+                "record failed" not in p.stdout
+            ), "record still attempted after replay"
+            assert "record succeeded" not in p.stdout, "record after successful replay"
+        elif record:
+            assert "record succeeded" in p.stdout, "record of file write failed"
+        else:
+            assert "record failed" not in p.stdout, "record incorrectly enabled"
+            assert "record succeeded" not in p.stdout, "record incorrectly enabled"
+
+    assert (tmp_path / "foo").exists(), "file not written"
+    assert (tmp_path / "foo").read_text() == "hello world", "file contents not written"
+
+
+@pytest.mark.parametrize("debug", (False, True))
 def test_no_dir(debug: bool, tmp_path: Path):
     """
     hosting the cache in a directory within a directory that does not exist
