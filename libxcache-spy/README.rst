@@ -10,5 +10,5 @@ is relevant to tracing but happens purely in userspace.
 To deal with this, libxcache injects this library into the subprocess via
 ``LD_PRELOAD``. It can intercept libc calls via its own wrappers and then relay
 details back to its parent, libxcache. In doing this, it must try to only use
-syscalls that ignored by tracing (e.g. ``read`` and ``write``) because its
+syscalls that are ignored by tracing (e.g. ``read`` and ``write``) because its
 actions are indistinguishable from those of the tracee.
