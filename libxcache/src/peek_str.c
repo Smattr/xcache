@@ -32,7 +32,6 @@ int peek_str(char **out, const proc_t *proc, uintptr_t addr) {
     // read some data from the tracee
     struct iovec ours = {.iov_base = chunk, .iov_len = sizeof(chunk)};
     struct iovec theirs = {.iov_base = (void *)base, .iov_len = len};
-    ;
     ssize_t r = process_vm_readv(proc->id, &ours, 1, &theirs, 1, 0);
     if (ERROR(r < 0)) {
       // if the process’ address space was torn down while we were trying to
