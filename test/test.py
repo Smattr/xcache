@@ -7,12 +7,11 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
 
-def strace(args: list[Path | str], cwd: Optional[Path] = None):
+def strace(args: list[Path | str], cwd: Path | None = None):
     """
     `strace` a process, expecting it to succeed
     """
