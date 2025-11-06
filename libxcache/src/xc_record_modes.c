@@ -10,8 +10,7 @@ unsigned xc_record_modes(unsigned request) {
   unsigned answer = request & XC_MODE_AUTO;
 
 // if we were compiled on an older kernel
-#if LINUX_VERSION_MAJOR < 3 ||                                                 \
-    (LINUX_VERSION_MAJOR == 3 && LINUX_VERSION_MINOR < 5)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 0)
   answer &= ~(XC_EARLY_SECCOMP | XC_LATE_SECCOMP);
 #endif
 
@@ -20,17 +19,18 @@ unsigned xc_record_modes(unsigned request) {
   if (ERROR(uname(&name) < 0))
     return 0;
   int major = 0;
-  int minor = 0;
-  if (sscanf(name.release, "%d.%d.", &major, &minor) != 2)
+  int patch = 0;
+  int sub = 0;
+  if (sscanf(name.release, "%d.%d.%d", &major, &patch, &sub) != 3)
     return 0;
+  const int v = KERNEL_VERSION(major, patch, sub);
 
   // pre-syscall seccomp behaviour exists in Linux [3.5, 4.8)
-  if (major < 3 || major > 4 || (major == 3 && minor < 5) ||
-      (major == 4 && minor > 7))
+  if (v < KERNEL_VERSION(3, 5, 0) || v >= KERNEL_VERSION(4, 8, 0))
     answer &= ~XC_EARLY_SECCOMP;
 
   // mid-syscall seccomp behaviour exists in Linux ≥ 4.8
-  if (major < 4 || (major == 4 && minor < 8))
+  if (v < KERNEL_VERSION(4, 8, 0))
     answer &= ~XC_LATE_SECCOMP;
 
   return answer;

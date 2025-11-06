@@ -130,8 +130,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     // otherwise have to do our own tracking of which PID(s) had just called
     // `execve` and would thus receive one of these.
     opts |= PTRACE_O_TRACEEXEC;
-#if LINUX_VERSION_MAJOR > 3 ||                                                 \
-    (LINUX_VERSION_MAJOR == 3 && LINUX_VERSION_MINOR > 4)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
     if (inf->mode == XC_EARLY_SECCOMP || inf->mode == XC_LATE_SECCOMP)
       opts |= PTRACE_O_TRACESECCOMP;
 #endif
