@@ -226,14 +226,6 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
   if (ERROR((rc = inferior_new(inf, mode, trace_root))))
     goto done;
 
-  // allocate our initial process
-  inf->procs = calloc(1, sizeof(inf->procs[0]));
-  if (ERROR(inf->procs == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-  ++inf->c_procs;
-
   // We want to wait on the tracee and any subprocesses and/or threads it spawns
   // but not the tee threads we just created nor on any children of our caller.
   // Linux APIs do not seem to offer a way to do this directly. So spawn a
