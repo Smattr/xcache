@@ -39,6 +39,15 @@ IGNORE(munmap)
 #ifdef __NR_brk
 IGNORE(brk)
 #endif
+#ifdef __NR_rt_sigaction
+IGNORE(rt_sigaction)
+#endif
+#ifdef __NR_rt_sigprocmask
+IGNORE(rt_sigprocmask)
+#endif
+#ifdef __NR_rt_sigreturn
+IGNORE(rt_sigreturn)
+#endif
 #ifdef __NR_ioctl
 SYSEXIT_IGNORE(ioctl) // handled or gave up in sysenter
 #endif
