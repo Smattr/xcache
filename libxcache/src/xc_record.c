@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "event.h"
 #include "inferior_t.h"
+#include "list.h"
 #include "proc_t.h"
 #include "syscall.h"
 #include "tee_t.h"
@@ -61,10 +62,11 @@ static void *monitor(void *state) {
     // locate which process and thread we are dealing with
     proc_t *proc = NULL;
     thread_t *thread = NULL;
-    for (size_t i = 0; i < inf->n_procs; ++i) {
-      for (size_t j = 0; j < inf->procs[i].n_threads; ++j) {
-        if (inf->procs[i].threads[j].id == tid) {
-          proc = &inf->procs[i];
+    for (size_t i = 0; i < LIST_SIZE(&inf->procs); ++i) {
+      proc_t *const p = LIST_AT(&inf->procs, i);
+      for (size_t j = 0; j < p->n_threads; ++j) {
+        if (p->threads[j].id == tid) {
+          proc = p;
           thread = &proc->threads[j];
           break;
         }
@@ -264,12 +266,13 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
 
 done:
   // the monitor should have waited on and cleaned up all tracee threads
-  for (size_t i = 0; i < inf->n_procs; ++i)
-    assert(inf->procs[i].n_threads == 0 && "remaining tracee threads");
+  for (size_t i = 0; i < LIST_SIZE(&inf->procs); ++i)
+    assert(LIST_AT(&inf->procs, i)->n_threads == 0 &&
+           "remaining tracee threads");
 
   if (rc == 0 || rc == ECHILD) {
-    assert(inf->n_procs > 0);
-    *exit_status = inf->procs[0].exit_status;
+    assert(LIST_SIZE(&inf->procs) > 0);
+    *exit_status = LIST_AT(&inf->procs, 0)->exit_status;
   }
 
   inferior_free(inf);

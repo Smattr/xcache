@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "find_me.h"
 #include "inferior_t.h"
+#include "list.h"
 #include "proc_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -19,23 +20,15 @@
 int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
 
   assert(inf != NULL);
-  assert(inf->n_procs == 0 && "proc already started?");
+  assert(LIST_SIZE(&inf->procs) == 0 && "proc already started?");
 
   char *spy = NULL;
   proc_t proc = {0};
   int rc = 0;
 
-  // allocate space for the process
-  if (inf->n_procs == inf->c_procs) {
-    size_t c = inf->c_procs == 0 ? 1 : inf->c_procs * 2;
-    proc_t *ps = realloc(inf->procs, c * sizeof(inf->procs[0]));
-    if (ERROR(ps == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-    inf->procs = ps;
-    inf->c_procs = c;
-  }
+  // allocate space for the upcoming process
+  if (ERROR((rc = LIST_RESERVE(&inf->procs, LIST_SIZE(&inf->procs) + 1))))
+    goto done;
 
   if (ERROR((rc = find_spy(&spy))))
     goto done;
@@ -149,9 +142,8 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
       goto done;
   }
 
-  assert(inf->c_procs > inf->n_procs);
-  inf->procs[inf->n_procs] = proc;
-  ++inf->n_procs;
+  if (ERROR((rc = LIST_PUSH_BACK(&inf->procs, proc))))
+    goto done;
   proc = (proc_t){0};
 
 done:

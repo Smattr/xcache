@@ -1,5 +1,6 @@
 #include "inferior_t.h"
 #include "input_t.h"
+#include "list.h"
 #include "output_t.h"
 #include "proc_t.h"
 #include "tee_t.h"
@@ -13,7 +14,7 @@ void inferior_free(inferior_t *inf) {
 
   inferior_kill(inf);
 
-  free(inf->procs);
+  LIST_FREE(&inf->procs);
 
   for (size_t i = 0; i < inf->n_outputs; ++i)
     output_free(inf->outputs[i]);

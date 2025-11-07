@@ -2,6 +2,7 @@
 
 #include "../../common/compiler.h"
 #include "input_t.h"
+#include "list.h"
 #include "output_t.h"
 #include "proc_t.h"
 #include "tee_t.h"
@@ -20,9 +21,7 @@ typedef struct {
 
   int proccall[2]; ///< pipe for the libxcache-spy to message us
 
-  proc_t *procs;  ///< processes belonging to this target
-  size_t n_procs; ///< number of entries in `procs`
-  size_t c_procs; ///< number of allocated slots in `procs`
+  LIST(proc_t) procs; ///< processes belonging to this target
 
   input_t *inputs; ///< list of input actions observed
   size_t n_inputs; ///< number of entries in `inputs`
