@@ -12,6 +12,10 @@ unsigned xc_record_modes(unsigned request) {
 // if we were compiled on an older kernel
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 0)
   answer &= ~(XC_EARLY_SECCOMP | XC_LATE_SECCOMP);
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 8, 0)
+  answer &= ~XC_LATE_SECCOMP;
+#else
+  answer &= ~XC_EARLY_SECCOMP;
 #endif
 
   // get kernel version

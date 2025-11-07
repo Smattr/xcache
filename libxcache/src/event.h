@@ -1,5 +1,6 @@
 #pragma once
 
+#include <linux/version.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <sys/ptrace.h>
@@ -40,8 +41,10 @@ static inline bool is_fork(int status) {
 static inline bool is_seccomp(int status) {
   if (!WIFSTOPPED(status))
     return false;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
   if (status >> 8 == (SIGTRAP | (PTRACE_EVENT_SECCOMP << 8)))
     return true;
+#endif
   return false;
 }
 
