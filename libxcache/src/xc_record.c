@@ -205,6 +205,7 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode, int *exec_status,
 
   if (ERROR(exit_status == NULL))
     return EINVAL;
+  *exit_status = 0;
 
   char *trace_root = NULL;
   state_t st = {.cmd = cmd};
