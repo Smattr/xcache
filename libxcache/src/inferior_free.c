@@ -20,9 +20,9 @@ void inferior_free(inferior_t *inf) {
     output_free(inf->outputs[i]);
   free(inf->outputs);
 
-  for (size_t i = 0; i < inf->n_inputs; ++i)
-    input_free(inf->inputs[i]);
-  free(inf->inputs);
+  for (size_t i = 0; i < LIST_SIZE(&inf->inputs); ++i)
+    input_free(*LIST_AT(&inf->inputs, i));
+  LIST_FREE(&inf->inputs);
 
   if (inf->proccall[0] > 0)
     (void)close(inf->proccall[0]);

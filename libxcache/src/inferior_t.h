@@ -23,9 +23,7 @@ typedef struct {
 
   LIST(proc_t) procs; ///< processes belonging to this target
 
-  input_t *inputs; ///< list of input actions observed
-  size_t n_inputs; ///< number of entries in `inputs`
-  size_t c_inputs; ///< number of allocated slots in `inputs`
+  LIST(input_t) inputs; ///< input actions observed
 
   /// list of output actions observed
   ///
