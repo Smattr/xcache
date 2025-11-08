@@ -201,6 +201,7 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode, int *exec_status,
 
   if (ERROR(exec_status == NULL))
     return EINVAL;
+  *exec_status = 0;
 
   if (ERROR(exit_status == NULL))
     return EINVAL;

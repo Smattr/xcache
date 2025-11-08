@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
 
   if (record_enabled) {
     DEBUG("attempting record");
-    int exec_status = 0;
+    int exec_status;
     if ((rc = xc_record(db, cmd, XC_SYSCALL, &exec_status, &exit_status))) {
       if (exec_status != 0)
         fprintf(stderr, "xc_record: %s\n", strerror(exec_status));

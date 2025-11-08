@@ -51,8 +51,6 @@ XCACHE_API unsigned xc_record_modes(unsigned request);
 /// The `exec_status` is set when `execve` or one of the other “initialisation”
 /// steps fails. This allows a caller to discriminate between something going
 /// wrong during tracing and something going wrong during starting the tracee.
-/// Note that the caller needs to set this to 0 before its call to conclude
-/// anything meaningful from the resulting value of this.
 ///
 /// The `exit_status` is always set when the command runs to completion. That
 /// is, it is set both when 0 is returned and when `ECHILD` is returned
