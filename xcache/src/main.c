@@ -223,7 +223,10 @@ int main(int argc, char **argv) {
 
   if (record_enabled) {
     DEBUG("attempting record");
-    if ((rc = xc_record(db, cmd, XC_SYSCALL, &exit_status))) {
+    int exec_status = 0;
+    if ((rc = xc_record(db, cmd, XC_SYSCALL, &exec_status, &exit_status))) {
+      if (exec_status != 0)
+        fprintf(stderr, "xc_record: %s\n", strerror(exec_status));
       if (rc == ECHILD) {
         DEBUG("record failed: child did something unsupported");
       } else {

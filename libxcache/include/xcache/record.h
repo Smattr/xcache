@@ -48,6 +48,12 @@ XCACHE_API unsigned xc_record_modes(unsigned request);
 ///
 /// `mode` is expected to be a bitmask of `xc_record_mode_t` values.
 ///
+/// The `exec_status` is set when `execve` or one of the other “initialisation”
+/// steps fails. This allows a caller to discriminate between something going
+/// wrong during tracing and something going wrong during starting the tracee.
+/// Note that the caller needs to set this to 0 before its call to conclude
+/// anything meaningful from the resulting value of this.
+///
 /// The `exit_status` is always set when the command runs to completion. That
 /// is, it is set both when 0 is returned and when `ECHILD` is returned
 /// indicating the command could not be recorded due to it doing something
@@ -56,10 +62,11 @@ XCACHE_API unsigned xc_record_modes(unsigned request);
 /// @param db Database to record results into
 /// @param cmd Command to run
 /// @param mode Acceptable modes in which to record
+/// @param exec_statu [out] Result of `execve` and associated setup
 /// @param exit_status [out] Exit status of the command on success
 /// @return 0 on success or an errno on failure
 XCACHE_API int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
-                         int *exit_status);
+                         int *exec_status, int *exit_status);
 
 #ifdef __cplusplus
 }

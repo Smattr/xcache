@@ -24,6 +24,11 @@ void inferior_free(inferior_t *inf) {
     input_free(*LIST_AT(&inf->inputs, i));
   LIST_FREE(&inf->inputs);
 
+  if (inf->exec_status[0] > 0)
+    (void)close(inf->exec_status[0]);
+  if (inf->exec_status[1] > 0)
+    (void)close(inf->exec_status[1]);
+
   if (inf->proccall[0] > 0)
     (void)close(inf->proccall[0]);
   if (inf->proccall[1] > 0)

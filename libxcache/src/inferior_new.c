@@ -41,6 +41,12 @@ int inferior_new(inferior_t *inf, unsigned mode, const char *trace_root) {
     goto done;
   }
 
+  // setup a bridge `inferior_exec` will use to notify us of initial failure
+  if (ERROR(pipe2(i.exec_status, O_CLOEXEC) < 0)) {
+    rc = errno;
+    goto done;
+  }
+
   *inf = i;
   i = (inferior_t){0};
 

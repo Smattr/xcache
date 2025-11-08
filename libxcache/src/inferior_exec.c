@@ -28,6 +28,7 @@ _Noreturn void inferior_exec(const inferior_t *inf, const xc_cmd_t cmd,
   assert(inf != NULL);
   assert(inf->t_out->pipe[1] > 0);
   assert(inf->t_err->pipe[1] > 0);
+  assert(inf->exec_status[1] > 0);
   assert(cmd.cwd != NULL);
   assert(cmd.argv != NULL);
   assert(cmd.argc > 0);
@@ -93,8 +94,10 @@ _Noreturn void inferior_exec(const inferior_t *inf, const xc_cmd_t cmd,
 
   // chdir _after_ the tracer attaches to let it naturally count this as a read
 
-  if ((rc = xc_cmd_exec(cmd)))
+  if ((rc = xc_cmd_exec(cmd))) {
+    (void)write(inf->exec_status[1], &rc, sizeof(rc));
     goto fail;
+  }
 
 fail:
   assert(rc != 0 && "reached child failure without failing status");

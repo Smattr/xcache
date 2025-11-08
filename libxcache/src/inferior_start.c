@@ -70,6 +70,10 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
       // unreachable
     }
 
+    // discard the write end of this pipe so that our child’s closure (during
+    // `execve`/`exit` in `inferior_exec`) will unblock reads on the other end
+    (void)close(inf->exec_status[1]);
+
     proc.id = pid;
 
     assert(proc.n_threads < proc.c_threads);

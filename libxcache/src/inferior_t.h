@@ -21,6 +21,8 @@ typedef struct {
 
   int proccall[2]; ///< pipe for the libxcache-spy to message us
 
+  int exec_status[2]; ///< pipe for propagating initial `execve` result
+
   LIST(proc_t) procs; ///< processes belonging to this target
 
   LIST(input_t) inputs; ///< input actions observed

@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <unistd.h>
 #include <xcache/cmd.h>
 #include <xcache/db.h>
 #include <xcache/record.h>
@@ -178,7 +179,7 @@ done:
   return (void *)(intptr_t)rc;
 }
 
-int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
+int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode, int *exec_status,
               int *exit_status) {
 
   if (ERROR(db == NULL))
@@ -196,6 +197,9 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
   }
 
   if (ERROR((mode & XC_MODE_AUTO) == 0))
+    return EINVAL;
+
+  if (ERROR(exec_status == NULL))
     return EINVAL;
 
   if (ERROR(exit_status == NULL))
@@ -241,6 +245,9 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
     void *ret = NULL;
     if (ERROR((rc = pthread_join(mon, &ret))))
       goto done;
+
+    // probe whether the initial `execve` failed
+    (void)read(inf->exec_status[0], exec_status, sizeof(*exec_status));
 
     if (ret != NULL) {
       rc = (int)(intptr_t)ret;

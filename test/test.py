@@ -155,7 +155,6 @@ def test_nonexistent(debug: bool, tmp_path: Path):
     assert ret == 127, "unexpected return from non-existent exec"
 
 
-@pytest.mark.xfail(strict=True)
 def test_nonexistent2(tmp_path: Path):
     """running something that non-existent should report a readable error"""
     args = ["xcache", f"--dir={tmp_path}/database", "--", tmp_path / "nonexistent"]
