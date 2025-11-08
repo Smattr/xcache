@@ -23,6 +23,7 @@
 typedef struct {
   inferior_t inf;
   const xc_cmd_t cmd;
+  int *trace_status; ///< result of tracing
 } state_t;
 
 static void *monitor(void *state) {
@@ -32,6 +33,12 @@ static void *monitor(void *state) {
   state_t *st = state;
   inferior_t *inf = &st->inf;
   int rc = 0;
+
+/// mark tracing as unsuccessful, treating any previous failure as sticky
+#define FAIL_TRACE(ret)                                                        \
+  do {                                                                         \
+    *st->trace_status = *st->trace_status ? *st->trace_status : (ret);         \
+  } while (0)
 
   // start our initial process
   if (ERROR((rc = inferior_start(inf, st->cmd))))
@@ -77,7 +84,7 @@ static void *monitor(void *state) {
     }
     if (ERROR(thread == NULL)) {
       DEBUG("TID %ld is not a child we are tracking", (long)tid);
-      inf->fate = inf->fate ? inf->fate : ECHILD;
+      FAIL_TRACE(ESRCH);
       continue;
     }
 
@@ -86,8 +93,6 @@ static void *monitor(void *state) {
       DEBUG("TID %ld exited with %d", (long)tid, WEXITSTATUS(status));
       // FIXME: we should be noting the exit of a _thread_ here, not a process
       proc_exit(proc, WEXITSTATUS(status));
-      if (ERROR(WEXITSTATUS(status) != EXIT_SUCCESS))
-        inf->fate = inf->fate ? inf->fate : ECHILD;
       continue;
     }
 
@@ -96,15 +101,14 @@ static void *monitor(void *state) {
       // FIXME: as above, we should be dealing with a _thread_ here
       DEBUG("TID %ld died with signal %d", (long)tid, WTERMSIG(status));
       proc_exit(proc, 128 + WTERMSIG(status));
-      inf->fate = inf->fate ? inf->fate : ECHILD;
       continue;
     }
 
     // if anything else happens, but we have already failed, release this child
-    if (inf->fate) {
+    if (*st->trace_status != 0) {
       const int signal = is_signal(status) ? WSTOPSIG(status) : 0;
-      if (ERROR((rc = thread_detach(*thread, signal))))
-        inf->fate = inf->fate ? inf->fate : rc;
+      // ignore failure as there is nothing we can do about it
+      (void)thread_detach(*thread, signal);
       continue;
     }
 
@@ -118,10 +122,11 @@ static void *monitor(void *state) {
       // `SIGSTOP` in the child before execution (handled below). It is simpler
       // to just ignore the `SIGTRAP` in the parent and start tracking the child
       // when we receive its initial `SIGSTOP`.
-      if (ERROR((rc = thread_cont(
-                     *thread)))) // FIXME: shouldn't we be `thread_syscall`-ing
-                                 // if mode == XC_SYSCALL?
-        inf->fate = inf->fate ? inf->fate : rc;
+      const int r =
+          thread_cont(*thread); // FIXME: shouldn't we be `thread_syscall`-ing
+                                // if mode == XC_SYSCALL?
+      if (ERROR(r != 0))
+        FAIL_TRACE(r);
       continue;
     }
 
@@ -134,14 +139,16 @@ static void *monitor(void *state) {
 
     if (is_syscall(status)) {
       if (thread->pending_sysexit) {
-        if (ERROR((rc = sysexit(inf, proc, thread)))) {
-          inf->fate = inf->fate ? inf->fate : rc;
+        const int r = sysexit(inf, proc, thread);
+        if (ERROR(r != 0)) {
+          FAIL_TRACE(r);
           (void)thread_detach(*thread, 0);
           continue;
         }
       } else {
-        if (ERROR((rc = sysenter(inf, proc, thread)))) {
-          inf->fate = inf->fate ? inf->fate : rc;
+        const int r = sysenter(inf, proc, thread);
+        if (ERROR(r != 0)) {
+          FAIL_TRACE(r);
           (void)thread_detach(*thread, 0);
           continue;
         }
@@ -155,11 +162,13 @@ static void *monitor(void *state) {
     if (is_exec(status)) {
       DEBUG("TID %ld, PTRACE_EVENT_EXEC", (long)tid);
       if (inf->mode == XC_SYSCALL) {
-        if (ERROR((rc = thread_syscall(*thread))))
-          inf->fate = inf->fate ? inf->fate : rc;
+        const int r = thread_syscall(*thread);
+        if (ERROR(r != 0))
+          FAIL_TRACE(r);
       } else {
-        if (ERROR((rc = thread_cont(*thread))))
-          inf->fate = inf->fate ? inf->fate : rc;
+        const int r = thread_cont(*thread);
+        if (ERROR(r != 0))
+          FAIL_TRACE(r);
       }
       continue;
     }
@@ -167,20 +176,18 @@ static void *monitor(void *state) {
     {
       const int sig = WSTOPSIG(status);
       DEBUG("TID %ld, stopped by signal %d", (long)tid, sig);
-      if (ERROR((rc = thread_signal(*thread, sig))))
-        inf->fate = inf->fate ? inf->fate : rc;
+      const int r = thread_signal(*thread, sig);
+      if (ERROR(r != 0))
+        FAIL_TRACE(r);
     }
   }
 
 done:
-  if (inf->fate)
-    rc = inf->fate;
-
   return (void *)(intptr_t)rc;
 }
 
-int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode, int *exec_status,
-              int *exit_status) {
+int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
+              xc_record_t *status) {
 
   if (ERROR(db == NULL))
     return EINVAL;
@@ -199,16 +206,12 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode, int *exec_status,
   if (ERROR((mode & XC_MODE_AUTO) == 0))
     return EINVAL;
 
-  if (ERROR(exec_status == NULL))
+  if (ERROR(status == NULL))
     return EINVAL;
-  *exec_status = 0;
 
-  if (ERROR(exit_status == NULL))
-    return EINVAL;
-  *exit_status = 0;
-
+  *status = (xc_record_t){0};
   char *trace_root = NULL;
-  state_t st = {.cmd = cmd};
+  state_t st = {.cmd = cmd, .trace_status = &status->trace_status};
   inferior_t *inf = &st.inf;
   int rc = 0;
 
@@ -248,14 +251,19 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode, int *exec_status,
     if (ERROR((rc = pthread_join(mon, &ret))))
       goto done;
 
-    // probe whether the initial `execve` failed
-    (void)read(inf->exec_status[0], exec_status, sizeof(*exec_status));
-
     if (ret != NULL) {
       rc = (int)(intptr_t)ret;
       goto done;
     }
   }
+
+  // probe whether the initial `execve` failed
+  (void)read(inf->exec_status[0], &status->exec_status,
+             sizeof(status->exec_status));
+
+  // if `execve` failed, fail tracing
+  if (status->exec_status != 0 && status->trace_status == 0)
+    status->trace_status = status->exec_status;
 
   // coalesce the stdout and stderr threads
   if (ERROR((rc = tee_join(inf->t_out))))
@@ -263,15 +271,17 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode, int *exec_status,
   if (ERROR((rc = tee_join(inf->t_err))))
     goto done;
 
-  // save the result
-  if (ERROR((rc = inferior_save(inf, cmd, trace_root))))
-    goto done;
+  if (status->trace_status == 0) {
+    // save the result
+    if (ERROR((rc = inferior_save(inf, cmd, trace_root))))
+      goto done;
 
-  // blank the stdout and stderr saved paths so they are retained
-  free(inf->t_out->copy_path);
-  inf->t_out->copy_path = NULL;
-  free(inf->t_err->copy_path);
-  inf->t_err->copy_path = NULL;
+    // blank the stdout and stderr saved paths so they are retained
+    free(inf->t_out->copy_path);
+    inf->t_out->copy_path = NULL;
+    free(inf->t_err->copy_path);
+    inf->t_err->copy_path = NULL;
+  }
 
 done:
   // the monitor should have waited on and cleaned up all tracee threads
@@ -279,9 +289,9 @@ done:
     assert(LIST_AT(&inf->procs, i)->n_threads == 0 &&
            "remaining tracee threads");
 
-  if (rc == 0 || rc == ECHILD) {
+  if (rc == 0 && status->exec_status == 0) {
     assert(LIST_SIZE(&inf->procs) > 0);
-    *exit_status = LIST_AT(&inf->procs, 0)->exit_status;
+    status->exit_status = LIST_AT(&inf->procs, 0)->exit_status;
   }
 
   inferior_free(inf);

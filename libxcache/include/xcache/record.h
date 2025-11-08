@@ -41,6 +41,30 @@ typedef enum {
 /// @return The subset of `request` bits that map to available modes
 XCACHE_API unsigned xc_record_modes(unsigned request);
 
+/// result of an `xc_record` call
+typedef struct {
+  /// result of calling `execve` to run the given command
+  ///
+  /// `exec_status` is set when `execve` or one of the other “initialisation”
+  /// steps fails. This allows an `xc_record` caller to discriminate between
+  /// something going wrong during tracing and something going wrong during
+  /// starting the tracee.
+  ///
+  /// This member is only meaningful if `xc_record` returns 0.
+  int exec_status;
+
+  /// the command’s exit status
+  ///
+  /// This member is only meaningful if `xc_record` returns 0 and `exec_status`
+  /// is 0.
+  int exit_status;
+
+  /// result of tracing
+  ///
+  /// This member will is only meaningful if `xc_record` returns 0.
+  int trace_status;
+} xc_record_t;
+
 /// run a command and monitor its behaviour
 ///
 /// This function `fork`s and spawns background threads. It attempts to join all
@@ -48,23 +72,15 @@ XCACHE_API unsigned xc_record_modes(unsigned request);
 ///
 /// `mode` is expected to be a bitmask of `xc_record_mode_t` values.
 ///
-/// The `exec_status` is set when `execve` or one of the other “initialisation”
-/// steps fails. This allows a caller to discriminate between something going
-/// wrong during tracing and something going wrong during starting the tracee.
-///
-/// The `exit_status` is always set when the command runs to completion. That
-/// is, it is set both when 0 is returned and when `ECHILD` is returned
-/// indicating the command could not be recorded due to it doing something
-/// unsupported.
+/// `status` is set as described above in `xc_record_t`’s documentation.
 ///
 /// @param db Database to record results into
 /// @param cmd Command to run
 /// @param mode Acceptable modes in which to record
-/// @param exec_statu [out] Result of `execve` and associated setup
-/// @param exit_status [out] Exit status of the command on success
+/// @param status [out] Result of tracing actions
 /// @return 0 on success or an errno on failure
 XCACHE_API int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
-                         int *exec_status, int *exit_status);
+                         xc_record_t *status);
 
 #ifdef __cplusplus
 }

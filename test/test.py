@@ -34,7 +34,7 @@ def strace(args: list[Path | str], cwd: Path | None = None):
     "record",
     (
         pytest.param(False, id="norecord"),
-        pytest.param(True, id="record", marks=pytest.mark.xfail(strict=True)),
+        pytest.param(True, id="record"),
     ),
 )
 @pytest.mark.parametrize(
@@ -44,6 +44,10 @@ def test_fork(debug: bool, record: bool, replay: bool, tmp_path: Path):
     """
     can we handle something that forks?
     """
+
+    # FIXME
+    if record and debug:
+        pytest.xfail("fork cannot be recorded")
 
     # First, `strace` the process we are about to test. If the test fails, the
     # `strace` output will show what syscalls it made which may aid debugging.

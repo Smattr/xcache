@@ -14,8 +14,6 @@
 typedef struct {
   xc_record_mode_t mode;
 
-  int fate; ///< errno if tracing has already failed
-
   tee_t *t_out; ///< pipe for communicating stdout content
   tee_t *t_err; ///< pipe for communicating stderr content
 
