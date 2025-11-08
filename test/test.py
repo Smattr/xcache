@@ -27,11 +27,19 @@ def strace(args: list[Path | str], cwd: Path | None = None):
     subprocess.run(["strace", "-f", "--"] + args, env=env, check=True, **kwargs)
 
 
-@pytest.mark.parametrize("debug", (False, True))
 @pytest.mark.parametrize(
-    "record", (False, pytest.param(True, marks=pytest.mark.xfail(strict=True)))
+    "debug", (pytest.param(False, id="nodebug"), pytest.param(True, id="debug"))
 )
-@pytest.mark.parametrize("replay", (False, True))
+@pytest.mark.parametrize(
+    "record",
+    (
+        pytest.param(False, id="norecord"),
+        pytest.param(True, id="record", marks=pytest.mark.xfail(strict=True)),
+    ),
+)
+@pytest.mark.parametrize(
+    "replay", (pytest.param(False, id="noreplay"), pytest.param(True, id="replay"))
+)
 def test_fork(debug: bool, record: bool, replay: bool, tmp_path: Path):
     """
     can we handle something that forks?
