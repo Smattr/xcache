@@ -11,6 +11,17 @@
 #include <unistd.h>
 #include <xcache/cmd.h>
 
+// safeguard against calling `DEBUG` or `ERROR` from within this file where we
+// are in the inferior’s process context
+#ifdef DEBUG
+#undef DEBUG
+#define DEBUG unavailable_in_this_file
+#endif
+#ifdef ERROR
+#undef ERROR
+#define ERROR unavailable_in_this_file
+#endif
+
 _Noreturn void inferior_exec(const inferior_t *inf, const xc_cmd_t cmd,
                              const char *spy) {
 
