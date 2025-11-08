@@ -2,6 +2,7 @@
 Xcache test suite
 """
 
+import errno
 import os
 import re
 import subprocess
@@ -152,6 +153,18 @@ def test_nonexistent(debug: bool, tmp_path: Path):
     # even if we cached it, replay should return failure
     ret = subprocess.call(args)
     assert ret == 127, "unexpected return from non-existent exec"
+
+
+@pytest.mark.xfail(strict=True)
+def test_nonexistent2(tmp_path: Path):
+    """running something that non-existent should report a readable error"""
+    args = ["xcache", f"--dir={tmp_path}/database", "--", tmp_path / "nonexistent"]
+    p = subprocess.run(
+        args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False, text=True
+    )
+    assert (
+        os.strerror(errno.ENOENT).lower() in p.stdout.lower()
+    ), "incorrect/missing error message for missing program"
 
 
 @pytest.mark.parametrize("debug", (False, True))
