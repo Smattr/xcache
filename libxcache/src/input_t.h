@@ -2,6 +2,7 @@
 
 #include "../../common/compiler.h"
 #include "hash_t.h"
+#include "list.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -104,3 +105,6 @@ INTERNAL void input_free(input_t i);
 /// @param input Input to translate
 /// @return A string representation of `NULL` on out-of-memory
 INTERNAL char *input_to_str(const input_t input);
+
+/// a collection of inputs
+typedef LIST(input_t) inputs_t;

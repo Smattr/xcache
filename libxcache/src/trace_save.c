@@ -2,6 +2,7 @@
 #include "cmd_t.h"
 #include "debug.h"
 #include "input_t.h"
+#include "list.h"
 #include "output_t.h"
 #include "trace_t.h"
 #include <assert.h>
@@ -36,11 +37,12 @@ int trace_save(const xc_trace_t trace, FILE *stream) {
   if (ERROR((rc = cmd_save(trace.cmd, stream))))
     goto done;
 
-  assert(trace.n_inputs <= UINT64_MAX);
-  if (ERROR((rc = cbor_write_u64_raw(stream, (uint64_t)trace.n_inputs, 0x80))))
+  assert(LIST_SIZE(&trace.inputs) <= UINT64_MAX);
+  if (ERROR((rc = cbor_write_u64_raw(stream, (uint64_t)LIST_SIZE(&trace.inputs),
+                                     0x80))))
     goto done;
-  for (size_t i = 0; i < trace.n_inputs; ++i) {
-    if (ERROR((rc = input_save(trace.inputs[i], stream))))
+  for (size_t i = 0; i < LIST_SIZE(&trace.inputs); ++i) {
+    if (ERROR((rc = input_save(*LIST_AT(&trace.inputs, i), stream))))
       goto done;
   }
 

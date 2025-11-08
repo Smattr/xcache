@@ -145,8 +145,7 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
 
   // construct a trace object to write out
   const xc_trace_t trace = {.cmd = cmd,
-                            .inputs = inf->inputs.base, // FIXME
-                            .n_inputs = LIST_SIZE(&inf->inputs),
+                            .inputs = inf->inputs,
                             .outputs = outputs,
                             .n_outputs = n_outputs};
 

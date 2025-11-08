@@ -1,4 +1,5 @@
 #include "input_t.h"
+#include "list.h"
 #include "output_t.h"
 #include "trace_t.h"
 #include <stdlib.h>
@@ -15,9 +16,9 @@ void xc_trace_free(xc_trace_t *trace) {
     output_free(trace->outputs[i]);
   free(trace->outputs);
 
-  for (size_t i = 0; i < trace->n_inputs; ++i)
-    input_free(trace->inputs[i]);
-  free(trace->inputs);
+  for (size_t i = 0; i < LIST_SIZE(&trace->inputs); ++i)
+    input_free(*LIST_AT(&trace->inputs, i));
+  LIST_FREE(&trace->inputs);
 
   xc_cmd_free(trace->cmd);
 

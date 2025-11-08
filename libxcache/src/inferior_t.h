@@ -25,7 +25,7 @@ typedef struct {
 
   LIST(proc_t) procs; ///< processes belonging to this target
 
-  LIST(input_t) inputs; ///< input actions observed
+  inputs_t inputs; ///< input actions observed
 
   /// list of output actions observed
   ///

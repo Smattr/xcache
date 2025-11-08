@@ -13,8 +13,7 @@ struct xc_trace {
 
   xc_cmd_t cmd; ///< command originating this trace
 
-  input_t *inputs; ///< inputs that were read by the tracee
-  size_t n_inputs; ///< number of items in `inputs`
+  inputs_t inputs; ///< inputs that were read by the tracee
 
   output_t *outputs; ///< outputs that were written by the tracee
   size_t n_outputs;  ///< number of items in `outputs`

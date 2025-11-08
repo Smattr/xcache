@@ -2,6 +2,7 @@
 #include "cmd_t.h"
 #include "debug.h"
 #include "input_t.h"
+#include "list.h"
 #include "output_t.h"
 #include "trace_t.h"
 #include <assert.h>
@@ -83,19 +84,18 @@ int trace_load(xc_trace_t *trace, const char *trace_root,
     if (ERROR(n_inputs > SIZE_MAX))
       return EOVERFLOW;
 
-    if (n_inputs > 0) {
-      t.inputs = calloc((size_t)n_inputs, sizeof(t.inputs[0]));
-      if (ERROR(t.inputs == NULL)) {
-        rc = ENOMEM;
+    if (ERROR((rc = LIST_RESERVE(&t.inputs, (size_t)n_inputs))))
+      goto done;
+
+    for (uint64_t i = 0; i < n_inputs; ++i) {
+      input_t input = {0};
+      if (ERROR((rc = input_load(&input, trace_f))))
+        goto done;
+      if (ERROR((rc = LIST_PUSH_BACK(&t.inputs, input)))) {
+        input_free(input);
         goto done;
       }
-      t.n_inputs = (size_t)n_inputs;
     }
-  }
-
-  for (size_t i = 0; i < t.n_inputs; ++i) {
-    if (ERROR((rc = input_load(&t.inputs[i], trace_f))))
-      goto done;
   }
 
   {
