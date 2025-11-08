@@ -46,11 +46,12 @@ int trace_save(const xc_trace_t trace, FILE *stream) {
       goto done;
   }
 
-  assert(trace.n_outputs <= UINT64_MAX);
-  if (ERROR((rc = cbor_write_u64_raw(stream, (uint64_t)trace.n_outputs, 0x80))))
+  assert(LIST_SIZE(&trace.outputs) <= UINT64_MAX);
+  if (ERROR((rc = cbor_write_u64_raw(
+                 stream, (uint64_t)LIST_SIZE(&trace.outputs), 0x80))))
     goto done;
-  for (size_t i = 0; i < trace.n_outputs; ++i) {
-    if (ERROR((rc = output_save(trace.outputs[i], stream))))
+  for (size_t i = 0; i < LIST_SIZE(&trace.outputs); ++i) {
+    if (ERROR((rc = output_save(*LIST_AT(&trace.outputs, i), stream))))
       goto done;
   }
 

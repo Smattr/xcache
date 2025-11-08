@@ -16,12 +16,10 @@
 #include <unistd.h>
 #include <xcache/cmd.h>
 
-static int append_stream(output_t *outputs, size_t *n_outputs,
-                         const char *target, const char *copy,
-                         const char *trace_root) {
+static int append_stream(outputs_t *outputs, const char *target,
+                         const char *copy, const char *trace_root) {
 
   assert(outputs != NULL);
-  assert(n_outputs != NULL);
   assert(target != NULL);
   assert(copy != NULL);
   assert(trace_root != NULL);
@@ -59,8 +57,8 @@ static int append_stream(output_t *outputs, size_t *n_outputs,
   }
 
   // append this output
-  outputs[*n_outputs] = o;
-  ++*n_outputs;
+  if (ERROR((rc = LIST_PUSH_BACK(outputs, o))))
+    goto done;
   o = (output_t){0};
 
 done:
@@ -76,8 +74,7 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
 
   int fd = 0;
   FILE *f = NULL;
-  output_t *outputs = NULL;
-  size_t n_outputs = 0;
+  outputs_t outputs = {0};
   int rc = 0;
 
   // drain stdout and stderr
@@ -87,33 +84,31 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
     goto done;
 
   // account for the outputs we saw + stdout and stderr
-  outputs = calloc(LIST_SIZE(&inf->outputs) + 2, sizeof(outputs[0]));
-  if (ERROR(outputs == NULL)) {
-    rc = ENOMEM;
+  if (ERROR((rc = LIST_RESERVE(&outputs, LIST_SIZE(&inf->outputs) + 2))))
     goto done;
-  }
 
   // determine whether stdout and stderr need to be saved
-  if (ERROR((rc = append_stream(outputs, &n_outputs, "/dev/stdout",
-                                inf->t_out->copy_path, trace_root))))
+  if (ERROR((rc = append_stream(&outputs, "/dev/stdout", inf->t_out->copy_path,
+                                trace_root))))
     goto done;
-  if (ERROR((rc = append_stream(outputs, &n_outputs, "/dev/stderr",
-                                inf->t_err->copy_path, trace_root))))
+  if (ERROR((rc = append_stream(&outputs, "/dev/stderr", inf->t_err->copy_path,
+                                trace_root))))
     goto done;
 
   // finalise our other outputs
   for (size_t i = 0; i < LIST_SIZE(&inf->outputs); ++i) {
-    if (ERROR(
-            (rc = output_dup(&outputs[n_outputs], *LIST_AT(&inf->outputs, i)))))
+    if (ERROR((rc = LIST_PUSH_BACK(&outputs, (output_t){0}))))
       goto done;
-    ++n_outputs;
+    output_t *const back = LIST_AT(&outputs, LIST_SIZE(&outputs) - 1);
+    if (ERROR((rc = output_dup(back, *LIST_AT(&inf->outputs, i)))))
+      goto done;
 
     // if this was a file write, finalise it now
-    if (outputs[i].tag == OUT_WRITE) {
-      assert(outputs[i].write.cached_copy == NULL &&
+    if (back->tag == OUT_WRITE) {
+      assert(back->write.cached_copy == NULL &&
              "output already has saved copy prior to finalisation");
 
-      int src = open(outputs[i].path, O_RDONLY | O_CLOEXEC);
+      int src = open(back->path, O_RDONLY | O_CLOEXEC);
       if (ERROR(src < 0)) {
         rc = errno;
         goto done;
@@ -121,7 +116,7 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
 
       int dst = -1;
       if (ERROR((rc = path_make(trace_root, NULL, &dst,
-                                &outputs[i].write.cached_copy)))) {
+                                &back->write.cached_copy)))) {
         (void)close(src);
         goto done;
       }
@@ -146,10 +141,8 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
   fd = 0;
 
   // construct a trace object to write out
-  const xc_trace_t trace = {.cmd = cmd,
-                            .inputs = inf->inputs,
-                            .outputs = outputs,
-                            .n_outputs = n_outputs};
+  const xc_trace_t trace = {
+      .cmd = cmd, .inputs = inf->inputs, .outputs = outputs};
 
   if (ERROR((rc = trace_save(trace, f))))
     goto done;
@@ -159,9 +152,9 @@ done:
     (void)fclose(f);
   if (fd > 0)
     (void)close(fd);
-  for (size_t i = 0; i < n_outputs; ++i)
-    output_free(outputs[i]);
-  free(outputs);
+  for (size_t i = 0; i < LIST_SIZE(&outputs); ++i)
+    output_free(*LIST_AT(&outputs, i));
+  LIST_FREE(&outputs);
 
   return rc;
 }

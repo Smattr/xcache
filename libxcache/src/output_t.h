@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include "list.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -94,3 +95,6 @@ INTERNAL int output_dup(output_t *dst, const output_t src);
 ///
 /// @param output Output whose backing memory to deallocate
 INTERNAL void output_free(output_t output);
+
+/// a collection of outputs
+typedef LIST(output_t) outputs_t;

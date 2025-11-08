@@ -15,8 +15,7 @@ struct xc_trace {
 
   inputs_t inputs; ///< inputs that were read by the tracee
 
-  output_t *outputs; ///< outputs that were written by the tracee
-  size_t n_outputs;  ///< number of items in `outputs`
+  outputs_t outputs; ///< outputs that were written by the tracee
 };
 
 /// deserialise a trace from a file

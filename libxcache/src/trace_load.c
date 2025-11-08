@@ -8,9 +8,9 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <xcache/trace.h>
@@ -105,19 +105,18 @@ int trace_load(xc_trace_t *trace, const char *trace_root,
     if (ERROR(n_outputs > SIZE_MAX))
       return EOVERFLOW;
 
-    if (n_outputs > 0) {
-      t.outputs = calloc((size_t)n_outputs, sizeof(t.outputs[0]));
-      if (ERROR(t.outputs == NULL)) {
-        rc = ENOMEM;
+    if (ERROR((rc = LIST_RESERVE(&t.outputs, (size_t)n_outputs))))
+      goto done;
+
+    for (uint64_t i = 0; i < n_outputs; ++i) {
+      output_t output = {0};
+      if (ERROR((rc = output_load(&output, trace_f))))
+        goto done;
+      if (ERROR((rc = LIST_PUSH_BACK(&t.outputs, output)))) {
+        output_free(output);
         goto done;
       }
-      t.n_outputs = (size_t)n_outputs;
     }
-  }
-
-  for (size_t i = 0; i < t.n_outputs; ++i) {
-    if (ERROR((rc = output_load(&t.outputs[i], trace_f))))
-      goto done;
   }
 
   *trace = t;
