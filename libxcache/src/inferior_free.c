@@ -16,9 +16,9 @@ void inferior_free(inferior_t *inf) {
 
   LIST_FREE(&inf->procs);
 
-  for (size_t i = 0; i < inf->n_outputs; ++i)
-    output_free(inf->outputs[i]);
-  free(inf->outputs);
+  for (size_t i = 0; i < LIST_SIZE(&inf->outputs); ++i)
+    output_free(*LIST_AT(&inf->outputs, i));
+  LIST_FREE(&inf->outputs);
 
   for (size_t i = 0; i < LIST_SIZE(&inf->inputs); ++i)
     input_free(*LIST_AT(&inf->inputs, i));

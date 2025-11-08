@@ -31,9 +31,7 @@ typedef struct {
   ///
   /// For `OUT_WRITE` items, the `cached_copy` member is not populated. That
   /// will be done during finalisation, when the trace record is being written.
-  output_t *outputs;
-  size_t n_outputs; ///< number of entries in `outputs`
-  size_t c_outputs; ///< number of allocated slots in `outputs`
+  LIST(output_t) outputs;
 } inferior_t;
 
 /// create a new inferior to be traced

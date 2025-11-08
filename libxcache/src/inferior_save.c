@@ -1,6 +1,7 @@
 #include "cp.h"
 #include "debug.h"
 #include "inferior_t.h"
+#include "list.h"
 #include "output_t.h"
 #include "path.h"
 #include "tee_t.h"
@@ -86,7 +87,7 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
     goto done;
 
   // account for the outputs we saw + stdout and stderr
-  outputs = calloc(inf->n_outputs + 2, sizeof(outputs[0]));
+  outputs = calloc(LIST_SIZE(&inf->outputs) + 2, sizeof(outputs[0]));
   if (ERROR(outputs == NULL)) {
     rc = ENOMEM;
     goto done;
@@ -101,8 +102,9 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
     goto done;
 
   // finalise our other outputs
-  for (size_t i = 0; i < inf->n_outputs; ++i) {
-    if (ERROR((rc = output_dup(&outputs[n_outputs], inf->outputs[i]))))
+  for (size_t i = 0; i < LIST_SIZE(&inf->outputs); ++i) {
+    if (ERROR(
+            (rc = output_dup(&outputs[n_outputs], *LIST_AT(&inf->outputs, i)))))
       goto done;
     ++n_outputs;
 
