@@ -78,14 +78,6 @@ typedef struct {
   size_t n_fds; ///< number of entries in `fds`
 } proc_t;
 
-/// create a new process
-///
-/// @param proc [out] Created process on success
-/// @param mode Acceptable modes
-/// @param trace_root Directory traces will be stored in
-/// @return 0 on success or an errno on failure
-INTERNAL int proc_new(proc_t *proc, unsigned mode, const char *trace_root);
-
 /// register a new open file descriptor
 ///
 /// @param proc Process to register the file descriptor with
