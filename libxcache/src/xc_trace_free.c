@@ -12,13 +12,8 @@ void xc_trace_free(xc_trace_t *trace) {
   if (trace == NULL)
     return;
 
-  for (size_t i = 0; i < LIST_SIZE(&trace->outputs); ++i)
-    output_free(*LIST_AT(&trace->outputs, i));
-  LIST_FREE(&trace->outputs);
-
-  for (size_t i = 0; i < LIST_SIZE(&trace->inputs); ++i)
-    input_free(*LIST_AT(&trace->inputs, i));
-  LIST_FREE(&trace->inputs);
+  LIST_FREE(&trace->outputs, output_free);
+  LIST_FREE(&trace->inputs, input_free);
 
   xc_cmd_free(trace->cmd);
 

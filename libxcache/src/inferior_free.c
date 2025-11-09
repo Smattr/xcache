@@ -14,15 +14,9 @@ void inferior_free(inferior_t *inf) {
 
   inferior_kill(inf);
 
-  LIST_FREE(&inf->threads);
-
-  for (size_t i = 0; i < LIST_SIZE(&inf->outputs); ++i)
-    output_free(*LIST_AT(&inf->outputs, i));
-  LIST_FREE(&inf->outputs);
-
-  for (size_t i = 0; i < LIST_SIZE(&inf->inputs); ++i)
-    input_free(*LIST_AT(&inf->inputs, i));
-  LIST_FREE(&inf->inputs);
+  LIST_FREE(&inf->threads, NULL);
+  LIST_FREE(&inf->outputs, output_free);
+  LIST_FREE(&inf->inputs, input_free);
 
   if (inf->exec_status[0] > 0)
     (void)close(inf->exec_status[0]);

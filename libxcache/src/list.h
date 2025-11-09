@@ -98,4 +98,12 @@ INTERNAL int list_reserve_(list_impl_t_ *l, size_t request, size_t stride);
 INTERNAL void list_free_(list_impl_t_ *l);
 
 /// deallocate a list’s contents
-#define LIST_FREE(list) list_free_(&(list)->impl);
+#define LIST_FREE(list, dtor)                                                  \
+  do {                                                                         \
+    __typeof__(list) list_ = (list);                                           \
+    void (*dtor_)(__typeof__(list_->base[0])) = (dtor);                        \
+    for (size_t i_ = 0; dtor_ != NULL && i_ < LIST_SIZE(list_); ++i_) {        \
+      dtor_(*LIST_AT(list_, i_));                                              \
+    }                                                                          \
+    list_free_(&list_->impl);                                                  \
+  } while (0)

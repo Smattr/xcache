@@ -152,9 +152,7 @@ done:
     (void)fclose(f);
   if (fd > 0)
     (void)close(fd);
-  for (size_t i = 0; i < LIST_SIZE(&outputs); ++i)
-    output_free(*LIST_AT(&outputs, i));
-  LIST_FREE(&outputs);
+  LIST_FREE(&outputs, output_free);
 
   return rc;
 }
