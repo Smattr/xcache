@@ -4,8 +4,8 @@
 #include "input_t.h"
 #include "list.h"
 #include "output_t.h"
-#include "proc_t.h"
 #include "tee_t.h"
+#include "thread_t.h"
 #include <stddef.h>
 #include <xcache/cmd.h>
 #include <xcache/record.h>
@@ -21,7 +21,7 @@ typedef struct {
 
   int exec_status[2]; ///< pipe for propagating initial `execve` result
 
-  LIST(proc_t) procs; ///< processes belonging to this target
+  LIST(thread_t) threads; ///< threads belonging to this target
 
   inputs_t inputs; ///< input actions observed
 
@@ -85,9 +85,9 @@ INTERNAL int inferior_output_new(inferior_t *inf, const output_t output);
 INTERNAL int inferior_save(inferior_t *proc, const xc_cmd_t cmd,
                            const char *trace_root);
 
-/// SIGKILL all processes
+/// SIGKILL all threads
 ///
-/// @param inf Inferior whose processes to signal
+/// @param inf Inferior whose threads to signal
 INTERNAL void inferior_kill(inferior_t *inf);
 
 /// deallocate resources associated with an inferior

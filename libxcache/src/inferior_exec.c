@@ -1,6 +1,6 @@
 #include "../../common/proccall.h"
 #include "inferior_t.h"
-#include "proc_t.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>

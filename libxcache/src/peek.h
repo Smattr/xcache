@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
-#include "proc_t.h"
+#include "thread_t.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/ptrace.h>

@@ -2,16 +2,15 @@
 #include "debug.h"
 #include "inferior_t.h"
 #include "peek.h"
-#include "proc_t.h"
 #include "syscall.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <stddef.h>
 #include <xcache/record.h>
 
-int sysexit_close(inferior_t *inf, proc_t *proc, thread_t *thread) {
+int sysexit_close(inferior_t *inf, thread_t *thread) {
 
   assert(inf != NULL);
-  assert(proc != NULL);
   assert(thread != NULL);
 
   int rc = 0;
@@ -33,14 +32,15 @@ int sysexit_close(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
   // if it succeeded, drop this from our tracking table
   if (err == 0) {
-    if (ERROR(fd < 0 || (size_t)fd >= proc->n_fds || proc->fds[fd] == NULL)) {
+    if (ERROR(fd < 0 || (size_t)fd >= thread->proc->n_fds ||
+              thread->proc->fds[fd] == NULL)) {
       // the child somehow successfully closed something they did not have open
       rc = ECHILD;
       goto done;
     }
 
-    fd_free(proc->fds[fd]);
-    proc->fds[fd] = NULL;
+    fd_free(thread->proc->fds[fd]);
+    thread->proc->fds[fd] = NULL;
   }
 
 done:

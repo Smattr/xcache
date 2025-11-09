@@ -3,18 +3,17 @@
 #include "input_t.h"
 #include "path.h"
 #include "peek.h"
-#include "proc_t.h"
 #include "syscall.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-int sysenter_execve(inferior_t *inf, proc_t *proc, thread_t *thread) {
+int sysenter_execve(inferior_t *inf, thread_t *thread) {
 
   assert(inf != NULL);
-  assert(proc != NULL);
   assert(thread != NULL);
 
   char *path = NULL;
@@ -24,7 +23,7 @@ int sysenter_execve(inferior_t *inf, proc_t *proc, thread_t *thread) {
 
   // extract the path
   const uintptr_t path_ptr = (uintptr_t)peek_reg(thread, REG(rdi));
-  if (ERROR((rc = peek_str(&path, proc, path_ptr)))) {
+  if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
     // if the read faulted, assume our side was correct and the tracee used a
     // bad pointer, something we do not support recording
     if (rc == EFAULT)
@@ -33,7 +32,7 @@ int sysenter_execve(inferior_t *inf, proc_t *proc, thread_t *thread) {
   }
 
   // make it absolute
-  abs = path_absolute(proc->cwd, path);
+  abs = path_absolute(thread->proc->cwd, path);
   if (ERROR(abs == NULL)) {
     rc = ENOMEM;
     goto done;

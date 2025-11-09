@@ -2,8 +2,8 @@
 #include "input_t.h"
 #include "list.h"
 #include "output_t.h"
-#include "proc_t.h"
 #include "tee_t.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,7 +14,7 @@ void inferior_free(inferior_t *inf) {
 
   inferior_kill(inf);
 
-  LIST_FREE(&inf->procs);
+  LIST_FREE(&inf->threads);
 
   for (size_t i = 0; i < LIST_SIZE(&inf->outputs); ++i)
     output_free(*LIST_AT(&inf->outputs, i));

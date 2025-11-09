@@ -2,18 +2,17 @@
 #include "debug.h"
 #include "inferior_t.h"
 #include "peek.h"
-#include "proc_t.h"
 #include "syscall.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <stddef.h>
 #include <sys/syscall.h>
 #include <xcache/record.h>
 
-int sysenter_ioctl(inferior_t *inf, proc_t *proc, thread_t *thread) {
+int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
 
   assert(inf != NULL);
-  assert(proc != NULL);
   assert(thread != NULL);
 
   int rc = 0;

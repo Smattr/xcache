@@ -56,11 +56,10 @@ add_library(libxcache
   src/path_join.c
   src/path_make.c
   src/peek_str.c
-  src/proc_end.c
-  src/proc_exit.c
   src/proc_fd.c
   src/proc_fd_new.c
   src/proc_fds_free.c
+  src/proc_free.c
   src/statflags_to_str.c
   src/syscall_to_str.c
   src/sysenter.c
@@ -77,6 +76,7 @@ add_library(libxcache
   src/tee_new.c
   src/thread_cont.c
   src/thread_detach.c
+  src/thread_exit.c
   src/thread_signal.c
   src/thread_syscall.c
   src/trace_load.c

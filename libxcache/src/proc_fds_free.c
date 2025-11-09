@@ -1,4 +1,4 @@
-#include "proc_t.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <stdlib.h>
 

@@ -7,11 +7,46 @@
 #include <xcache/cmd.h>
 #include <xcache/record.h>
 
+/// an open file descriptor in a subprocess
+typedef struct {
+  char *path;
+} fd_t;
+
+/// create a file descriptor
+///
+/// @param fd [out] Created file descriptor on success
+/// @param path Absolute path of the target file/directory
+/// @return 0 on success or an errno on failure
+INTERNAL int fd_new(fd_t **fd, const char *path);
+
+/// destroy a file descriptor
+///
+/// @param fd File descriptor to deallocate
+INTERNAL void fd_free(fd_t *fd);
+
+/// a process being traced
+typedef struct {
+  char *cwd; ///< current working directory
+
+  pid_t id; ///< process identifier
+
+  fd_t **fds;   ///< file descriptor table
+  size_t n_fds; ///< number of entries in `fds`
+
+  /// number of threads homed within this process
+  ///
+  /// The expectation is that this dropping to 0 represents the termination of
+  /// the process.
+  size_t reference_count;
+} proc_t;
+
 /// a thread within a process
 typedef struct {
   pid_t id;                 ///< thread identifier
+  proc_t *proc;             ///< containing process
   bool pending_sysexit : 1; ///< is this thread mid-syscall?
   bool ignoring : 1;        ///< has the spy told us to ignore syscalls?
+  int exit_status;          ///< exit status on completion
 } thread_t;
 
 /// resume a stopped thread, running it until the next event
@@ -45,38 +80,11 @@ INTERNAL int thread_syscall(thread_t thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int thread_detach(thread_t thread, int sig);
 
-/// an open file descriptor in a subprocess
-typedef struct {
-  char *path;
-} fd_t;
-
-/// create a file descriptor
+/// register thread exit
 ///
-/// @param fd [out] Created file descriptor on success
-/// @param path Absolute path of the target file/directory
-/// @return 0 on success or an errno on failure
-INTERNAL int fd_new(fd_t **fd, const char *path);
-
-/// destroy a file descriptor
-///
-/// @param fd File descriptor to deallocate
-INTERNAL void fd_free(fd_t *fd);
-
-/// a process being traced
-typedef struct {
-  char *cwd; ///< current working directory
-
-  pid_t id; ///< process identifier
-
-  thread_t *threads; ///< threads running in this process
-  size_t n_threads;  ///< number of entries in `threads`
-  size_t c_threads;  ///< number of allocated slots in `threads`
-
-  int exit_status; ///< exit status on completion
-
-  fd_t **fds;   ///< file descriptor table
-  size_t n_fds; ///< number of entries in `fds`
-} proc_t;
+/// @param thread Thread to update
+/// @param exit_status Exit status to save
+INTERNAL void thread_exit(thread_t *thread, int exit_status);
 
 /// register a new open file descriptor
 ///
@@ -98,15 +106,10 @@ INTERNAL const fd_t *proc_fd(const proc_t *proc, int fd);
 /// @param proc Process whose table to reset
 INTERNAL void proc_fds_free(proc_t *proc);
 
-/// register process exit
+/// deallocate resources for a process
 ///
-/// @param proc Process to update
-/// @param exit_status Exit status to save
-INTERNAL void proc_exit(proc_t *proc, int exit_status);
-
-/// unceremoniously terminate a process
+/// This only frees up resources if there are no remaining threads referencing
+/// it.
 ///
-/// This is a no-op if the process has already terminated.
-///
-/// @param proc Process to terminate
-INTERNAL void proc_end(proc_t *proc);
+/// @param proc Process to free
+INTERNAL void proc_free(proc_t *proc);

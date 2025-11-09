@@ -1,7 +1,7 @@
 #include "debug.h"
 #include "page_size.h"
 #include "peek.h"
-#include "proc_t.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>

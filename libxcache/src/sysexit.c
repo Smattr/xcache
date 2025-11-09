@@ -1,18 +1,17 @@
 #include "debug.h"
 #include "inferior_t.h"
 #include "peek.h"
-#include "proc_t.h"
 #include "syscall.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <stddef.h>
 #include <sys/syscall.h>
 #include <xcache/record.h>
 
-int sysexit(inferior_t *inf, proc_t *proc, thread_t *thread) {
+int sysexit(inferior_t *inf, thread_t *thread) {
 
   assert(inf != NULL);
-  assert(proc != NULL);
   assert(thread != NULL);
 
   int rc = 0;
@@ -60,7 +59,7 @@ int sysexit(inferior_t *inf, proc_t *proc, thread_t *thread) {
 #define DO(call)                                                               \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
-      if (ERROR((rc = sysexit_##call(inf, proc, thread)))) {                   \
+      if (ERROR((rc = sysexit_##call(inf, thread)))) {                         \
         goto done;                                                             \
       }                                                                        \
                                                                                \

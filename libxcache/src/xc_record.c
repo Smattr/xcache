@@ -3,9 +3,9 @@
 #include "event.h"
 #include "inferior_t.h"
 #include "list.h"
-#include "proc_t.h"
 #include "syscall.h"
 #include "tee_t.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
@@ -67,20 +67,13 @@ static void *monitor(void *state) {
     assert(!is_exit(status));
     assert(!is_vfork_done(status));
 
-    // locate which process and thread we are dealing with
-    proc_t *proc = NULL;
+    // locate which thread we are dealing with
     thread_t *thread = NULL;
-    for (size_t i = 0; i < LIST_SIZE(&inf->procs); ++i) {
-      proc_t *const p = LIST_AT(&inf->procs, i);
-      for (size_t j = 0; j < p->n_threads; ++j) {
-        if (p->threads[j].id == tid) {
-          proc = p;
-          thread = &proc->threads[j];
-          break;
-        }
-      }
-      if (thread != NULL)
+    for (size_t i = 0; i < LIST_SIZE(&inf->threads); ++i) {
+      if (LIST_AT(&inf->threads, i)->id == tid) {
+        thread = LIST_AT(&inf->threads, i);
         break;
+      }
     }
     if (ERROR(thread == NULL)) {
       DEBUG("TID %ld is not a child we are tracking", (long)tid);
@@ -91,8 +84,7 @@ static void *monitor(void *state) {
     // did the child exit?
     if (WIFEXITED(status)) {
       DEBUG("TID %ld exited with %d", (long)tid, WEXITSTATUS(status));
-      // FIXME: we should be noting the exit of a _thread_ here, not a process
-      proc_exit(proc, WEXITSTATUS(status));
+      thread_exit(thread, WEXITSTATUS(status));
       continue;
     }
 
@@ -100,7 +92,7 @@ static void *monitor(void *state) {
     if (ERROR(WIFSIGNALED(status))) {
       // FIXME: as above, we should be dealing with a _thread_ here
       DEBUG("TID %ld died with signal %d", (long)tid, WTERMSIG(status));
-      proc_exit(proc, 128 + WTERMSIG(status));
+      thread_exit(thread, 128 + WTERMSIG(status));
       continue;
     }
 
@@ -139,14 +131,14 @@ static void *monitor(void *state) {
 
     if (is_syscall(status)) {
       if (thread->pending_sysexit) {
-        const int r = sysexit(inf, proc, thread);
+        const int r = sysexit(inf, thread);
         if (ERROR(r != 0)) {
           FAIL_TRACE(r);
           (void)thread_detach(*thread, 0);
           continue;
         }
       } else {
-        const int r = sysenter(inf, proc, thread);
+        const int r = sysenter(inf, thread);
         if (ERROR(r != 0)) {
           FAIL_TRACE(r);
           (void)thread_detach(*thread, 0);
@@ -285,13 +277,12 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
 
 done:
   // the monitor should have waited on and cleaned up all tracee threads
-  for (size_t i = 0; i < LIST_SIZE(&inf->procs); ++i)
-    assert(LIST_AT(&inf->procs, i)->n_threads == 0 &&
-           "remaining tracee threads");
+  for (size_t i = 0; i < LIST_SIZE(&inf->threads); ++i)
+    assert(LIST_AT(&inf->threads, i)->id == 0 && "remaining tracee threads");
 
   if (rc == 0 && status->exec_status == 0) {
-    assert(LIST_SIZE(&inf->procs) > 0);
-    status->exit_status = LIST_AT(&inf->procs, 0)->exit_status;
+    assert(LIST_SIZE(&inf->threads) > 0);
+    status->exit_status = LIST_AT(&inf->threads, 0)->exit_status;
   }
 
   inferior_free(inf);

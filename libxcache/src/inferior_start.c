@@ -3,7 +3,7 @@
 #include "find_me.h"
 #include "inferior_t.h"
 #include "list.h"
-#include "proc_t.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -20,43 +20,46 @@
 int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
 
   assert(inf != NULL);
-  assert(LIST_SIZE(&inf->procs) == 0 && "proc already started?");
+  assert(LIST_SIZE(&inf->threads) == 0 && "inferior already started?");
 
   char *spy = NULL;
-  proc_t proc = {0};
+  thread_t thread = {0};
   int rc = 0;
-
-  // allocate space for the upcoming process
-  if (ERROR((rc = LIST_RESERVE(&inf->procs, LIST_SIZE(&inf->procs) + 1))))
-    goto done;
 
   if (ERROR((rc = find_spy(&spy))))
     goto done;
 
-  proc.cwd = strdup(cmd.cwd);
-  if (ERROR(proc.cwd == NULL)) {
-    rc = ENOMEM;
-    goto done;
+  {
+    proc_t *const proc = calloc(1, sizeof(*proc));
+    if (proc == NULL) {
+      rc = ENOMEM;
+      goto done;
+    }
+
+    thread.proc = proc;
+    ++proc->reference_count;
+
+    proc->cwd = strdup(cmd.cwd);
+    if (ERROR(proc->cwd == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+
+    // we dup /dev/null over the child’s stdin
+    if (ERROR((rc = proc_fd_new(proc, STDIN_FILENO, "/dev/null"))))
+      goto done;
+    if (ERROR((rc = proc_fd_new(proc, STDOUT_FILENO, "/dev/stdout"))))
+      goto done;
+    if (ERROR((rc = proc_fd_new(proc, STDERR_FILENO, "/dev/stderr"))))
+      goto done;
+    if (ERROR((rc = proc_fd_new(proc, XCACHE_FILENO, ""))))
+      goto done;
   }
 
-  // we dup /dev/null over the child’s stdin
-  if (ERROR((rc = proc_fd_new(&proc, STDIN_FILENO, "/dev/null"))))
+  // allocate space for the upcoming thread to avoid dealing with a messy ENOMEM
+  // after fork
+  if (ERROR((rc = LIST_RESERVE(&inf->threads, LIST_SIZE(&inf->threads) + 1))))
     goto done;
-  if (ERROR((rc = proc_fd_new(&proc, STDOUT_FILENO, "/dev/stdout"))))
-    goto done;
-  if (ERROR((rc = proc_fd_new(&proc, STDERR_FILENO, "/dev/stderr"))))
-    goto done;
-  if (ERROR((rc = proc_fd_new(&proc, XCACHE_FILENO, ""))))
-    goto done;
-
-  // allocate space for the child’s thread before forking, to avoid dealing with
-  // a messy ENOMEM after fork
-  proc.threads = calloc(1, sizeof(proc.threads[0]));
-  if (ERROR(proc.threads == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-  proc.c_threads = 1;
 
   {
     pid_t pid = fork();
@@ -74,18 +77,14 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     // `execve`/`exit` in `inferior_exec`) will unblock reads on the other end
     (void)close(inf->exec_status[1]);
 
-    proc.id = pid;
-
-    assert(proc.n_threads < proc.c_threads);
-    assert(proc.n_threads == 0);
-    proc.threads[proc.n_threads].id = pid;
-    ++proc.n_threads;
+    thread.id = pid;
+    thread.proc->id = pid;
   }
 
-  DEBUG("waiting for the child (PID %ld) to SIGSTOP itself…", (long)proc.id);
+  DEBUG("waiting for the child (TID %ld) to SIGSTOP itself…", (long)thread.id);
   {
     int status;
-    if (ERROR(waitpid(proc.threads[0].id, &status, 0) < 0)) {
+    if (ERROR(waitpid(thread.id, &status, 0) < 0)) {
       rc = errno;
       goto done;
     }
@@ -99,18 +98,18 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     if (ERROR(WIFEXITED(status))) {
       // FIXME: does this get confused about the 126/127 logic?
       rc = WEXITSTATUS(status);
-      proc.id = 0;
-      --proc.n_threads;
+      thread_exit(&thread, rc);
       goto done;
     }
     if (ERROR(WIFSIGNALED(status))) {
       DEBUG("child died with signal %d", WTERMSIG(status));
-      proc_exit(&proc, 128 + WTERMSIG(status));
+      thread_exit(&thread, 128 + WTERMSIG(status));
       rc = ECHILD;
       goto done;
     }
     assert(WIFSTOPPED(status));
     if (ERROR(WSTOPSIG(status) != SIGSTOP)) {
+      // FIXME: doesn’t this leave the child stuck and unknown to us?
       DEBUG("child stopped with signal %d", WSTOPSIG(status));
       rc = ECHILD;
       goto done;
@@ -131,7 +130,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     if (inf->mode == XC_EARLY_SECCOMP || inf->mode == XC_LATE_SECCOMP)
       opts |= PTRACE_O_TRACESECCOMP;
 #endif
-    if (ERROR(ptrace(PTRACE_SETOPTIONS, proc.threads[0].id, NULL, opts) < 0)) {
+    if (ERROR(ptrace(PTRACE_SETOPTIONS, thread.id, NULL, opts) < 0)) {
       rc = errno;
       goto done;
     }
@@ -139,19 +138,19 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
 
   // resume the child
   if (inf->mode == XC_SYSCALL) {
-    if (ERROR((rc = thread_syscall(proc.threads[0]))))
+    if (ERROR((rc = thread_syscall(thread))))
       goto done;
   } else {
-    if (ERROR((rc = thread_cont(proc.threads[0]))))
+    if (ERROR((rc = thread_cont(thread))))
       goto done;
   }
 
-  if (ERROR((rc = LIST_PUSH_BACK(&inf->procs, proc))))
+  if (ERROR((rc = LIST_PUSH_BACK(&inf->threads, thread))))
     goto done;
-  proc = (proc_t){0};
+  thread = (thread_t){0};
 
 done:
-  proc_end(&proc);
+  thread_exit(&thread, EXIT_FAILURE);
   free(spy);
 
   return rc;

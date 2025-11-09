@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "proc_t.h"
+#include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
