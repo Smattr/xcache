@@ -32,8 +32,7 @@ int sysexit_close(inferior_t *inf, thread_t *thread) {
 
   // if it succeeded, drop this from our tracking table
   if (err == 0) {
-    if (ERROR(fd < 0 || (size_t)fd >= thread->proc->n_fds ||
-              thread->proc->fds[fd] == NULL)) {
+    if (ERROR(proc_fd(thread->proc, fd) == NULL)) {
       // the child somehow successfully closed something they did not have open
       rc = ECHILD;
       goto done;
