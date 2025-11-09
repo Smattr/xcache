@@ -1,14 +1,13 @@
+#include "list.h"
 #include "thread_t.h"
 #include <assert.h>
-#include <stdlib.h>
+#include <stddef.h>
 
 void proc_fds_free(proc_t *proc) {
 
   assert(proc != NULL);
 
-  for (size_t i = 0; i < proc->n_fds; ++i)
-    fd_free(proc->fds[i]);
-  free(proc->fds);
-  proc->fds = NULL;
-  proc->n_fds = 0;
+  for (size_t i = 0; i < LIST_SIZE(&proc->fds); ++i)
+    fd_free(*LIST_AT(&proc->fds, i));
+  LIST_FREE(&proc->fds);
 }

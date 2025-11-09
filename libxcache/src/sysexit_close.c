@@ -38,8 +38,8 @@ int sysexit_close(inferior_t *inf, thread_t *thread) {
       goto done;
     }
 
-    fd_free(thread->proc->fds[fd]);
-    thread->proc->fds[fd] = NULL;
+    fd_free(*LIST_AT(&thread->proc->fds, (size_t)fd));
+    *LIST_AT(&thread->proc->fds, (size_t)fd) = NULL;
   }
 
 done:

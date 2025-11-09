@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include "list.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
@@ -30,8 +31,7 @@ typedef struct {
 
   pid_t id; ///< process identifier
 
-  fd_t **fds;   ///< file descriptor table
-  size_t n_fds; ///< number of entries in `fds`
+  LIST(fd_t *) fds; ///< file descriptor table
 
   /// number of threads homed within this process
   ///
