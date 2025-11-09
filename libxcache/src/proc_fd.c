@@ -5,7 +5,9 @@
 const fd_t *proc_fd(const proc_t *proc, int fd) {
 
   assert(proc != NULL);
-  assert(fd >= 0);
+
+  if (fd < 0)
+    return NULL;
 
   if ((size_t)fd >= proc->n_fds)
     return NULL;
