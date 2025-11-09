@@ -96,7 +96,6 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     // if the child failed before it could SIGSTOP itself, it will have exited
     // with an errno as its status
     if (ERROR(WIFEXITED(status))) {
-      // FIXME: does this get confused about the 126/127 logic?
       rc = WEXITSTATUS(status);
       thread_exit(&thread, rc);
       goto done;
