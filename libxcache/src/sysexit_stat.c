@@ -68,9 +68,6 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
       rc = ENOMEM;
       goto done;
     }
-  } else if (ERROR(fd < 0)) {
-    rc = ECHILD;
-    goto done;
   } else {
     const fd_t *dirfd = proc_fd(thread->proc, fd);
     if (ERROR(dirfd == NULL)) {
