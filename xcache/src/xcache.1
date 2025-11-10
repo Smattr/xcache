@@ -52,6 +52,8 @@ simply executed as-is.
 .IP \[bu]
 \fB--write-only\fR Enable record, disable replay.
 .RE
+By default, both record and replay are enabled, subject to the effects of
+\fB$XCACHE_DISABLE\fR and \fB$XCACHE_READONLY\fR as discussed below.
 .RE
 .PP
 \fB--help\fR
@@ -77,6 +79,22 @@ variable is unset and the \fBXDG_CACHE_HOME\fR environment variable is unset,
 .RS
 If the \fB--dir\fR option is not passed, \fB$XCACHE_DIR\fR will be used as the
 cache directory.
+.RE
+.PP
+\fBXCACHE_DISABLE\fR
+.RS
+If this is set, record and replay will both be disabled. That is, xcache will
+just call the command given without attempting record or replay. Passing any of
+\fB--disable\fR, \fB--read-only\fR, \fB--read-write\fR, or \fB--write-only\fR
+overrides the effect of \fB$XCACHE_DISABLE\fR.
+.RE
+.PP
+\fBXCACHE_READONLY\fR
+.RS
+If this is set, record will be disabled. That is, xcache will attempt replay but
+not record of the command given. Passing any of \fB--disable\fR,
+\fB--read-only\fR, \fB--read-write\fR, or \fB--write-only\fR overrides the
+effect of \fB$XCACHE_READONLY\fR.
 .RE
 .PP
 \fBXDG_CACHE_HOME\fR

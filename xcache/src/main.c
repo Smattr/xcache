@@ -25,6 +25,14 @@ bool debug;
 
 static int parse_args(int argc, char **argv) {
 
+  // apply defaults from environment variables
+  if (getenv("XCACHE_READONLY") != NULL) {
+    record_enabled = false;
+  } else if (getenv("XCACHE_DISABLE") != NULL) {
+    record_enabled = false;
+    replay_enabled = false;
+  }
+
   while (true) {
     const struct option opts[] = {
         {"debug", no_argument, 0, 130},
