@@ -19,12 +19,12 @@ If you are familiar with
 xcache tries to do the same thing, but for any program, not just your C
 compiler.
 .SH OPTIONS
-\fB--debug\fR
+\fB\-\-debug\fR
 .RS
 Enable debugging output. Debugging messages will be printed to stderr.
 .RE
 .PP
-\fB--dir\fR \fIPATH\fR or \fB-d\fR \fIPATH\fR
+\fB\-\-dir\fR \fIPATH\fR or \fB\-d\fR \fIPATH\fR
 .RS
 Set directory in which to store or lookup cache results. If this option is not
 given, the contents of the environment variable \fB$XCACHE_DIR\fR is used. If
@@ -32,25 +32,25 @@ given, the contents of the environment variable \fB$XCACHE_DIR\fR is used. If
 \fB$XDG_CACHE_HOME\fR is not set, the path \fB$HOME/.xcache\fR is used.
 .RE
 .PP
-\fB--disable\fR
+\fB\-\-disable\fR
 .br
-\fB--read-only\fR or \fB--ro\fR
+\fB\-\-read\-only\fR or \fB\-\-ro\fR
 .br
-\fB--read-write\fR or \fB--rw\fR
+\fB\-\-read-write\fR or \fB\-\-rw\fR
 .br
-\fB--write-only\fR or \fB--wo\fR
+\fB\-\-write\-only\fR or \fB\-\-wo\fR
 .RS
 Select which combination of replay and record functionality is enabled:
 .RS
 .IP \[bu] 2
-\fB--disable\fR Disable both record and replay. In this mode, the sub-command is
-simply executed as-is.
+\fB\-\-disable\fR Disable both record and replay. In this mode, the sub-command
+is simply executed as-is.
 .IP \[bu]
-\fB--read-only\fR Disable record, enable replay.
+\fB\-\-read\-only\fR Disable record, enable replay.
 .IP \[bu]
-\fB--read-write\fR Enable both record and replay (default).
+\fB\-\-read\-write\fR Enable both record and replay (default).
 .IP \[bu]
-\fB--write-only\fR Enable record, disable replay.
+\fB\-\-write\-only\fR Enable record, disable replay.
 .RE
 By default, both record and replay are enabled, subject to the effects of
 \fB$XCACHE_DISABLE\fR and \fB$XCACHE_READONLY\fR as discussed below.
@@ -61,7 +61,7 @@ By default, both record and replay are enabled, subject to the effects of
 Display this information.
 .RE
 .PP
-\fB--version\fR or \f-V\fR
+\fB\-\-version\fR or \f\-V\fR
 .RS
 Display version information and exit.
 .RE
@@ -70,14 +70,14 @@ The behaviour of xcache is affected by the following environment variables.
 .PP
 \fBHOME\fR
 .RS
-If the \fB--dir\fR option is not passed and the \fBXCACHE_DIR\fR environment
+If the \fB\-\-dir\fR option is not passed and the \fBXCACHE_DIR\fR environment
 variable is unset and the \fBXDG_CACHE_HOME\fR environment variable is unset,
 \fB$HOME/.xcache\fR will be used as the cache directory.
 .RE
 .PP
 \fBXCACHE_DIR\fR
 .RS
-If the \fB--dir\fR option is not passed, \fB$XCACHE_DIR\fR will be used as the
+If the \fB\-\-dir\fR option is not passed, \fB$XCACHE_DIR\fR will be used as the
 cache directory.
 .RE
 .PP
@@ -85,21 +85,21 @@ cache directory.
 .RS
 If this is set, record and replay will both be disabled. That is, xcache will
 just call the command given without attempting record or replay. Passing any of
-\fB--disable\fR, \fB--read-only\fR, \fB--read-write\fR, or \fB--write-only\fR
-overrides the effect of \fB$XCACHE_DISABLE\fR.
+\fB\-\-disable\fR, \fB\-\-read\-only\fR, \fB\-\-read\-write\fR, or
+\fB\-\-write\-only\fR overrides the effect of \fB$XCACHE_DISABLE\fR.
 .RE
 .PP
 \fBXCACHE_READONLY\fR
 .RS
 If this is set, record will be disabled. That is, xcache will attempt replay but
-not record of the command given. Passing any of \fB--disable\fR,
-\fB--read-only\fR, \fB--read-write\fR, or \fB--write-only\fR overrides the
-effect of \fB$XCACHE_READONLY\fR.
+not record of the command given. Passing any of \fB\-\-disable\fR,
+\fB\-\-read\-only\fR, \fB\-\-read\-write\fR, or \fB\-\-write\-only\fR overrides
+the effect of \fB$XCACHE_READONLY\fR.
 .RE
 .PP
 \fBXDG_CACHE_HOME\fR
 .RS
-If the \fB--dir\fR option is not passed and the \fBXCACHE_DIR\fR environment
+If the \fB\-\-dir\fR option is not passed and the \fBXCACHE_DIR\fR environment
 variable is unset, \fB$XDG_CACHE_HOME/xcache\fR will be used as the cache
 directory.
 .RE
