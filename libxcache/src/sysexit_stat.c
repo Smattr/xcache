@@ -25,10 +25,10 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
   int rc = 0;
 
   // extract the file descriptor
-  const int fd = (int)peek_reg(thread, REG(rdi));
+  const int fd = (int)peek_syscall_arg(thread, 1);
 
   // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_reg(thread, REG(rsi));
+  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 2);
   if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
     // if the read faulted, assume our side was correct and the tracee used a
     // bad pointer, something we do not support recording
@@ -38,7 +38,7 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
   }
 
   // extract the flags
-  const long flags = peek_reg(thread, REG(r10));
+  const long flags = peek_syscall_arg(thread, 4);
 
   // extract the result
   const int err = peek_errno(thread);

@@ -23,7 +23,7 @@ int sysexit_chdir(inferior_t *inf, thread_t *thread) {
   int rc = 0;
 
   // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_reg(thread, REG(rdi));
+  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 1);
   if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
     // if the read faulted, assume our side was correct and the tracee used a
     // bad pointer, something we do not support recording

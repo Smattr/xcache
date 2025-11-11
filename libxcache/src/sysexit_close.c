@@ -16,7 +16,7 @@ int sysexit_close(inferior_t *inf, thread_t *thread) {
   int rc = 0;
 
   // extract the file descriptor
-  const int fd = (int)peek_reg(thread, REG(rdi));
+  const int fd = (int)peek_syscall_arg(thread, 1);
 
   // extract the result
   const int err = peek_errno(thread);

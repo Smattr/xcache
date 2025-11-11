@@ -18,7 +18,7 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
   int rc = 0;
 
   // extract the file descriptor
-  const int fd = (int)peek_reg(thread, REG(rdi));
+  const int fd = (int)peek_syscall_arg(thread, 1);
 
   // any ioctl except a communication from the spy is unsupported
   if (ERROR(fd != XCACHE_FILENO)) {
@@ -33,7 +33,7 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
   }
 
   // extract the call number
-  const long callno = peek_reg(thread, REG(rsi));
+  const long callno = peek_syscall_arg(thread, 2);
 
   DEBUG("TID %ld, ioctl(%d (XCACHE_FILENO), 0x%lx (%s), …)", (long)thread->id,
         fd, callno, callno_to_str(callno));
