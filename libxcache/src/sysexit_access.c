@@ -51,6 +51,7 @@ int sysexit_access(inferior_t *inf, thread_t *thread) {
   // extract the result
   const int err = peek_errno(thread);
 
+  // TODO: translate the flags. Reading them numerically is annoying.
   DEBUG("TID %ld, access(\"%s\", %ld) = %d, errno == %d", (long)thread->id,
         path, flags, err == 0 ? 0 : -1, err);
 
