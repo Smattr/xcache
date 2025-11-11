@@ -46,7 +46,7 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
   if (UNLIKELY(xc_debug != NULL)) {
     char *fd_str = atfd_to_str(fd);
     char *flags_str = statflags_to_str(flags);
-    DEBUG("pid %ld, newfstatat(%s, \"%s\", …, %s) = %d, errno == %d",
+    DEBUG("TID %ld, newfstatat(%s, \"%s\", …, %s) = %d, errno == %d",
           (long)thread->id, fd_str == NULL ? "<oom>" : fd_str, path,
           flags_str == NULL ? "<oom>" : flags_str, err == 0 ? 0 : -1, err);
     free(flags_str);
