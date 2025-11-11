@@ -40,6 +40,7 @@ int hash_file(const char *path, hash_t *hash) {
 
   base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
   if (ERROR(base == MAP_FAILED)) {
+    // FIXME: handle hashing of unmappable files
     rc = errno;
     goto done;
   }
