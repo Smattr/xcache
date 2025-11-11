@@ -1,3 +1,4 @@
+#include "../../common/compiler.h"
 #include "debug.h"
 #include "inferior_t.h"
 #include "input_t.h"
