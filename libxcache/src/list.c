@@ -6,6 +6,29 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __has_feature
+#if __has_feature(address_sanitizer)
+#include <sanitizer/asan_interface.h>
+#define ASAN_POISON(addr, size) ASAN_POISON_MEMORY_REGION((addr), (size))
+#define ASAN_UNPOISON(addr, size) ASAN_UNPOISON_MEMORY_REGION((addr), (size))
+#endif
+#endif
+
+#ifndef ASAN_POISON
+#define ASAN_POISON(addr, size)                                                \
+  do {                                                                         \
+    (void)(addr);                                                              \
+    (void)(size);                                                              \
+  } while (0)
+#endif
+#ifndef ASAN_UNPOISON
+#define ASAN_UNPOISON(addr, size)                                              \
+  do {                                                                         \
+    (void)(addr);                                                              \
+    (void)(size);                                                              \
+  } while (0)
+#endif
+
 int list_push_back_(list_impl_t_ *l, const void *item, size_t stride) {
   assert(l != NULL);
   assert(item != NULL);
@@ -24,6 +47,7 @@ int list_push_back_(list_impl_t_ *l, const void *item, size_t stride) {
   assert(l->capacity > l->size);
 
   void *const dst = (void *)((uintptr_t)l->base + l->size * stride);
+  ASAN_UNPOISON(dst, stride);
   if (stride > 0)
     memcpy(dst, item, stride);
   ++l->size;
@@ -59,6 +83,10 @@ int list_reserve_(list_impl_t_ *l, size_t request, size_t stride) {
     const size_t try = l->capacity * 2;
     void *const base = realloc(l->base, stride * try);
     if (stride == 0 || base != NULL) { // success
+      void *const start = (char *)base + l->capacity * stride;
+      const size_t len = (try - l->capacity) * stride;
+      ASAN_POISON(start, len);
+
       l->base = base;
       l->capacity = try;
       return 0;
@@ -68,6 +96,10 @@ int list_reserve_(list_impl_t_ *l, size_t request, size_t stride) {
   void *const base = realloc(l->base, stride * request);
   if (ERROR(stride > 0 && base == NULL))
     return ENOMEM;
+
+  void *const start = (char *)base + l->capacity * stride;
+  const size_t len = (request - l->capacity) * stride;
+  ASAN_POISON(start, len);
 
   l->base = base;
   l->capacity = request;
