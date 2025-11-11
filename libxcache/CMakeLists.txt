@@ -70,6 +70,7 @@ add_library(libxcache
   src/sysexit_chdir.c
   src/sysexit_close.c
   src/sysexit_open.c
+  src/sysexit_readlink.c
   src/sysexit_stat.c
   src/tee_cancel.c
   src/tee_join.c

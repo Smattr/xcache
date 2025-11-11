@@ -91,6 +91,9 @@ int sysexit(inferior_t *inf, thread_t *thread) {
 #ifdef __NR_newfstatat
   DO(newfstatat);
 #endif
+#ifdef __NR_readlinkat
+  DO(readlinkat);
+#endif
 
 #undef DO
 

@@ -67,6 +67,13 @@ INTERNAL int sysexit_newfstatat(inferior_t *inf, thread_t *thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int sysexit_openat(inferior_t *inf, thread_t *thread);
 
+/// handle end of `readlinkat`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysexit_readlinkat(inferior_t *inf, thread_t *thread);
+
 /// convert a syscall number to its name
 ///
 /// @param number Syscall to lookup

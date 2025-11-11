@@ -78,6 +78,9 @@ SYSENTER_IGNORE(openat)
 #ifdef __NR_newfstatat
 SYSENTER_IGNORE(newfstatat)
 #endif
+#ifdef __NR_readlinkat
+SYSENTER_IGNORE(readlinkat)
+#endif
 #ifdef __NR_prlimit64
 IGNORE(prlimit64)
 #endif
