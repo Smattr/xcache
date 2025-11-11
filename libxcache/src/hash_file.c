@@ -36,19 +36,21 @@ int hash_file(const char *path, hash_t *hash) {
     goto done;
   }
 
-  // FIXME: handle size == 0
-
-  base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (ERROR(base == MAP_FAILED)) {
-    // FIXME: handle hashing of unmappable files
-    rc = errno;
-    goto done;
+  if (size > 0) {
+    base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (ERROR(base == MAP_FAILED)) {
+      // FIXME: handle hashing of unmappable files
+      rc = errno;
+      goto done;
+    }
+  } else {
+    base = NULL;
   }
 
   *hash = hash_data(base, size);
 
 done:
-  if (base != MAP_FAILED)
+  if (base != MAP_FAILED && base != NULL)
     (void)munmap(base, size);
   if (fd >= 0)
     (void)close(fd);
