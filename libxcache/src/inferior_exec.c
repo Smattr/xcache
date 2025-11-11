@@ -1,5 +1,6 @@
 #include "../../common/proccall.h"
 #include "inferior_t.h"
+#include "list.h"
 #include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -108,6 +109,13 @@ fail:
   } else if (rc == EACCES || rc == ENOEXEC || rc == EPERM) {
     rc = 126;
   }
+
+  // I do not understand why, but ASan considers allocations made in our caller
+  // (`inferior_start`) to have leaked unless we free the initial `proc_t`. We
+  // are in a child process while these allocations were made in our parent.
+  // Also the claimed leaks are beyond just `LIST_AT(inf->threads, 0)->proc` and
+  // things reachable from that. Nevertheless, this is enough to pacify it.
+  thread_exit(LIST_AT(&inf->threads, 0), rc);
 
   exit(rc);
 }
