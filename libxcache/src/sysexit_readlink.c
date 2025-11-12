@@ -79,6 +79,14 @@ int sysexit_readlinkat(inferior_t *inf, thread_t *thread) {
     }
   }
 
+  // ignore reads of /proc/self/exe because we know this points somewhere
+  // reliably reproducible, but will generate false negatives if we naïvely try
+  // to replay it
+  if (strcmp(abs, "/proc/self/exe") == 0) {
+    DEBUG("ignoring readlink of \"/proc/self/exe\"");
+    goto done;
+  }
+
   // record it
   if (ERROR((rc = input_new_readlink(&saw, err, abs))))
     goto done;
