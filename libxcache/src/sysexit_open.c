@@ -13,6 +13,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <xcache/record.h>
 
 int sysexit_openat(inferior_t *inf, thread_t *thread) {
@@ -91,6 +92,13 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
   switch (flags_relevant) {
 
   case O_RDONLY:
+    // ignore reads of /proc/self/cmdline that we have effectively already
+    // recorded through the name of the command itself
+    if (strcmp(abs, "/proc/self/cmdline") == 0) {
+      DEBUG("ignoring open of \"/proc/self/cmdline\"");
+      goto done;
+    }
+
     // record it
     if (ERROR((rc = input_new_read(&seen_read, err, abs))))
       goto done;
