@@ -417,3 +417,83 @@ def test_version(debug: bool):
         args += ["--debug"]
     output = subprocess.check_output(args, stderr=subprocess.STDOUT)
     assert output.strip() != "", "--version output nothing"
+
+
+@pytest.mark.parametrize("debug", (False, True))
+@pytest.mark.parametrize("record", (False, True))
+@pytest.mark.parametrize("replay", (False, True))
+def test_uncacheable(debug: bool, record: bool, replay: bool, tmp_path: Path):
+    """tracing of something we know we cannot cache"""
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(["uncacheable"])
+
+    args = ["xcache"]
+    if debug:
+        args += ["--debug"]
+    args += [f"--dir={tmp_path}/database"]
+    if record:
+        if replay:
+            args += ["--read-write"]
+        else:
+            args += ["--write-only"]
+    else:
+        if replay:
+            args += ["--read-only"]
+        else:
+            args += ["--disable"]
+    args += ["--", "uncacheable"]
+
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    print(f"output:\n{p.stdout}\n")
+    p.check_returncode()
+
+    if debug:
+        if replay:
+            assert "replay failed" in p.stdout, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in p.stdout, "replay incorrectly enabled"
+            assert "replay succeeded" not in p.stdout, "replay incorrectly enabled"
+        if record:
+            assert "record failed" in p.stdout, "record of uncacheable succeeded"
+        else:
+            assert "record failed" not in p.stdout, "record incorrectly enabled"
+            assert "record succeeded" not in p.stdout, "record incorrectly enabled"
+
+    # try it again to see if we can replay
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    print(f"output:\n{p.stdout}\n")
+    p.check_returncode()
+
+    if debug:
+        if record and replay:
+            assert "replay failed" in p.stdout, "replay of uncacheable succeeded"
+        elif replay:
+            assert "replay failed" in p.stdout, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in p.stdout, "replay incorrectly enabled"
+            assert "replay succeeded" not in p.stdout, "replay incorrectly enabled"
+        if record and replay:
+            assert "record failed" in p.stdout, "record of uncacheable succeeded"
+        elif record:
+            assert "record failed" in p.stdout, "record of uncacheable succeeded"
+        else:
+            assert "record failed" not in p.stdout, "record incorrectly enabled"
+            assert "record succeeded" not in p.stdout, "record incorrectly enabled"
