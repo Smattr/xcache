@@ -72,6 +72,17 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
     goto done;
   }
 
+  // if it succeeded, update the file descriptor table
+  if (err == 0) {
+    const long ret = peek_ret(thread);
+    assert(ret >= 0 && "logic error");
+    assert(ret <= INT_MAX && "unexpected kernel return from openat");
+    DEBUG("TID %ld PID %ld, updating FD %ld → \"%s\"", (long)thread->id,
+          (long)thread->proc->id, ret, abs);
+    if (ERROR((rc = proc_fd_new(thread->proc, (int)ret, abs))))
+      goto done;
+  }
+
   // discard the flags that have no relevance to us
   const long flags_relevant =
       flags & ~(O_ASYNC | O_CLOEXEC | O_DIRECT | O_DSYNC | O_LARGEFILE |
@@ -124,17 +135,6 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
     // TODO
     rc = ENOTSUP;
     goto done;
-  }
-
-  // if it succeeded, update the file descriptor table
-  if (err == 0) {
-    const long ret = peek_ret(thread);
-    assert(ret >= 0 && "logic error");
-    assert(ret <= INT_MAX && "unexpected kernel return from openat");
-    DEBUG("TID %ld PID %ld, updating FD %ld → \"%s\"", (long)thread->id,
-          (long)thread->proc->id, ret, abs);
-    if (ERROR((rc = proc_fd_new(thread->proc, (int)ret, abs))))
-      goto done;
   }
 
 done:
