@@ -57,11 +57,21 @@ IGNORE(pread64)
 #ifdef __NR_access
 SYSENTER_IGNORE(access)
 #endif
+// Tell a white lie that we are able to record and replay `getpid` without
+// seeing it. We can essentially choose an arbitrary return value for this, so
+// no need to cache it.
+#ifdef __NR_getpid
+IGNORE(getpid)
+#endif
 #ifdef __NR_execve
 SYSEXIT_IGNORE(execve)
 #endif
 #ifdef __NR_chdir
 SYSENTER_IGNORE(chdir)
+#endif
+// see note about `getpid`
+#ifdef __NR_getppid
+IGNORE(getppid)
 #endif
 #ifdef __NR_arch_prctl
 IGNORE(arch_prctl)
