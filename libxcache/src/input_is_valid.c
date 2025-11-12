@@ -22,6 +22,13 @@ bool input_is_valid(const input_t input) {
     break;
   }
 
+  case INP_READLINK: {
+    const int r = input_new_readlink(&attempt, input.err, input.path);
+    if (r != 0)
+      return false;
+    break;
+  }
+
   case INP_STAT: {
     const int r =
         input_new_stat(&attempt, input.err, input.path, input.stat.is_lstat);

@@ -24,6 +24,11 @@ bool input_eq(const input_t a, const input_t b) {
       return false;
     break;
 
+  case INP_READLINK:
+    if (!hash_eq(a.readlink.hash, b.readlink.hash))
+      return false;
+    break;
+
   case INP_STAT:
     if (a.stat.is_lstat != b.stat.is_lstat)
       return false;

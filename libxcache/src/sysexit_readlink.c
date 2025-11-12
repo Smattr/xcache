@@ -80,9 +80,7 @@ int sysexit_readlinkat(inferior_t *inf, thread_t *thread) {
   }
 
   // record it
-  // FIXME: this is wrong. This reads the target of the link, but we actually
-  // want to read the link itself.
-  if (ERROR((rc = input_new_read(&saw, err, abs))))
+  if (ERROR((rc = input_new_readlink(&saw, err, abs))))
     goto done;
 
   if (ERROR((rc = inferior_input_new(inf, saw))))

@@ -34,6 +34,11 @@ int input_save(const input_t input, FILE *stream) {
       goto done;
     break;
 
+  case INP_READLINK:
+    if (ERROR((rc = cbor_write_u64(stream, input.readlink.hash.data))))
+      goto done;
+    break;
+
   case INP_STAT:
     if (ERROR((rc = cbor_write_u64(stream, input.stat.is_lstat))))
       goto done;

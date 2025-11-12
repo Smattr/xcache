@@ -29,6 +29,11 @@ char *input_to_str(const input_t input) {
       goto done;
     break;
 
+  case INP_READLINK:
+    if (fputs(".tag = INP_READLINK", stream) < 0)
+      goto done;
+    break;
+
   case INP_STAT:
     if (fputs(".tag = INP_STAT", stream) < 0)
       goto done;
@@ -54,6 +59,12 @@ char *input_to_str(const input_t input) {
 
   case INP_READ:
     if (fprintf(stream, ", .read.hash = 0x%" PRIx64, input.read.hash.data) < 0)
+      goto done;
+    break;
+
+  case INP_READLINK:
+    if (fprintf(stream, ", .readlink.hash = 0x%" PRIx64,
+                input.readlink.hash.data) < 0)
       goto done;
     break;
 

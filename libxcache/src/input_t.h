@@ -10,9 +10,10 @@
 
 /// type of a recorded file system read
 typedef enum {
-  INP_ACCESS, ///< access()
-  INP_READ,   ///< open() with O_RDONLY or O_RDWR
-  INP_STAT,   ///< stat()
+  INP_ACCESS,   ///< access()
+  INP_READ,     ///< open() with O_RDONLY or O_RDWR
+  INP_READLINK, ///< readlink()
+  INP_STAT,     ///< stat()
 } input_type_t;
 
 /// a file/directory that was read
@@ -27,6 +28,9 @@ typedef struct {
     struct {
       hash_t hash; ///< hash of the file’s content
     } read;
+    struct {
+      hash_t hash; ///< hash of the link’s target
+    } readlink;
     struct {
       bool is_lstat : 1;    ///< were symlinks not followed?
       mode_t mode;          ///< mode of the file/directory
@@ -56,6 +60,15 @@ INTERNAL int input_new_access(input_t *input, int expected_err,
 /// @param path Absolute path to the target file/directory
 /// @return 0 on success or an errno on failure
 INTERNAL int input_new_read(input_t *input, int expected_err, const char *path);
+
+/// create an input for a readlink() call
+///
+/// @param input [out] Created input on success
+/// @param expected_err Expected error result
+/// @param path Absolute path to the link
+/// @return 0 on success or an errno on failure
+INTERNAL int input_new_readlink(input_t *input, int expected_err,
+                                const char *path);
 
 /// create an input for a stat() call
 ///
