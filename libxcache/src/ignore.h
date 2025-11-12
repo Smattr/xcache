@@ -76,6 +76,9 @@ IGNORE(getppid)
 #ifdef __NR_arch_prctl
 IGNORE(arch_prctl)
 #endif
+#ifdef __NR_futex
+IGNORE(futex)
+#endif
 #ifdef __NR_set_tid_address
 IGNORE(set_tid_address)
 #endif
