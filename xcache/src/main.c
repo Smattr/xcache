@@ -3,6 +3,7 @@
 #include "help.h"
 #include <errno.h>
 #include <getopt.h>
+#include <linux/version.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,22 +88,24 @@ static int parse_args(int argc, char **argv) {
       break;
 
     case 'V': { // --version, -V
-      printf("xcache version %s\n supported recording modes: ", xc_version());
+      printf("xcache version %s\nrecording modes:\n", xc_version());
       unsigned modes = xc_record_modes(XC_MODE_AUTO);
-      if (modes == 0)
-        printf("<none>");
-      const char *separator = "";
-      if (modes & XC_SYSCALL) {
-        printf("ptrace");
-        separator = ", ";
-      }
-      if (modes & XC_EARLY_SECCOMP) {
-        printf("%sseccomp (early)", separator);
-        separator = ", ";
-      }
-      if (modes & XC_LATE_SECCOMP)
-        printf("%sseccomp (late)", separator);
-      printf("\n");
+      printf(" ptrace: %s\n",
+             (modes & XC_SYSCALL) ? "supported" : "not supported");
+      printf(" seccomp (early): ");
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 0) ||                            \
+    LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
+      printf("disabled (only available on Linux ≥ 3.5.0 and < 4.8.0)\n");
+#else
+      printf("%s\n",
+             (modes & XC_EARLY_SECCOMP) ? "supported" : "not supported");
+#endif
+      printf(" seccomp (late): ");
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 8, 0)
+      printf("disabled (only available on Linux ≥ 4.8.0)\n");
+#else
+      printf("%s\n", (modes & XC_LATE_SECCOMP) ? "supported" : "not supported");
+#endif
       exit(EXIT_SUCCESS);
     }
 
