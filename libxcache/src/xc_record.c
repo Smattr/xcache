@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/ptrace.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -66,6 +67,19 @@ static void *monitor(void *state) {
     // we should not have received any of the events we did not ask for
     assert(!is_exit(status));
     assert(!is_vfork_done(status));
+
+    // If we stopped due to `PTRACE_O_TRACEEXEC`, `waitpid` will have given us
+    // the thread group leader’s ID. Retrieve the actual thread’s ID.
+    if (is_exec(status)) {
+      unsigned long msg;
+      if (ERROR(ptrace(PTRACE_GETEVENTMSG, tid, NULL, &msg) < 0)) {
+        FAIL_TRACE(errno);
+        // FIXME: what should we do here?
+      } else {
+        tid = (pid_t)msg;
+        DEBUG("TID remapped to %ld", (long)tid);
+      }
+    }
 
     // locate which thread we are dealing with
     thread_t *thread = NULL;
