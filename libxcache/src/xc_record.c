@@ -128,9 +128,8 @@ static void *monitor(void *state) {
       // `SIGSTOP` in the child before execution (handled below). It is simpler
       // to just ignore the `SIGTRAP` in the parent and start tracking the child
       // when we receive its initial `SIGSTOP`.
-      const int r =
-          thread_cont(*thread); // FIXME: shouldn't we be `thread_syscall`-ing
-                                // if mode == XC_SYSCALL?
+      const int r = inf->mode == XC_SYSCALL ? thread_syscall(*thread)
+                                            : thread_cont(*thread);
       if (ERROR(r != 0))
         FAIL_TRACE(r);
       continue;
