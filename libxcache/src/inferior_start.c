@@ -1,5 +1,6 @@
 #include "../../common/proccall.h"
 #include "debug.h"
+#include "fd.h"
 #include "find_me.h"
 #include "fs.h"
 #include "inferior_t.h"
@@ -38,16 +39,6 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
 
     thread.proc = proc;
     ++proc->reference_count;
-
-    // we dup /dev/null over the child’s stdin
-    if (ERROR((rc = proc_fd_new(proc, STDIN_FILENO, "/dev/null"))))
-      goto done;
-    if (ERROR((rc = proc_fd_new(proc, STDOUT_FILENO, "/dev/stdout"))))
-      goto done;
-    if (ERROR((rc = proc_fd_new(proc, STDERR_FILENO, "/dev/stderr"))))
-      goto done;
-    if (ERROR((rc = proc_fd_new(proc, XCACHE_FILENO, ""))))
-      goto done;
   }
 
   {
@@ -58,6 +49,25 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     }
 
     thread.fs = fs_acquire(fs);
+  }
+
+  {
+    fds_t *const fd = fds_new();
+    if (ERROR(fd == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+    thread.fd = fds_acquire(fd);
+
+    // we dup /dev/null over the child’s stdin
+    if (ERROR((rc = fd_open(fd, STDIN_FILENO, "/dev/null"))))
+      goto done;
+    if (ERROR((rc = fd_open(fd, STDOUT_FILENO, "/dev/stdout"))))
+      goto done;
+    if (ERROR((rc = fd_open(fd, STDERR_FILENO, "/dev/stderr"))))
+      goto done;
+    if (ERROR((rc = fd_open(fd, XCACHE_FILENO, ""))))
+      goto done;
   }
 
   // allocate space for the upcoming thread to avoid dealing with a messy ENOMEM

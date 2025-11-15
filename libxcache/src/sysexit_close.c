@@ -1,5 +1,6 @@
 #include "../../common/proccall.h"
 #include "debug.h"
+#include "fd.h"
 #include "inferior_t.h"
 #include "peek.h"
 #include "syscall.h"
@@ -32,14 +33,13 @@ int sysexit_close(inferior_t *inf, thread_t *thread) {
 
   // if it succeeded, drop this from our tracking table
   if (err == 0) {
-    if (ERROR(proc_fd(thread->proc, fd) == NULL)) {
+    if (ERROR(fd_at(thread->fd, fd) == NULL)) {
       // the child somehow successfully closed something they did not have open
       rc = ECHILD;
       goto done;
     }
 
-    fd_free(*LIST_AT(&thread->proc->fds, (size_t)fd));
-    *LIST_AT(&thread->proc->fds, (size_t)fd) = NULL;
+    fd_close(thread->fd, fd);
   }
 
 done:

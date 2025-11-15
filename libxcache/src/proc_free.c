@@ -15,7 +15,5 @@ void proc_free(proc_t *proc) {
   if (proc->reference_count > 0)
     return;
 
-  proc_fds_free(proc);
-
   free(proc);
 }

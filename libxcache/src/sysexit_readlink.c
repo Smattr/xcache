@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "debug.h"
+#include "fd.h"
 #include "fs.h"
 #include "input_t.h"
 #include "path.h"
@@ -64,7 +65,7 @@ int sysexit_readlinkat(inferior_t *inf, thread_t *thread) {
       goto done;
     }
   } else {
-    const fd_t *fd = proc_fd(thread->proc, dirfd);
+    const fd_t *fd = fd_at(thread->fd, dirfd);
     if (ERROR(fd == NULL)) {
       rc = ECHILD;
       goto done;

@@ -17,8 +17,7 @@ add_library(libxcache
   src/find_exe.c
   src/find_lib.c
   src/find_spy.c
-  src/fd_free.c
-  src/fd_new.c
+  src/fd.c
   src/fs.c
   src/hash_cmd.c
   src/hash_data.c
@@ -58,9 +57,6 @@ add_library(libxcache
   src/path_join.c
   src/path_make.c
   src/peek_str.c
-  src/proc_fd.c
-  src/proc_fd_new.c
-  src/proc_fds_free.c
   src/proc_free.c
   src/statflags_to_str.c
   src/syscall_to_str.c

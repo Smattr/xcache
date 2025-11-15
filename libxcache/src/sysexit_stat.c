@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "debug.h"
+#include "fd.h"
 #include "fs.h"
 #include "inferior_t.h"
 #include "input_t.h"
@@ -71,7 +72,7 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
       goto done;
     }
   } else {
-    const fd_t *dirfd = proc_fd(thread->proc, fd);
+    const fd_t *dirfd = fd_at(thread->fd, fd);
     if (ERROR(dirfd == NULL)) {
       rc = ECHILD;
       goto done;

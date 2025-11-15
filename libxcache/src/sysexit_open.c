@@ -81,7 +81,7 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
     assert(ret <= INT_MAX && "unexpected kernel return from openat");
     DEBUG("TID %ld PID %ld, updating FD %ld → \"%s\"", (long)thread->id,
           (long)thread->proc->id, ret, abs);
-    if (ERROR((rc = proc_fd_new(thread->proc, (int)ret, abs))))
+    if (ERROR((rc = fd_open(thread->fd, (int)ret, abs))))
       goto done;
   }
 

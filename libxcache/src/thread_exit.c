@@ -1,3 +1,4 @@
+#include "fd.h"
 #include "fs.h"
 #include "thread_t.h"
 #include <assert.h>
@@ -6,6 +7,9 @@
 void thread_exit(thread_t *thread, int exit_status) {
 
   assert(thread != NULL);
+
+  if (thread->fd != NULL)
+    thread->fd = fds_release(thread->fd);
 
   if (thread->fs != NULL)
     thread->fs = fs_release(thread->fs);
