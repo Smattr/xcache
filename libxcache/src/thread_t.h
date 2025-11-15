@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include "fs.h"
 #include "list.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -27,8 +28,6 @@ INTERNAL void fd_free(fd_t *fd);
 
 /// a process being traced
 typedef struct {
-  char *cwd; ///< current working directory
-
   pid_t id; ///< process identifier
 
   LIST(fd_t *) fds; ///< file descriptor table
@@ -44,6 +43,7 @@ typedef struct {
 typedef struct {
   pid_t id;                 ///< thread identifier
   proc_t *proc;             ///< containing process
+  fs_t *fs;                 ///< filesystem
   bool pending_sysexit : 1; ///< is this thread mid-syscall?
   bool ignoring : 1;        ///< has the spy told us to ignore syscalls?
   int exit_status;          ///< exit status on completion

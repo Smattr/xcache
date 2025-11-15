@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "debug.h"
+#include "fs.h"
 #include "inferior_t.h"
 #include "input_t.h"
 #include "output_t.h"
@@ -62,7 +63,7 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
     abs = path;
     path = NULL;
   } else if (fd == AT_FDCWD) {
-    abs = path_absolute(thread->proc->cwd, path);
+    abs = path_absolute(thread->fs->cwd, path);
     if (ERROR(abs == NULL)) {
       rc = ENOMEM;
       goto done;

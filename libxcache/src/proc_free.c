@@ -17,8 +17,5 @@ void proc_free(proc_t *proc) {
 
   proc_fds_free(proc);
 
-  free(proc->cwd);
-  proc->cwd = NULL;
-
   free(proc);
 }

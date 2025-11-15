@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "fs.h"
 #include "inferior_t.h"
 #include "input_t.h"
 #include "path.h"
@@ -33,7 +34,7 @@ int sysexit_chdir(inferior_t *inf, thread_t *thread) {
   }
 
   // make it absolute
-  abs = path_absolute(thread->proc->cwd, path);
+  abs = path_absolute(thread->fs->cwd, path);
   if (ERROR(abs == NULL)) {
     rc = ENOMEM;
     goto done;
@@ -55,9 +56,8 @@ int sysexit_chdir(inferior_t *inf, thread_t *thread) {
 
   // if it succeeded, update our cwd
   if (err == 0) {
-    free(thread->proc->cwd);
-    thread->proc->cwd = abs;
-    abs = NULL;
+    if (ERROR((rc = fs_chdir(thread->fs, abs))))
+      goto done;
   }
 
 done:

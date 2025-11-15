@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "fs.h"
 #include "inferior_t.h"
 #include "input_t.h"
 #include "path.h"
@@ -32,7 +33,7 @@ int sysenter_execve(inferior_t *inf, thread_t *thread) {
   }
 
   // make it absolute
-  abs = path_absolute(thread->proc->cwd, path);
+  abs = path_absolute(thread->fs->cwd, path);
   if (ERROR(abs == NULL)) {
     rc = ENOMEM;
     goto done;

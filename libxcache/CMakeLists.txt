@@ -19,6 +19,7 @@ add_library(libxcache
   src/find_spy.c
   src/fd_free.c
   src/fd_new.c
+  src/fs.c
   src/hash_cmd.c
   src/hash_data.c
   src/hash_eq.c

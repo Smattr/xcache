@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "debug.h"
+#include "fs.h"
 #include "input_t.h"
 #include "path.h"
 #include "peek.h"
@@ -54,9 +55,9 @@ int sysexit_readlinkat(inferior_t *inf, thread_t *thread) {
     path = NULL;
   } else if (dirfd == AT_FDCWD) {
     if (strcmp(path, "") == 0) {
-      abs = strdup(thread->proc->cwd);
+      abs = strdup(thread->fs->cwd);
     } else {
-      abs = path_absolute(thread->proc->cwd, path);
+      abs = path_absolute(thread->fs->cwd, path);
     }
     if (ERROR(abs == NULL)) {
       rc = ENOMEM;

@@ -1,6 +1,7 @@
 #include "../../common/proccall.h"
 #include "debug.h"
 #include "find_me.h"
+#include "fs.h"
 #include "inferior_t.h"
 #include "list.h"
 #include "thread_t.h"
@@ -10,7 +11,6 @@
 #include <linux/version.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -39,12 +39,6 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     thread.proc = proc;
     ++proc->reference_count;
 
-    proc->cwd = strdup(cmd.cwd);
-    if (ERROR(proc->cwd == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-
     // we dup /dev/null over the child’s stdin
     if (ERROR((rc = proc_fd_new(proc, STDIN_FILENO, "/dev/null"))))
       goto done;
@@ -54,6 +48,16 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
       goto done;
     if (ERROR((rc = proc_fd_new(proc, XCACHE_FILENO, ""))))
       goto done;
+  }
+
+  {
+    fs_t *const fs = fs_new(cmd.cwd);
+    if (ERROR(fs == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+
+    thread.fs = fs_acquire(fs);
   }
 
   // allocate space for the upcoming thread to avoid dealing with a messy ENOMEM

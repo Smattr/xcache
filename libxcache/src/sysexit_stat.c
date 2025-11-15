@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "debug.h"
+#include "fs.h"
 #include "inferior_t.h"
 #include "input_t.h"
 #include "path.h"
@@ -61,9 +62,9 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
     path = NULL;
   } else if (fd == AT_FDCWD) {
     if (strcmp(path, "") == 0 && (flags & AT_EMPTY_PATH)) {
-      abs = strdup(thread->proc->cwd);
+      abs = strdup(thread->fs->cwd);
     } else {
-      abs = path_absolute(thread->proc->cwd, path);
+      abs = path_absolute(thread->fs->cwd, path);
     }
     if (ERROR(abs == NULL)) {
       rc = ENOMEM;
