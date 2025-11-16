@@ -42,7 +42,7 @@ int inferior_spawn(inferior_t *inf, thread_t *parent, pid_t child) {
       rc = ENOMEM;
       goto done;
     }
-    ++new->proc->reference_count;
+    *new->proc = (proc_t){.id = new->id, .reference_count = 1};
   }
 
   // will the child have the same filesystem information as the parent?

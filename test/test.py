@@ -45,10 +45,6 @@ def test_fork(debug: bool, record: bool, replay: bool, tmp_path: Path):
     can we handle something that forks?
     """
 
-    # FIXME
-    if record and replay:
-        pytest.xfail("fork cannot be recorded")
-
     # First, `strace` the process we are about to test. If the test fails, the
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
