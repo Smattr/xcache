@@ -20,15 +20,29 @@ typedef struct {
   size_t reference_count;
 } proc_t;
 
+/// flags recorded from a `clone`/`clone3`/`fork`/`vfork`
+typedef struct {
+  /// flags populated?
+  ///
+  /// This is used to model an optional type. Essentially a flag to indicate
+  /// when the value of this struct is “unset”.
+  bool set : 1;
+
+  bool clone_files : 1;  ///< was `CLONE_FILES` set?
+  bool clone_fs : 1;     ///< was `CLONE_FS` set?
+  bool clone_thread : 1; ///< was `CLONE_THREAD` set?
+} clone_flags_t;
+
 /// a thread within a process
 typedef struct {
-  pid_t id;                 ///< thread identifier
-  proc_t *proc;             ///< containing process
-  fs_t *fs;                 ///< filesystem
-  fds_t *fd;                ///< file descriptor table
-  bool pending_sysexit : 1; ///< is this thread mid-syscall?
-  bool ignoring : 1;        ///< has the spy told us to ignore syscalls?
-  int *exit_status;         ///< where to write exit status on completion
+  pid_t id;                  ///< thread identifier
+  proc_t *proc;              ///< containing process
+  fs_t *fs;                  ///< filesystem
+  fds_t *fd;                 ///< file descriptor table
+  bool pending_sysexit : 1;  ///< is this thread mid-syscall?
+  bool ignoring : 1;         ///< has the spy told us to ignore syscalls?
+  clone_flags_t clone_flags; ///< options observed from last clone() syscall
+  int *exit_status;          ///< where to write exit status on completion
 } thread_t;
 
 /// resume a stopped thread, running it until the next event

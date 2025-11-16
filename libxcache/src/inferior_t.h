@@ -7,6 +7,7 @@
 #include "tee_t.h"
 #include "thread_t.h"
 #include <stddef.h>
+#include <sys/types.h>
 #include <xcache/cmd.h>
 #include <xcache/record.h>
 
@@ -77,6 +78,14 @@ INTERNAL int inferior_input_new(inferior_t *inf, const input_t input);
 /// @param output Output to append
 /// @return 0 on success or an errno on failure
 INTERNAL int inferior_output_new(inferior_t *inf, const output_t output);
+
+/// learn the existence of a new thread
+///
+/// @param inf Inferior who just spawned a new thread
+/// @param parent The thread who created the new one
+/// @param child The TID of the new thread
+/// @return 0 on success or an errno on failure
+INTERNAL int inferior_spawn(inferior_t *inf, thread_t *parent, pid_t child);
 
 /// write out a completed inferior’s result to a trace file
 ///

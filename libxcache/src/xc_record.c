@@ -121,18 +121,28 @@ static void *monitor(void *state) {
 
     if (is_fork(status)) {
       DEBUG("child forked");
-      // The target called fork (or a cousin of). Unless I have missed
-      // something in the ptrace docs, the only way to also trace forked
-      // children is to set `PTRACE_O_FORK` and friends on the root process.
-      // Unfortunately the result of this is that we get two events that tell
-      // us the same thing: a `SIGTRAP` in the parent on fork (this case) and a
-      // `SIGSTOP` in the child before execution (handled below). It is simpler
-      // to just ignore the `SIGTRAP` in the parent and start tracking the child
-      // when we receive its initial `SIGSTOP`.
-      const int r = inf->mode == XC_SYSCALL ? thread_syscall(*thread)
-                                            : thread_cont(*thread);
-      if (ERROR(r != 0))
-        FAIL_TRACE(r);
+
+      // learn the TID of the new child
+      unsigned long msg;
+      if (ERROR(ptrace(PTRACE_GETEVENTMSG, tid, NULL, &msg) < 0)) {
+        FAIL_TRACE(errno);
+        abort(); // TODO
+      }
+      const pid_t child = (pid_t)msg;
+
+      {
+        const int r = inferior_spawn(inf, thread, child);
+        if (ERROR(r != 0))
+          FAIL_TRACE(r);
+      }
+
+      {
+        const int r = inf->mode == XC_SYSCALL ? thread_syscall(*thread)
+                                              : thread_cont(*thread);
+        if (ERROR(r != 0))
+          FAIL_TRACE(r);
+      }
+
       continue;
     }
 
