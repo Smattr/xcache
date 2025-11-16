@@ -52,6 +52,12 @@ INTERNAL fds_t *fds_acquire(fds_t *fd);
 /// @return `NULL`
 INTERNAL fds_t *fds_release(fds_t *fd);
 
+/// copy a file descriptor table
+///
+/// @param src Object to copy
+/// @return Copy of `src` or `NULL` on out-of-memory
+INTERNAL fds_t *fds_dup(fds_t *src);
+
 /// register a new open file descriptor
 ///
 /// @param table File descriptor table to install into

@@ -90,6 +90,32 @@ fds_t *fds_release(fds_t *fd) {
   return NULL;
 }
 
+fds_t *fds_dup(fds_t *src) {
+
+  fds_t *dst = NULL;
+  fds_t *ret = NULL;
+
+  dst = fds_new();
+  if (ERROR(dst == NULL))
+    goto done;
+
+  for (size_t i = 0; i < LIST_SIZE(&src->fds); ++i) {
+    const fd_t *const s = *LIST_AT(&src->fds, i);
+    if (s == NULL)
+      continue;
+    if (ERROR(fd_open(dst, (int)i, s->path) != 0))
+      goto done;
+  }
+
+  ret = dst;
+  dst = NULL;
+
+done:
+  fds_free(dst);
+
+  return ret;
+}
+
 int fd_open(fds_t *table, int fd, const char *path) {
   assert(table != NULL);
   assert(fd >= 0);
