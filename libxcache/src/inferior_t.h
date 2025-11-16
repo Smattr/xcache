@@ -21,6 +21,8 @@ typedef struct {
 
   int exec_status[2]; ///< pipe for propagating initial `execve` result
 
+  int exit_status; ///< exit status on completion
+
   LIST(thread_t) threads; ///< threads belonging to this target
 
   inputs_t inputs; ///< input actions observed

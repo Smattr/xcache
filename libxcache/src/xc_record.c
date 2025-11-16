@@ -293,10 +293,8 @@ done:
   for (size_t i = 0; i < LIST_SIZE(&inf->threads); ++i)
     assert(LIST_AT(&inf->threads, i)->id == 0 && "remaining tracee threads");
 
-  if (rc == 0 && status->exec_status == 0) {
-    assert(LIST_SIZE(&inf->threads) > 0);
-    status->exit_status = LIST_AT(&inf->threads, 0)->exit_status;
-  }
+  if (rc == 0 && status->exec_status == 0)
+    status->exit_status = inf->exit_status;
 
   inferior_free(inf);
   free(trace_root);

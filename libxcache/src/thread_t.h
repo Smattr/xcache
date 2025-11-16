@@ -28,7 +28,7 @@ typedef struct {
   fds_t *fd;                ///< file descriptor table
   bool pending_sysexit : 1; ///< is this thread mid-syscall?
   bool ignoring : 1;        ///< has the spy told us to ignore syscalls?
-  int exit_status;          ///< exit status on completion
+  int *exit_status;         ///< where to write exit status on completion
 } thread_t;
 
 /// resume a stopped thread, running it until the next event

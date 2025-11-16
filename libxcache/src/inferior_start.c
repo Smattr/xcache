@@ -63,6 +63,10 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
   if (ERROR((rc = fd_open(thread.fd, XCACHE_FILENO, ""))))
     goto done;
 
+  // make the first thread export its eventual exit status as the process’ exit
+  // status
+  thread.exit_status = &inf->exit_status;
+
   // allocate space for the upcoming thread to avoid dealing with a messy ENOMEM
   // after fork
   if (ERROR((rc = LIST_RESERVE(&inf->threads, LIST_SIZE(&inf->threads) + 1))))
