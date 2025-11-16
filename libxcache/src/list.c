@@ -56,6 +56,29 @@ done:
   return rc;
 }
 
+void list_pop_(list_impl_t_ *l, size_t index, void *ret, size_t stride) {
+  assert(l != NULL);
+  assert(ret != NULL || stride == 0);
+  assert(index < l->size && "out of bounds access");
+
+  // pop the requested item
+  if (stride > 0) {
+    const void *const src = (char *)l->base + index * stride;
+    memcpy(ret, src, stride);
+  }
+
+  // shrink the list
+  if (stride > 0) {
+    void *const dst = (char *)l->base + index * stride;
+    const void *const src = (char *)l->base + (index + 1) * stride;
+    memmove(dst, src, (l->size - index - 1) * stride);
+  }
+  --l->size;
+
+  // poison the (now empty) uppermost slot
+  ASAN_POISON((char *)l->base + l->size * stride, stride);
+}
+
 void *list_at_(list_impl_t_ *l, size_t index, size_t stride) {
   return (void *)list_at_const_(l, index, stride);
 }

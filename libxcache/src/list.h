@@ -51,6 +51,25 @@ INTERNAL int list_push_back_(list_impl_t_ *l, const void *item, size_t stride);
   list_push_back_(&(list)->impl, (__typeof__((list)->base[0])[]){(item)},      \
                   sizeof((list)->base[0]))
 
+/// remove an item from a list
+///
+/// @param l List to pop from
+/// @param index Index of item to pop
+/// @param ret Where to write popped item to
+/// @param stride Byte size of the list items
+INTERNAL void list_pop_(list_impl_t_ *l, size_t index, void *ret,
+                        size_t stride);
+
+/// remove and return an item from a list
+#define LIST_POP(list, index)                                                  \
+  ({                                                                           \
+    __typeof__(list) list__ = (list);                                          \
+    const size_t index_ = (index);                                             \
+    __typeof__(list__->base[0]) popped_;                                       \
+    list_pop_(&list__->impl, index_, &popped_, sizeof(popped_));               \
+    popped_;                                                                   \
+  })
+
 /// access an item in a list
 ///
 /// Access this through `LIST_AT`.
