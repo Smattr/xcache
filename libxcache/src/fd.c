@@ -39,8 +39,6 @@ done:
   return ret;
 }
 
-fds_t *fds_new(void) { return calloc(1, sizeof(fds_t)); }
-
 /// deallocate a file descriptor table
 static void fds_free(fds_t *fd) {
   if (fd == NULL)
@@ -48,6 +46,26 @@ static void fds_free(fds_t *fd) {
 
   LIST_FREE(&fd->fds, fd_free);
   free(fd);
+}
+
+fds_t *fds_new(void) {
+
+  fds_t *f = NULL;
+  fds_t *ret = NULL;
+
+  f = calloc(1, sizeof(*f));
+  if (ERROR(f == NULL))
+    goto done;
+
+  f->ref_count = 1;
+
+  ret = f;
+  f = NULL;
+
+done:
+  fds_free(f);
+
+  return ret;
 }
 
 fds_t *fds_acquire(fds_t *fd) {

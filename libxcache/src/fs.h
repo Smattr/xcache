@@ -16,6 +16,9 @@ typedef struct {
 
 /// create a new filesystem information object
 ///
+/// The reference count of the created filesystem information object is set to 1
+/// on success.
+///
 /// @param cwd Initial current working directory
 /// @return A created object on success or `NULL` on out-of-memory
 INTERNAL fs_t *fs_new(const char *cwd);

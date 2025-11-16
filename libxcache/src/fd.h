@@ -17,6 +17,9 @@ typedef struct {
 
 /// create a new file descriptor table
 ///
+/// The reference count of the created file descriptor table is set to 1 on
+/// success.
+///
 /// @return Created table on success or `NULL` on out-of-memory
 INTERNAL fds_t *fds_new(void);
 

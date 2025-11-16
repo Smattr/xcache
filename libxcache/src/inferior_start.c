@@ -41,34 +41,27 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     ++proc->reference_count;
   }
 
-  {
-    fs_t *const fs = fs_new(cmd.cwd);
-    if (ERROR(fs == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-
-    thread.fs = fs_acquire(fs);
+  thread.fs = fs_new(cmd.cwd);
+  if (ERROR(thread.fs == NULL)) {
+    rc = ENOMEM;
+    goto done;
   }
 
-  {
-    fds_t *const fd = fds_new();
-    if (ERROR(fd == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-    thread.fd = fds_acquire(fd);
-
-    // we dup /dev/null over the child’s stdin
-    if (ERROR((rc = fd_open(fd, STDIN_FILENO, "/dev/null"))))
-      goto done;
-    if (ERROR((rc = fd_open(fd, STDOUT_FILENO, "/dev/stdout"))))
-      goto done;
-    if (ERROR((rc = fd_open(fd, STDERR_FILENO, "/dev/stderr"))))
-      goto done;
-    if (ERROR((rc = fd_open(fd, XCACHE_FILENO, ""))))
-      goto done;
+  thread.fd = fds_new();
+  if (ERROR(thread.fd == NULL)) {
+    rc = ENOMEM;
+    goto done;
   }
+
+  // we dup /dev/null over the child’s stdin
+  if (ERROR((rc = fd_open(thread.fd, STDIN_FILENO, "/dev/null"))))
+    goto done;
+  if (ERROR((rc = fd_open(thread.fd, STDOUT_FILENO, "/dev/stdout"))))
+    goto done;
+  if (ERROR((rc = fd_open(thread.fd, STDERR_FILENO, "/dev/stderr"))))
+    goto done;
+  if (ERROR((rc = fd_open(thread.fd, XCACHE_FILENO, ""))))
+    goto done;
 
   // allocate space for the upcoming thread to avoid dealing with a messy ENOMEM
   // after fork

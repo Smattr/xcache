@@ -25,6 +25,8 @@ fs_t *fs_new(const char *cwd) {
   if (ERROR(fs_chdir(f, cwd) < 0))
     goto done;
 
+  f->ref_count = 1;
+
   ret = f;
   f = NULL;
 
