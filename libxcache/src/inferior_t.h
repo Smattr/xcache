@@ -23,7 +23,7 @@ typedef struct {
 
   int exit_status; ///< exit status on completion
 
-  LIST(thread_t) threads; ///< threads belonging to this target
+  LIST(thread_t *) threads; ///< threads belonging to this target
 
   inputs_t inputs; ///< input actions observed
 

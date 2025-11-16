@@ -24,11 +24,17 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
   assert(LIST_SIZE(&inf->threads) == 0 && "inferior already started?");
 
   char *spy = NULL;
-  thread_t thread = {0};
+  thread_t *thread = NULL;
   int rc = 0;
 
   if (ERROR((rc = find_spy(&spy))))
     goto done;
+
+  thread = calloc(1, sizeof(*thread));
+  if (ERROR(thread == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
 
   {
     proc_t *const proc = calloc(1, sizeof(*proc));
@@ -37,35 +43,35 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
       goto done;
     }
 
-    thread.proc = proc;
+    thread->proc = proc;
     ++proc->reference_count;
   }
 
-  thread.fs = fs_new(cmd.cwd);
-  if (ERROR(thread.fs == NULL)) {
+  thread->fs = fs_new(cmd.cwd);
+  if (ERROR(thread->fs == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
-  thread.fd = fds_new();
-  if (ERROR(thread.fd == NULL)) {
+  thread->fd = fds_new();
+  if (ERROR(thread->fd == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   // we dup /dev/null over the child’s stdin
-  if (ERROR((rc = fd_open(thread.fd, STDIN_FILENO, "/dev/null"))))
+  if (ERROR((rc = fd_open(thread->fd, STDIN_FILENO, "/dev/null"))))
     goto done;
-  if (ERROR((rc = fd_open(thread.fd, STDOUT_FILENO, "/dev/stdout"))))
+  if (ERROR((rc = fd_open(thread->fd, STDOUT_FILENO, "/dev/stdout"))))
     goto done;
-  if (ERROR((rc = fd_open(thread.fd, STDERR_FILENO, "/dev/stderr"))))
+  if (ERROR((rc = fd_open(thread->fd, STDERR_FILENO, "/dev/stderr"))))
     goto done;
-  if (ERROR((rc = fd_open(thread.fd, XCACHE_FILENO, ""))))
+  if (ERROR((rc = fd_open(thread->fd, XCACHE_FILENO, ""))))
     goto done;
 
   // make the first thread export its eventual exit status as the process’ exit
   // status
-  thread.exit_status = &inf->exit_status;
+  thread->exit_status = &inf->exit_status;
 
   // allocate space for the upcoming thread to avoid dealing with a messy ENOMEM
   // after fork
@@ -88,14 +94,14 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     // `execve`/`exit` in `inferior_exec`) will unblock reads on the other end
     (void)close(inf->exec_status[1]);
 
-    thread.id = pid;
-    thread.proc->id = pid;
+    thread->id = pid;
+    thread->proc->id = pid;
   }
 
-  DEBUG("waiting for the child (TID %ld) to SIGSTOP itself…", (long)thread.id);
+  DEBUG("waiting for the child (TID %ld) to SIGSTOP itself…", (long)thread->id);
   {
     int status;
-    if (ERROR(waitpid(thread.id, &status, 0) < 0)) {
+    if (ERROR(waitpid(thread->id, &status, 0) < 0)) {
       rc = errno;
       goto done;
     }
@@ -108,12 +114,14 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     // with an errno as its status
     if (ERROR(WIFEXITED(status))) {
       rc = WEXITSTATUS(status);
-      thread_exit(&thread, rc);
+      thread_exit(thread, rc);
+      thread = NULL;
       goto done;
     }
     if (ERROR(WIFSIGNALED(status))) {
       DEBUG("child died with signal %d", WTERMSIG(status));
-      thread_exit(&thread, 128 + WTERMSIG(status));
+      thread_exit(thread, 128 + WTERMSIG(status));
+      thread = NULL;
       rc = ECHILD;
       goto done;
     }
@@ -140,7 +148,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     if (inf->mode == XC_EARLY_SECCOMP || inf->mode == XC_LATE_SECCOMP)
       opts |= PTRACE_O_TRACESECCOMP;
 #endif
-    if (ERROR(ptrace(PTRACE_SETOPTIONS, thread.id, NULL, opts) < 0)) {
+    if (ERROR(ptrace(PTRACE_SETOPTIONS, thread->id, NULL, opts) < 0)) {
       rc = errno;
       goto done;
     }
@@ -148,19 +156,20 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
 
   // resume the child
   if (inf->mode == XC_SYSCALL) {
-    if (ERROR((rc = thread_syscall(thread))))
+    if (ERROR((rc = thread_syscall(*thread))))
       goto done;
   } else {
-    if (ERROR((rc = thread_cont(thread))))
+    if (ERROR((rc = thread_cont(*thread))))
       goto done;
   }
 
   if (ERROR((rc = LIST_PUSH_BACK(&inf->threads, thread))))
     goto done;
-  thread = (thread_t){0};
+  thread = NULL;
 
 done:
-  thread_exit(&thread, EXIT_FAILURE);
+  if (thread != NULL)
+    thread_exit(thread, EXIT_FAILURE);
   free(spy);
 
   return rc;

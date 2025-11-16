@@ -4,7 +4,7 @@
 #include "thread_t.h"
 #include <assert.h>
 #include <signal.h>
-#include <stddef.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 
 void inferior_kill(inferior_t *inf) {
@@ -13,13 +13,13 @@ void inferior_kill(inferior_t *inf) {
 
   // unceremoniously kill all threads
   for (size_t i = 0; i < LIST_SIZE(&inf->threads); ++i) {
-    const thread_t *const t = LIST_AT(&inf->threads, i);
+    const thread_t *const t = *LIST_AT(&inf->threads, i);
     (void)tgkill(t->proc->id, t->id, SIGKILL);
   }
 
   // reap them all
   for (size_t i = 0; i < LIST_SIZE(&inf->threads); ++i) {
-    thread_t *const t = LIST_AT(&inf->threads, i);
+    thread_t *const t = *LIST_AT(&inf->threads, i);
 
     int status;
     if (ERROR(waitpid(t->id, &status, __WALL | __WNOTHREAD) < 0))

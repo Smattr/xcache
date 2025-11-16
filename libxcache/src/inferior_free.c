@@ -14,7 +14,9 @@ void inferior_free(inferior_t *inf) {
 
   inferior_kill(inf);
 
+  assert(LIST_SIZE(&inf->threads) == 0);
   LIST_FREE(&inf->threads, NULL);
+
   LIST_FREE(&inf->outputs, output_free);
   LIST_FREE(&inf->inputs, input_free);
 

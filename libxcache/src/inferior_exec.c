@@ -118,7 +118,7 @@ fail:
   // are in a child process while these allocations were made in our parent.
   // Also the claimed leaks are beyond just `LIST_AT(inf->threads, 0)->proc` and
   // things reachable from that. Nevertheless, this is enough to pacify it.
-  inferior_thread_exit(inf, LIST_AT(&inf->threads, 0), rc);
+  inferior_thread_exit(inf, *LIST_AT(&inf->threads, 0), rc);
 
   exit(rc);
 }

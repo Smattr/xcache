@@ -84,8 +84,9 @@ static void *monitor(void *state) {
     // locate which thread we are dealing with
     thread_t *thread = NULL;
     for (size_t i = 0; i < LIST_SIZE(&inf->threads); ++i) {
-      if (LIST_AT(&inf->threads, i)->id == tid) {
-        thread = LIST_AT(&inf->threads, i);
+      thread_t *const candidate = *LIST_AT(&inf->threads, i);
+      if (candidate->id == tid) {
+        thread = *LIST_AT(&inf->threads, i);
         break;
       }
     }
