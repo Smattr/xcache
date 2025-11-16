@@ -71,3 +71,22 @@ int fs_chdir(fs_t *fs, const char *cwd) {
 
   return 0;
 }
+
+fs_t *fs_dup(const fs_t *src) {
+  assert(src != NULL);
+
+  fs_t *dst = NULL;
+  fs_t *ret = NULL;
+
+  dst = fs_new(src->cwd);
+  if (ERROR(dst == NULL))
+    goto done;
+
+  ret = dst;
+  dst = NULL;
+
+done:
+  fs_free(dst);
+
+  return ret;
+}

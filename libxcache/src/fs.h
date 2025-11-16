@@ -58,3 +58,9 @@ INTERNAL fs_t *fs_release(fs_t *fs);
 /// @param cwd New current working directory
 /// @return 0 on success or an errno on failure
 INTERNAL int fs_chdir(fs_t *fs, const char *cwd);
+
+/// copy a filesystem information object
+///
+/// @param src Object to copy
+/// @return Copy of `src` or `NULL` on out-of-memory
+INTERNAL fs_t *fs_dup(const fs_t *src);
