@@ -46,7 +46,7 @@ def test_fork(debug: bool, record: bool, replay: bool, tmp_path: Path):
     """
 
     # FIXME
-    if record and debug:
+    if record and replay:
         pytest.xfail("fork cannot be recorded")
 
     # First, `strace` the process we are about to test. If the test fails, the

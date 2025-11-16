@@ -63,6 +63,7 @@ add_library(libxcache
   src/statflags_to_str.c
   src/syscall_to_str.c
   src/sysenter.c
+  src/sysenter_clone.c
   src/sysenter_execve.c
   src/sysenter_ioctl.c
   src/sysexit.c

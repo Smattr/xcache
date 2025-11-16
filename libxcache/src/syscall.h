@@ -25,6 +25,20 @@ INTERNAL int sysenter_execve(inferior_t *inf, thread_t *thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int sysenter_ioctl(inferior_t *inf, thread_t *thread);
 
+/// handle start of `clone`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysenter_clone(inferior_t *inf, thread_t *thread);
+
+/// handle start of `clone3`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysenter_clone3(inferior_t *inf, thread_t *thread);
+
 /// handle end of a syscall
 ///
 /// @param inf Tracee to which the target belongs

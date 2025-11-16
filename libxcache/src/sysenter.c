@@ -77,6 +77,9 @@ int sysenter(inferior_t *inf, thread_t *thread) {
 #define SYSEXIT_IGNORE(call) // nothing
 #include "ignore.h"
 
+  DO(clone);
+  DO(clone3);
+
   // `execve` is one of the few syscalls we must handle on enter because the
   // caller’s address space does not exist at exit, making it impossible for us
   // to peek its arguments
