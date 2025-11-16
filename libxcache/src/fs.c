@@ -45,7 +45,10 @@ fs_t *fs_acquire(fs_t *fs) {
 }
 
 fs_t *fs_release(fs_t *fs) {
-  assert(fs != NULL);
+
+  if (fs == NULL)
+    return NULL;
+
   assert(fs->ref_count > 0);
 
   --fs->ref_count;

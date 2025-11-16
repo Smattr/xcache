@@ -46,6 +46,8 @@ INTERNAL fds_t *fds_acquire(fds_t *fd);
 /// If the reference count reaches 0 by calling this function, the file
 /// descriptor table is also freed.
 ///
+/// When passed `NULL`, this function is a no-op.
+///
 /// @param fd Object to return a reference to
 /// @return `NULL`
 INTERNAL fds_t *fds_release(fds_t *fd);

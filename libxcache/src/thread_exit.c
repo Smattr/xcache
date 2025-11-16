@@ -8,11 +8,9 @@ void thread_exit(thread_t *thread, int exit_status) {
 
   assert(thread != NULL);
 
-  if (thread->fd != NULL)
-    thread->fd = fds_release(thread->fd);
+  thread->fd = fds_release(thread->fd);
 
-  if (thread->fs != NULL)
-    thread->fs = fs_release(thread->fs);
+  thread->fs = fs_release(thread->fs);
 
   proc_free(thread->proc);
   thread->proc = NULL;

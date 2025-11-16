@@ -77,7 +77,10 @@ fds_t *fds_acquire(fds_t *fd) {
 }
 
 fds_t *fds_release(fds_t *fd) {
-  assert(fd != NULL);
+
+  if (fd == NULL)
+    return NULL;
+
   assert(fd->ref_count > 0);
 
   --fd->ref_count;

@@ -46,6 +46,8 @@ INTERNAL fs_t *fs_acquire(fs_t *fs);
 /// If the reference count reaches 0 by calling this function, the filesystem
 /// object is also freed.
 ///
+/// When passed `NULL`, this function is a no-op.
+///
 /// @param fs Object to return a reference to
 /// @return `NULL`
 INTERNAL fs_t *fs_release(fs_t *fs);
