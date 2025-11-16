@@ -83,11 +83,9 @@ static void *monitor(void *state) {
 
     // locate which thread we are dealing with
     thread_t *thread = NULL;
-    size_t thread_index;
-    for (thread_index = 0; thread_index < LIST_SIZE(&inf->threads);
-         ++thread_index) {
-      if (LIST_AT(&inf->threads, thread_index)->id == tid) {
-        thread = LIST_AT(&inf->threads, thread_index);
+    for (size_t i = 0; i < LIST_SIZE(&inf->threads); ++i) {
+      if (LIST_AT(&inf->threads, i)->id == tid) {
+        thread = LIST_AT(&inf->threads, i);
         break;
       }
     }
@@ -100,8 +98,7 @@ static void *monitor(void *state) {
     // did the child exit?
     if (WIFEXITED(status)) {
       DEBUG("TID %ld exited with %d", (long)tid, WEXITSTATUS(status));
-      thread_exit(thread, WEXITSTATUS(status));
-      LIST_POP(&inf->threads, thread_index);
+      inferior_thread_exit(inf, thread, WEXITSTATUS(status));
       continue;
     }
 
@@ -109,8 +106,7 @@ static void *monitor(void *state) {
     if (ERROR(WIFSIGNALED(status))) {
       // FIXME: as above, we should be dealing with a _thread_ here
       DEBUG("TID %ld died with signal %d", (long)tid, WTERMSIG(status));
-      thread_exit(thread, 128 + WTERMSIG(status));
-      LIST_POP(&inf->threads, thread_index);
+      inferior_thread_exit(inf, thread, 128 + WTERMSIG(status));
       continue;
     }
 

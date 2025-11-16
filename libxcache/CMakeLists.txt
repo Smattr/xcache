@@ -32,6 +32,7 @@ add_library(libxcache
   src/inferior_output_new.c
   src/inferior_save.c
   src/inferior_start.c
+  src/inferior_thread_exit.c
   src/input_eq.c
   src/input_free.c
   src/input_is_valid.c

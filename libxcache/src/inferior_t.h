@@ -92,6 +92,14 @@ INTERNAL int inferior_save(inferior_t *proc, const xc_cmd_t cmd,
 /// @param inf Inferior whose threads to signal
 INTERNAL void inferior_kill(inferior_t *inf);
 
+/// mark a thread as exited and deallocate it
+///
+/// @param inf Inferior who owns the thread
+/// @param exiter Thread exiting
+/// @param exit_status The exit status of the thread
+INTERNAL void inferior_thread_exit(inferior_t *inf, thread_t *exiter,
+                                   int exit_status);
+
 /// deallocate resources associated with an inferior
 ///
 /// @param inf Inferior to free
