@@ -83,9 +83,11 @@ static void *monitor(void *state) {
 
     // locate which thread we are dealing with
     thread_t *thread = NULL;
-    for (size_t i = 0; i < LIST_SIZE(&inf->threads); ++i) {
-      if (LIST_AT(&inf->threads, i)->id == tid) {
-        thread = LIST_AT(&inf->threads, i);
+    size_t thread_index;
+    for (thread_index = 0; thread_index < LIST_SIZE(&inf->threads);
+         ++thread_index) {
+      if (LIST_AT(&inf->threads, thread_index)->id == tid) {
+        thread = LIST_AT(&inf->threads, thread_index);
         break;
       }
     }
@@ -99,6 +101,7 @@ static void *monitor(void *state) {
     if (WIFEXITED(status)) {
       DEBUG("TID %ld exited with %d", (long)tid, WEXITSTATUS(status));
       thread_exit(thread, WEXITSTATUS(status));
+      LIST_POP(&inf->threads, thread_index);
       continue;
     }
 
@@ -107,6 +110,7 @@ static void *monitor(void *state) {
       // FIXME: as above, we should be dealing with a _thread_ here
       DEBUG("TID %ld died with signal %d", (long)tid, WTERMSIG(status));
       thread_exit(thread, 128 + WTERMSIG(status));
+      LIST_POP(&inf->threads, thread_index);
       continue;
     }
 
@@ -290,8 +294,7 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
 
 done:
   // the monitor should have waited on and cleaned up all tracee threads
-  for (size_t i = 0; i < LIST_SIZE(&inf->threads); ++i)
-    assert(LIST_AT(&inf->threads, i)->id == 0 && "remaining tracee threads");
+  assert(LIST_SIZE(&inf->threads) == 0 && "remaining tracee threads");
 
   if (rc == 0 && status->exec_status == 0)
     status->exit_status = inf->exit_status;

@@ -18,6 +18,4 @@ void thread_exit(thread_t *thread, int exit_status) {
   if (thread->exit_status != NULL)
     *thread->exit_status = exit_status;
   thread->exit_status = NULL;
-
-  thread->id = 0;
 }

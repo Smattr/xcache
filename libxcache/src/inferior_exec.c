@@ -23,7 +23,7 @@
 #define ERROR unavailable_in_this_file
 #endif
 
-_Noreturn void inferior_exec(const inferior_t *inf, const xc_cmd_t cmd,
+_Noreturn void inferior_exec(inferior_t *inf, const xc_cmd_t cmd,
                              const char *spy) {
 
   assert(inf != NULL);
@@ -119,6 +119,7 @@ fail:
   // Also the claimed leaks are beyond just `LIST_AT(inf->threads, 0)->proc` and
   // things reachable from that. Nevertheless, this is enough to pacify it.
   thread_exit(LIST_AT(&inf->threads, 0), rc);
+  LIST_POP(&inf->threads, 0);
 
   exit(rc);
 }
