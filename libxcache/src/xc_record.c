@@ -91,6 +91,8 @@ static void *monitor(void *state) {
       }
     }
     if (ERROR(thread == NULL)) {
+      // FIXME: is this case actually possible any more or does this always
+      // indicate an xcache bug?
       DEBUG("TID %ld is not a child we are tracking", (long)tid);
       FAIL_TRACE(ESRCH);
       continue;
