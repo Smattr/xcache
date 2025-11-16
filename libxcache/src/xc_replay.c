@@ -13,7 +13,7 @@ int xc_replay(const xc_trace_t *trace) {
   int rc = 0;
 
   for (size_t i = 0; i < LIST_SIZE(&trace->outputs); ++i) {
-    if ((rc = output_replay(*LIST_AT(&trace->outputs, i), trace)))
+    if (ERROR((rc = output_replay(*LIST_AT(&trace->outputs, i), trace))))
       goto done;
   }
 
