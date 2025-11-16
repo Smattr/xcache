@@ -5,6 +5,7 @@
 #include "fs.h"
 #include "inferior_t.h"
 #include "list.h"
+#include "proc.h"
 #include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -37,15 +38,10 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     goto done;
   }
 
-  {
-    proc_t *const proc = calloc(1, sizeof(*proc));
-    if (ERROR(proc == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-
-    thread->proc = proc;
-    ++proc->reference_count;
+  thread->proc = proc_new(0); // ← 0 as placeholder
+  if (ERROR(thread->proc == NULL)) {
+    rc = ENOMEM;
+    goto done;
   }
 
   thread->fs = fs_new(cmd.cwd);

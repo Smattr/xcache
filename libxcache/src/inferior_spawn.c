@@ -3,6 +3,7 @@
 #include "fs.h"
 #include "inferior_t.h"
 #include "list.h"
+#include "proc.h"
 #include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -34,15 +35,13 @@ int inferior_spawn(inferior_t *inf, thread_t *parent, pid_t child) {
 
   // will the child have the same thread group (process ID) as the parent?
   if (parent->clone_flags.clone_thread) {
-    new->proc = parent->proc;
-    ++new->proc->reference_count;
+    new->proc = proc_acquire(parent->proc);
   } else {
-    new->proc = calloc(1, sizeof(*new->proc));
+    new->proc = proc_new(new->id);
     if (ERROR(new->proc == NULL)) {
       rc = ENOMEM;
       goto done;
     }
-    *new->proc = (proc_t){.id = new->id, .reference_count = 1};
   }
 
   // will the child have the same filesystem information as the parent?

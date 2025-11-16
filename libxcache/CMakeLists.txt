@@ -59,7 +59,7 @@ add_library(libxcache
   src/path_join.c
   src/path_make.c
   src/peek_str.c
-  src/proc_free.c
+  src/proc.c
   src/statflags_to_str.c
   src/syscall_to_str.c
   src/sysenter.c

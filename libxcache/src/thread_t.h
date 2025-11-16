@@ -3,22 +3,12 @@
 #include "../../common/compiler.h"
 #include "fd.h"
 #include "fs.h"
+#include "proc.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
 #include <xcache/cmd.h>
 #include <xcache/record.h>
-
-/// a process being traced
-typedef struct {
-  pid_t id; ///< process identifier
-
-  /// number of threads homed within this process
-  ///
-  /// The expectation is that this dropping to 0 represents the termination of
-  /// the process.
-  size_t reference_count;
-} proc_t;
 
 /// flags recorded from a `clone`/`clone3`/`fork`/`vfork`
 typedef struct {
@@ -82,11 +72,3 @@ INTERNAL int thread_detach(thread_t thread, int sig);
 /// @param thread Thread to update
 /// @param exit_status Exit status to save
 INTERNAL void thread_exit(thread_t *thread, int exit_status);
-
-/// deallocate resources for a process
-///
-/// This only frees up resources if there are no remaining threads referencing
-/// it.
-///
-/// @param proc Process to free
-INTERNAL void proc_free(proc_t *proc);

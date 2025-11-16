@@ -1,6 +1,7 @@
 #include "debug.h"
 #include "inferior_t.h"
 #include "list.h"
+#include "proc.h"
 #include "thread_t.h"
 #include <assert.h>
 #include <signal.h>
