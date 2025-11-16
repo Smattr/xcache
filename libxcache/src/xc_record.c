@@ -189,6 +189,22 @@ static void *monitor(void *state) {
       continue;
     }
 
+    // if this is a new child’s initial `SIGSTOP`, unblock it
+    assert(WIFSTOPPED(status));
+    if (WSTOPSIG(status) == SIGSTOP && thread->pending_sigstop) {
+      DEBUG("TID %ld’s initial SIGSTOP", (long)tid);
+      if (inf->mode == XC_SYSCALL) {
+        const int r = thread_syscall(*thread);
+        if (ERROR(r != 0))
+          FAIL_TRACE(r);
+      } else {
+        const int r = thread_cont(*thread);
+        if (ERROR(r != 0))
+          FAIL_TRACE(r);
+      }
+      continue;
+    }
+
     {
       const int sig = WSTOPSIG(status);
       DEBUG("TID %ld, stopped by signal %d", (long)tid, sig);

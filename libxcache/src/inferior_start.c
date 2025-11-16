@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <linux/version.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
@@ -98,6 +99,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     thread->proc->id = pid;
   }
 
+  thread->pending_sigstop = true;
   DEBUG("waiting for the child (TID %ld) to SIGSTOP itself…", (long)thread->id);
   {
     int status;
@@ -133,6 +135,8 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
       goto done;
     }
   }
+  assert(thread->pending_sigstop);
+  thread->pending_sigstop = false;
 
   // set our tracer preferences
   {

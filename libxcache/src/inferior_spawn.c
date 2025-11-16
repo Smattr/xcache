@@ -6,6 +6,7 @@
 #include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 int inferior_spawn(inferior_t *inf, thread_t *parent, pid_t child) {
@@ -65,6 +66,9 @@ int inferior_spawn(inferior_t *inf, thread_t *parent, pid_t child) {
       goto done;
     }
   }
+
+  // note that the new thread will start with a `SIGSTOP`
+  new->pending_sigstop = true;
 
   if (ERROR((rc = LIST_PUSH_BACK(&inf->threads, new))))
     goto done;

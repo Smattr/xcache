@@ -39,6 +39,7 @@ typedef struct {
   proc_t *proc;              ///< containing process
   fs_t *fs;                  ///< filesystem
   fds_t *fd;                 ///< file descriptor table
+  bool pending_sigstop : 1;  ///< do we need to acknowledge a future `SIGSTOP`?
   bool pending_sysexit : 1;  ///< is this thread mid-syscall?
   bool ignoring : 1;         ///< has the spy told us to ignore syscalls?
   clone_flags_t clone_flags; ///< options observed from last clone() syscall
