@@ -38,7 +38,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
 
   {
     proc_t *const proc = calloc(1, sizeof(*proc));
-    if (proc == NULL) {
+    if (ERROR(proc == NULL)) {
       rc = ENOMEM;
       goto done;
     }
