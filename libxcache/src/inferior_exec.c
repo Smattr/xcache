@@ -113,12 +113,11 @@ fail:
     rc = 126;
   }
 
-  // I do not understand why, but ASan considers allocations made in our caller
-  // (`inferior_start`) to have leaked unless we free the initial `proc_t`. We
-  // are in a child process while these allocations were made in our parent.
-  // Also the claimed leaks are beyond just `LIST_AT(inf->threads, 0)->proc` and
-  // things reachable from that. Nevertheless, this is enough to pacify it.
-  inferior_thread_exit(inf, *LIST_AT(&inf->threads, 0), rc);
-
-  exit(rc);
+  // Reaching here with LeakSanitizer enabled results in failures reported when
+  // we exit. It is not clear to me why some allocations are reported as leaked
+  // and others not. To avoid all of this confusion, use `_Exit` to avoid
+  // LeakSanitizer’s checks.
+  (void)fflush(stdout);
+  (void)fflush(stderr);
+  _Exit(rc);
 }
