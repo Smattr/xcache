@@ -201,7 +201,7 @@ int sysenter_fork(inferior_t *inf, thread_t *thread) {
   assert(thread != NULL);
 
   assert(!thread->clone_flags.set &&
-         "thread called `clone` while another clone was still in progress");
+         "thread called `fork` while another clone was still in progress");
 
   // One might think it is possible to ignore `fork` and just infer its known
   // behaviour when seeing a `PTRACE_EVENT_FORK`. However, it turns out that a
