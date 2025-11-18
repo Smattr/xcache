@@ -219,3 +219,28 @@ int sysenter_fork(inferior_t *inf, thread_t *thread) {
 
   return 0;
 }
+
+int sysenter_vfork(inferior_t *inf, thread_t *thread) {
+
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  assert(!thread->clone_flags.set &&
+         "thread called `vfork` while another clone was still in progress");
+
+  // One might think it is possible to ignore `vfork` and just infer its known
+  // behaviour when seeing a `PTRACE_EVENT_VFORK`. However, it turns out that a
+  // `clone`/`clone3` with the set of flags that correspond to `vfork` causes a
+  // `PTRACE_EVENT_VFORK` not a `PTRACE_EVENT_CLONE`. That is, when seeing a
+  // `PTRACE_EVENT_VFORK` we do not know it was definitely triggered by a
+  // `vfork`. It would be possible to infer `flags == CLONE_THREAD` when seeing
+  // a `PTRACE_EVENT_VFORK` with no saved flags. But this seems like a risky
+  // design that would easily mask xcache bugs.
+
+  // `vfork` unshares everything except the virtual address space
+  const uint64_t flags = CLONE_THREAD;
+
+  core(inf, thread, flags);
+
+  return 0;
+}

@@ -9,9 +9,10 @@ static void core(thread_t *thread) {
   assert(thread != NULL);
 
   // Note that this thread no longer has a pending clone, regardless of whether
-  // the `clone`/`clone3` actually succeeded. This is really only necessary in
-  // the case where the`clone`/`clone3` failed, leaving us having never seen a
-  // `PTRACE_EVENT_CLONE` but the thread still having clone flags saved.
+  // the `clone`/`clone3`/`fork`/`vfork` actually succeeded. This is really only
+  // necessary in the case where the`clone`/`clone3`/`fork`/`vfork` failed,
+  // leaving us having never seen a `PTRACE_EVENT_CLONE`/`PTRACE_EVENT_FORK`/
+  // `PTRACE_EVENT_VFORK` but the thread still having clone flags saved.
   thread->clone_flags = (clone_flags_t){0};
 }
 
@@ -38,6 +39,17 @@ int sysexit_clone3(inferior_t *inf, thread_t *thread) {
 }
 
 int sysexit_fork(inferior_t *inf, thread_t *thread) {
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  (void)inf;
+
+  core(thread);
+
+  return 0;
+}
+
+int sysexit_vfork(inferior_t *inf, thread_t *thread) {
   assert(inf != NULL);
   assert(thread != NULL);
 
