@@ -33,6 +33,7 @@ add_library(libxcache
   src/inferior_save.c
   src/inferior_spawn.c
   src/inferior_start.c
+  src/inferior_thread_continue.c
   src/inferior_thread_exit.c
   src/input_eq.c
   src/input_free.c
@@ -77,11 +78,8 @@ add_library(libxcache
   src/tee_cancel.c
   src/tee_join.c
   src/tee_new.c
-  src/thread_cont.c
   src/thread_detach.c
   src/thread_exit.c
-  src/thread_signal.c
-  src/thread_syscall.c
   src/trace_load.c
   src/trace_save.c
   src/xc_cmd_eq.c

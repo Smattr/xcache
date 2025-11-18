@@ -101,6 +101,15 @@ INTERNAL int inferior_save(inferior_t *proc, const xc_cmd_t cmd,
 /// @param inf Inferior whose threads to signal
 INTERNAL void inferior_kill(inferior_t *inf);
 
+/// resume a stopped thread
+///
+/// @param inf Home of the thread
+/// @param subject Thread to resume
+/// @param sig Optional signal to forward during resumption (0 == none)
+/// @return 0 on success or an errno on failure
+INTERNAL int inferior_thread_continue(const inferior_t *inf,
+                                      const thread_t *subject, int sig);
+
 /// mark a thread as exited and deallocate it
 ///
 /// @param inf Inferior who owns the thread

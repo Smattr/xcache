@@ -36,28 +36,6 @@ typedef struct {
   int *exit_status;          ///< where to write exit status on completion
 } thread_t;
 
-/// resume a stopped thread, running it until the next event
-///
-/// @param thread Thread to resume
-/// @return 0 on success or an errno on failure
-INTERNAL int thread_cont(thread_t thread);
-
-/// resume a stopped thread, forwarding it the given signal
-///
-/// If `sig` is 0, no signal will be forwarded.
-///
-/// @param thread Thread to resume
-/// @param sig Signal to forward
-/// @param cont Use `PTRACE_CONT` to resume (instead of `PTRACE_SYSCALL`)?
-/// @return 0 on success or an errno on failure
-INTERNAL int thread_signal(thread_t thread, int sig, bool cont);
-
-/// resume a stopped thread, running it until the next syscall
-///
-/// @param thread Thread to resume
-/// @return 0 on success or an errno on failure
-INTERNAL int thread_syscall(thread_t thread);
-
 /// resume a thread, detaching from tracing it
 ///
 /// After a successful call to this function, the target thread remains our

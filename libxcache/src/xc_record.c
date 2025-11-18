@@ -139,8 +139,7 @@ static void *monitor(void *state) {
       }
 
       {
-        const int r = inf->mode == XC_SYSCALL ? thread_syscall(*thread)
-                                              : thread_cont(*thread);
+        const int r = inferior_thread_continue(inf, thread, 0);
         if (ERROR(r != 0))
           FAIL_TRACE(r);
       }
@@ -179,15 +178,9 @@ static void *monitor(void *state) {
     // we do not care about exec events
     if (is_exec(status)) {
       DEBUG("TID %ld, PTRACE_EVENT_EXEC", (long)tid);
-      if (inf->mode == XC_SYSCALL) {
-        const int r = thread_syscall(*thread);
-        if (ERROR(r != 0))
-          FAIL_TRACE(r);
-      } else {
-        const int r = thread_cont(*thread);
-        if (ERROR(r != 0))
-          FAIL_TRACE(r);
-      }
+      const int r = inferior_thread_continue(inf, thread, 0);
+      if (ERROR(r != 0))
+        FAIL_TRACE(r);
       continue;
     }
 
@@ -195,22 +188,16 @@ static void *monitor(void *state) {
     assert(WIFSTOPPED(status));
     if (WSTOPSIG(status) == SIGSTOP && thread->pending_sigstop) {
       DEBUG("TID %ld’s initial SIGSTOP", (long)tid);
-      if (inf->mode == XC_SYSCALL) {
-        const int r = thread_syscall(*thread);
-        if (ERROR(r != 0))
-          FAIL_TRACE(r);
-      } else {
-        const int r = thread_cont(*thread);
-        if (ERROR(r != 0))
-          FAIL_TRACE(r);
-      }
+      const int r = inferior_thread_continue(inf, thread, 0);
+      if (ERROR(r != 0))
+        FAIL_TRACE(r);
       continue;
     }
 
     {
       const int sig = WSTOPSIG(status);
       DEBUG("TID %ld, stopped by signal %d", (long)tid, sig);
-      const int r = thread_signal(*thread, sig, inf->mode != XC_SYSCALL);
+      const int r = inferior_thread_continue(inf, thread, sig);
       if (ERROR(r != 0))
         FAIL_TRACE(r);
     }

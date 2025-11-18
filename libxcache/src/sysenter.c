@@ -31,13 +31,8 @@ int sysenter(inferior_t *inf, thread_t *thread) {
       }                                                                        \
                                                                                \
       /* restart the process */                                                \
-      if (inf->mode == XC_SYSCALL) {                                           \
-        if (ERROR((rc = thread_syscall(*thread))))                             \
-          goto done;                                                           \
-      } else {                                                                 \
-        if (ERROR((rc = thread_cont(*thread))))                                \
-          goto done;                                                           \
-      }                                                                        \
+      if (ERROR((rc = inferior_thread_continue(inf, thread, 0))))              \
+        goto done;                                                             \
                                                                                \
       goto done;                                                               \
     }                                                                          \
@@ -52,13 +47,8 @@ int sysenter(inferior_t *inf, thread_t *thread) {
           syscall_no);
 
     // restart the process
-    if (inf->mode == XC_SYSCALL) {
-      if (ERROR((rc = thread_syscall(*thread))))
-        goto done;
-    } else {
-      if (ERROR((rc = thread_cont(*thread))))
-        goto done;
-    }
+    if (ERROR((rc = inferior_thread_continue(inf, thread, 0))))
+      goto done;
 
     goto done;
   }
@@ -68,7 +58,7 @@ int sysenter(inferior_t *inf, thread_t *thread) {
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
       DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
-      if (ERROR((rc = thread_syscall(*thread)))) {                             \
+      if (ERROR((rc = inferior_thread_continue(inf, thread, 0)))) {            \
         goto done;                                                             \
       }                                                                        \
       goto done;                                                               \

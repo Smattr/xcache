@@ -155,13 +155,8 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
   }
 
   // resume the child
-  if (inf->mode == XC_SYSCALL) {
-    if (ERROR((rc = thread_syscall(*thread))))
-      goto done;
-  } else {
-    if (ERROR((rc = thread_cont(*thread))))
-      goto done;
-  }
+  if (ERROR((rc = inferior_thread_continue(inf, thread, 0))))
+    goto done;
 
   if (ERROR((rc = LIST_PUSH_BACK(&inf->threads, thread))))
     goto done;
