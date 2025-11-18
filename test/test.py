@@ -40,16 +40,20 @@ def strace(args: list[Path | str], cwd: Path | None = None):
 @pytest.mark.parametrize(
     "replay", (pytest.param(False, id="noreplay"), pytest.param(True, id="replay"))
 )
-def test_fork(debug: bool, record: bool, replay: bool, tmp_path: Path):
+@pytest.mark.parametrize("forker", ("forker", "forker-fork"))
+def test_fork(debug: bool, record: bool, replay: bool, forker: str, tmp_path: Path):
     """
     can we handle something that forks?
     """
+
+    if record and debug and forker == "forker-fork":
+        pytest.xfail("cannot record fork")
 
     # First, `strace` the process we are about to test. If the test fails, the
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["forker"], tmp_path)
+    strace([forker], tmp_path)
     (tmp_path / "foo").unlink()
 
     args = ["xcache"]
@@ -66,7 +70,7 @@ def test_fork(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "forker"]
+    args += ["--", forker]
 
     p = subprocess.run(
         args,
