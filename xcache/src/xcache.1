@@ -22,7 +22,8 @@ compiler.
 \fB\-\-debug\fR[\fB=\fR\fIpath\fR]
 .RS
 Enable debugging output. Debugging messages will be printed to either a file at
-the path given or stderr if a path is not provided.
+the path given or stderr if a path is not provided. This option overrides any
+log indicated by \fB$XCACHE_LOGFILE\fR.
 .RE
 .PP
 \fB\-\-dir\fR \fIPATH\fR or \fB\-d\fR \fIPATH\fR
@@ -88,6 +89,13 @@ If this is set, record and replay will both be disabled. That is, xcache will
 just call the command given without attempting record or replay. Passing any of
 \fB\-\-disable\fR, \fB\-\-read\-only\fR, \fB\-\-read\-write\fR, or
 \fB\-\-write\-only\fR overrides the effect of \fB$XCACHE_DISABLE\fR.
+.RE
+.PP
+\fBXCACHE_LOGFILE\fR
+.RS
+If this is set, \fB\-\-debug\fR logging is enabled and log messages are directed
+to the path given by this variable. In contrast to a log configured by
+\fB\-\-debug\fR, the log file is appended to instead of overwritten.
 .RE
 .PP
 \fBXCACHE_READONLY\fR

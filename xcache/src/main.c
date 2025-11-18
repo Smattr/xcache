@@ -35,6 +35,21 @@ static int parse_args(int argc, char **argv) {
     replay_enabled = false;
   }
 
+  // setup a log file default if requested
+  {
+    const char *const log = getenv("XCACHE_LOGFILE");
+    if (log != NULL) {
+      FILE *const f = fopen(log, "a");
+      if (f == NULL) {
+        fprintf(stderr, "failed to open %s ($XCACHE_LOGFILE): %s\n", log,
+                strerror(errno));
+        exit(EXIT_FAILURE);
+      }
+      debug = true;
+      debug_file = f;
+    }
+  }
+
   while (true) {
     const struct option opts[] = {
         {"debug", optional_argument, 0, 130},
