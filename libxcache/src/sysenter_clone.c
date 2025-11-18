@@ -213,7 +213,7 @@ int sysenter_fork(inferior_t *inf, thread_t *thread) {
   // that would easily mask xcache bugs.
 
   // `fork` unshares everything
-  uint64_t flags = 0;
+  const uint64_t flags = 0;
 
   core(inf, thread, flags);
 
