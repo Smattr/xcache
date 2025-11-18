@@ -23,6 +23,7 @@ static xc_db_t *db;
 static xc_cmd_t cmd;
 
 bool debug;
+FILE *debug_file;
 
 static int parse_args(int argc, char **argv) {
 
@@ -36,7 +37,7 @@ static int parse_args(int argc, char **argv) {
 
   while (true) {
     const struct option opts[] = {
-        {"debug", no_argument, 0, 130},
+        {"debug", optional_argument, 0, 130},
         {"dir", required_argument, 0, 'd'},
         {"disable", no_argument, 0, 131},
         {"help", no_argument, 0, 'h'},
@@ -59,7 +60,20 @@ static int parse_args(int argc, char **argv) {
     switch (c) {
 
     case 130: // --debug
-      xc_set_debug(stderr);
+      if (debug_file != NULL)
+        (void)fclose(debug_file);
+      debug_file = NULL;
+      if (optarg == NULL) {
+        xc_set_debug(stderr);
+      } else {
+        FILE *const f = fopen(optarg, "w");
+        if (f == NULL) {
+          fprintf(stderr, "failed to open %s: %s\n", optarg, strerror(errno));
+          exit(EXIT_FAILURE);
+        }
+        debug_file = f;
+        xc_set_debug(debug_file);
+      }
       debug = true;
       break;
 

@@ -19,9 +19,10 @@ If you are familiar with
 xcache tries to do the same thing, but for any program, not just your C
 compiler.
 .SH OPTIONS
-\fB\-\-debug\fR
+\fB\-\-debug\fR[\fB=\fR\fIpath\fR]
 .RS
-Enable debugging output. Debugging messages will be printed to stderr.
+Enable debugging output. Debugging messages will be printed to either a file at
+the path given or stderr if a path is not provided.
 .RE
 .PP
 \fB\-\-dir\fR \fIPATH\fR or \fB\-d\fR \fIPATH\fR
