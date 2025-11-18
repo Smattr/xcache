@@ -1,3 +1,6 @@
+/// @file
+/// @brief Version of forker.c that uses the `fork` syscall instead of `clone`
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
