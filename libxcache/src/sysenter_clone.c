@@ -194,3 +194,28 @@ int sysenter_clone3(inferior_t *inf, thread_t *thread) {
 done:
   return rc;
 }
+
+int sysenter_fork(inferior_t *inf, thread_t *thread) {
+
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  assert(!thread->clone_flags.set &&
+         "thread called `clone` while another clone was still in progress");
+
+  // One might think it is possible to ignore `fork` and just infer its known
+  // behaviour when seeing a `PTRACE_EVENT_FORK`. However, it turns out that a
+  // `clone`/`clone3` with the set of flags that correspond to `fork` causes a
+  // `PTRACE_EVENT_FORK` not a `PTRACE_EVENT_CLONE`. That is, when seeing a
+  // `PTRACE_EVENT_FORK` we do not know it was definitely triggered by a `fork`.
+  // It would be possible to infer `flags == 0` when seeing a
+  // `PTRACE_EVENT_FORK` with no saved flags. But this seems like a risky design
+  // that would easily mask xcache bugs.
+
+  // `fork` unshares everything
+  uint64_t flags = 0;
+
+  core(inf, thread, flags);
+
+  return 0;
+}

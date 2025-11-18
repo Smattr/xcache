@@ -36,3 +36,14 @@ int sysexit_clone3(inferior_t *inf, thread_t *thread) {
 
   return 0;
 }
+
+int sysexit_fork(inferior_t *inf, thread_t *thread) {
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  (void)inf;
+
+  core(thread);
+
+  return 0;
+}

@@ -97,6 +97,9 @@ int sysexit(inferior_t *inf, thread_t *thread) {
 #ifdef __NR_clone
   DO(clone);
 #endif
+#ifdef __NR_fork
+  DO(fork);
+#endif
 #ifdef __NR_clone3
   DO(clone3);
 #endif

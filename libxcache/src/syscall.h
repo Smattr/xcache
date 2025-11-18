@@ -18,6 +18,13 @@ INTERNAL int sysenter(inferior_t *inf, thread_t *thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int sysenter_execve(inferior_t *inf, thread_t *thread);
 
+/// handle start of `fork`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysenter_fork(inferior_t *inf, thread_t *thread);
+
 /// handle start of `ioctl`
 ///
 /// @param inf Tracee to which the target belongs
@@ -80,6 +87,13 @@ INTERNAL int sysexit_clone3(inferior_t *inf, thread_t *thread);
 /// @param thread Caller thread
 /// @return 0 on success or an errno on failure
 INTERNAL int sysexit_close(inferior_t *inf, thread_t *thread);
+
+/// handle end of `fork`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysexit_fork(inferior_t *inf, thread_t *thread);
 
 /// handle end of `newfstatat`
 ///
