@@ -7,6 +7,7 @@
 /// an open file descriptor in a subprocess
 typedef struct {
   char *path;
+  // TODO: close-on-exec
 } fd_t;
 
 /// a file descriptor table
