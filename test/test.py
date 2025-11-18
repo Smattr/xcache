@@ -40,11 +40,14 @@ def strace(args: list[Path | str], cwd: Path | None = None):
 @pytest.mark.parametrize(
     "replay", (pytest.param(False, id="noreplay"), pytest.param(True, id="replay"))
 )
-@pytest.mark.parametrize("forker", ("forker", "forker-fork"))
+@pytest.mark.parametrize("forker", ("forker", "forker-fork", "forker-vfork"))
 def test_fork(debug: bool, record: bool, replay: bool, forker: str, tmp_path: Path):
     """
     can we handle something that forks?
     """
+
+    if record and debug and forker == "forker-vfork":
+        pytest.xfail("cannot handle vfork")
 
     # First, `strace` the process we are about to test. If the test fails, the
     # `strace` output will show what syscalls it made which may aid debugging.

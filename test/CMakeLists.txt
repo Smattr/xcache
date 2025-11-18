@@ -1,5 +1,6 @@
 add_executable(forker forker.c)
 add_executable(forker-fork forker-fork.c)
+add_executable(forker-vfork forker-vfork.c)
 add_executable(my-echo my-echo.c)
 add_executable(nop nop.c)
 add_executable(print-stderr print-stderr.c)
@@ -34,6 +35,7 @@ add_custom_target(check
 add_dependencies(check
   forker
   forker-fork
+  forker-vfork
   my-echo
   nop
   print-stderr
