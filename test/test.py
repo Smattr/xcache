@@ -46,9 +46,6 @@ def test_fork(debug: bool, record: bool, replay: bool, forker: str, tmp_path: Pa
     can we handle something that forks?
     """
 
-    if record and replay and forker == "forker-vfork":
-        pytest.xfail("cannot handle vfork")
-
     # First, `strace` the process we are about to test. If the test fails, the
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic

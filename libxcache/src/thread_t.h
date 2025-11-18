@@ -48,8 +48,9 @@ INTERNAL int thread_cont(thread_t thread);
 ///
 /// @param thread Thread to resume
 /// @param sig Signal to forward
+/// @param cont Use `PTRACE_CONT` to resume (instead of `PTRACE_SYSCALL`)?
 /// @return 0 on success or an errno on failure
-INTERNAL int thread_signal(thread_t thread, int sig);
+INTERNAL int thread_signal(thread_t thread, int sig, bool cont);
 
 /// resume a stopped thread, running it until the next syscall
 ///

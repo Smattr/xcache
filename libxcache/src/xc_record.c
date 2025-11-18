@@ -210,7 +210,7 @@ static void *monitor(void *state) {
     {
       const int sig = WSTOPSIG(status);
       DEBUG("TID %ld, stopped by signal %d", (long)tid, sig);
-      const int r = thread_signal(*thread, sig);
+      const int r = thread_signal(*thread, sig, inf->mode != XC_SYSCALL);
       if (ERROR(r != 0))
         FAIL_TRACE(r);
     }
