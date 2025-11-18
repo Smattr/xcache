@@ -200,6 +200,14 @@ int main(int argc, char **argv) {
   if ((rc = parse_args(argc, argv)))
     goto done;
 
+  // if we are debug logging to a file, print a header identify the creator
+  if (debug_file != NULL) {
+    putc('+', debug_file);
+    for (int i = 0; i < argc; ++i)
+      fprintf(debug_file, " %s", argv[i]);
+    putc('\n', debug_file);
+  }
+
   if (replay_enabled || record_enabled) {
     assert(cache_dir != NULL);
 
