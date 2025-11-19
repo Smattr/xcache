@@ -116,6 +116,28 @@ done:
   return ret;
 }
 
+int fds_unshare(fds_t **fds) {
+  assert(fds != NULL);
+
+  fds_t *const src = *fds;
+  assert(src->ref_count > 0 &&
+         "attempting to unshare unused file descriptor table");
+
+  // if the table is already not shared, nothing to be done
+  if (src->ref_count == 1)
+    return 0;
+
+  fds_t *const dst = fds_dup(src);
+  if (ERROR(dst == NULL))
+    return ENOMEM;
+
+  // swap to the new, unshared table
+  fds_release(src);
+  *fds = dst;
+
+  return 0;
+}
+
 int fd_open(fds_t *table, int fd, const char *path) {
   assert(table != NULL);
   assert(fd >= 0);

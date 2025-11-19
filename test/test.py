@@ -512,9 +512,6 @@ def test_uncacheable(debug: bool, record: bool, replay: bool, tmp_path: Path):
 def test_exec_dups_fds(debug: bool, record: bool, replay: bool, tmp_path: Path):
     """does xcache recognise that `execve` unshares the file descriptor table?"""
 
-    if debug and record:
-        pytest.xfail("cannot trace unsharing FDs")
-
     # First, `strace` the process we are about to test. If the test fails, the
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic

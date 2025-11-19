@@ -165,9 +165,15 @@ static void *monitor(void *state) {
       continue;
     }
 
-    // we do not care about exec events
     if (is_exec(status)) {
       DEBUG("TID %ld, PTRACE_EVENT_EXEC", (long)tid);
+      // if the thread has a shared file descriptor table, we need to now
+      // duplicate it
+      {
+        const int r = fds_unshare(&thread->fd);
+        if (ERROR(r != 0))
+          FAIL_TRACE(r);
+      }
       const int r = inferior_thread_continue(inf, thread, 0);
       if (ERROR(r != 0))
         FAIL_TRACE(r);

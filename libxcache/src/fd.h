@@ -59,6 +59,17 @@ INTERNAL fds_t *fds_release(fds_t *fd);
 /// @return Copy of `src` or `NULL` on out-of-memory
 INTERNAL fds_t *fds_dup(fds_t *src);
 
+/// stop sharing a file descriptor table
+///
+/// The table passed to this function is assumed to currently be in use
+/// (`ref_count > 0`). If it is already not shared between multiple threads
+/// (`ref_count == 1`), this is a no-op. Otherwise its reference count is
+/// decremented, it is copied, and the copy is installed to `*fds`.
+///
+/// @param fds [inout] Table to unshare and copy
+/// @return 0 on success or an errno on failure
+INTERNAL int fds_unshare(fds_t **fds);
+
 /// register a new open file descriptor
 ///
 /// @param table File descriptor table to install into
