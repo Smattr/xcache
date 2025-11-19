@@ -49,7 +49,7 @@ int sysenter_execve(inferior_t *inf, thread_t *thread) {
   saw = (input_t){0};
 
   // infer an access() with X_OK from execve()
-  if (ERROR((rc = input_new_access(&saw, 0, abs, X_OK))))
+  if (ERROR((rc = input_new_access(&saw, &(int){0}, abs, X_OK))))
     goto done;
   if (ERROR((rc = inferior_input_new(inf, saw))))
     goto done;

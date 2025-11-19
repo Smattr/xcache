@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int input_new_access(input_t *input, int expected_err, const char *path,
+int input_new_access(input_t *input, const int *expected_err, const char *path,
                      int flags) {
 
   assert(input != NULL);
@@ -26,17 +26,17 @@ int input_new_access(input_t *input, int expected_err, const char *path,
 
   {
     const int r = access(path, flags);
-    if (ERROR(r < 0 && errno != expected_err)) {
+    if (ERROR(r < 0 && expected_err != NULL && errno != *expected_err)) {
       rc = ECHILD;
       goto done;
     }
-    if (ERROR(r == 0 && expected_err != 0)) {
+    if (ERROR(r == 0 && expected_err != NULL && *expected_err != 0)) {
       rc = ECHILD;
       goto done;
     }
+    i.err = r == 0 ? 0 : errno;
   }
 
-  i.err = expected_err;
   i.access.flags = flags;
 
   *input = i;

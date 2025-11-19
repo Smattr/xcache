@@ -57,7 +57,7 @@ int sysexit_access(inferior_t *inf, thread_t *thread) {
         path, flags, err == 0 ? 0 : -1, err);
 
   // record it
-  if (ERROR((rc = input_new_access(&saw, err, abs, (int)flags))))
+  if (ERROR((rc = input_new_access(&saw, &err, abs, (int)flags))))
     goto done;
 
   if (ERROR((rc = inferior_input_new(inf, saw))))

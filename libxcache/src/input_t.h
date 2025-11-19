@@ -46,11 +46,11 @@ typedef struct {
 /// create an input for an access() call
 ///
 /// @param input [out] Created input on success
-/// @param expected_err Expected error result
+/// @param expected_err Optional expected error result
 /// @param path Absolute path to the target file/directory
 /// @param flags Flags to access()
 /// @return 0 on success or an errno on failure
-INTERNAL int input_new_access(input_t *input, int expected_err,
+INTERNAL int input_new_access(input_t *input, const int *expected_err,
                               const char *path, int flags);
 
 /// create an input for a read open() call
