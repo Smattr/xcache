@@ -101,7 +101,7 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
     }
 
     // record it
-    if (ERROR((rc = input_new_read(&seen_read, err, abs))))
+    if (ERROR((rc = input_new_read(&seen_read, &err, abs))))
       goto done;
 
     if (ERROR((rc = inferior_input_new(inf, seen_read))))
