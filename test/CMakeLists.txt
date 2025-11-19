@@ -1,3 +1,5 @@
+add_executable(clone-exec-with-fd clone-exec-with-fd.c)
+add_executable(close-fd close-fd.c)
 add_executable(forker forker.c)
 add_executable(forker-fork forker-fork.c)
 add_executable(forker-vfork forker-vfork.c)
