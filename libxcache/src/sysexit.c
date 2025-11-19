@@ -24,10 +24,6 @@ int sysexit(inferior_t *inf, thread_t *thread) {
     DEBUG("ignoring %s«%lu» on spy’s instruction", syscall_to_str(syscall_no),
           syscall_no);
 
-    // restart the process
-    if (ERROR((rc = inferior_thread_continue(inf, thread, 0))))
-      goto done;
-
     goto done;
   }
 
@@ -37,9 +33,6 @@ int sysexit(inferior_t *inf, thread_t *thread) {
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
       DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
-      if (ERROR((rc = inferior_thread_continue(inf, thread, 0)))) {            \
-        goto done;                                                             \
-      }                                                                        \
       goto done;                                                               \
     }                                                                          \
   } while (0);
@@ -51,10 +44,6 @@ int sysexit(inferior_t *inf, thread_t *thread) {
       if (ERROR((rc = sysexit_##call(inf, thread)))) {                         \
         goto done;                                                             \
       }                                                                        \
-                                                                               \
-      /* restart the process */                                                \
-      if (ERROR((rc = inferior_thread_continue(inf, thread, 0))))              \
-        goto done;                                                             \
                                                                                \
       goto done;                                                               \
     }                                                                          \
@@ -94,6 +83,14 @@ int sysexit(inferior_t *inf, thread_t *thread) {
 #undef DO
 
   rc = ENOTSUP;
-done:
+done: {
+  // restart the process
+  int r = inferior_thread_continue(inf, thread, 0);
+  if (ERROR(r != 0)) {
+    if (rc == 0)
+      rc = r;
+  }
+}
+
   return rc;
 }

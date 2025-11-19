@@ -78,7 +78,6 @@ add_library(libxcache
   src/tee_cancel.c
   src/tee_join.c
   src/tee_new.c
-  src/thread_detach.c
   src/thread_exit.c
   src/trace_load.c
   src/trace_save.c

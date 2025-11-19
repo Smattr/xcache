@@ -113,14 +113,6 @@ static void *monitor(void *state) {
       continue;
     }
 
-    // if anything else happens, but we have already failed, release this child
-    if (*st->trace_status != 0) {
-      const int signal = is_signal(status) ? WSTOPSIG(status) : 0;
-      // ignore failure as there is nothing we can do about it
-      (void)thread_detach(*thread, signal);
-      continue;
-    }
-
     if (is_fork(status)) {
       DEBUG("child forked");
 
@@ -159,14 +151,12 @@ static void *monitor(void *state) {
         const int r = sysexit(inf, thread);
         if (ERROR(r != 0)) {
           FAIL_TRACE(r);
-          (void)thread_detach(*thread, 0);
           continue;
         }
       } else {
         const int r = sysenter(inf, thread);
         if (ERROR(r != 0)) {
           FAIL_TRACE(r);
-          (void)thread_detach(*thread, 0);
           continue;
         }
       }

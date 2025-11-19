@@ -30,10 +30,6 @@ int sysenter(inferior_t *inf, thread_t *thread) {
         goto done;                                                             \
       }                                                                        \
                                                                                \
-      /* restart the process */                                                \
-      if (ERROR((rc = inferior_thread_continue(inf, thread, 0))))              \
-        goto done;                                                             \
-                                                                               \
       goto done;                                                               \
     }                                                                          \
   } while (0)
@@ -46,10 +42,6 @@ int sysenter(inferior_t *inf, thread_t *thread) {
     DEBUG("ignoring %s«%lu» on spy’s instruction", syscall_to_str(syscall_no),
           syscall_no);
 
-    // restart the process
-    if (ERROR((rc = inferior_thread_continue(inf, thread, 0))))
-      goto done;
-
     goto done;
   }
 
@@ -58,9 +50,6 @@ int sysenter(inferior_t *inf, thread_t *thread) {
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
       DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
-      if (ERROR((rc = inferior_thread_continue(inf, thread, 0)))) {            \
-        goto done;                                                             \
-      }                                                                        \
       goto done;                                                               \
     }                                                                          \
   } while (0);
@@ -88,6 +77,14 @@ int sysenter(inferior_t *inf, thread_t *thread) {
 #endif
 
   rc = ENOTSUP;
-done:
+done: {
+  int r = inferior_thread_continue(inf, thread, 0);
+  /* restart the process */
+  if (ERROR(r != 0)) {
+    if (rc == 0)
+      rc = r;
+  }
+}
+
   return rc;
 }
