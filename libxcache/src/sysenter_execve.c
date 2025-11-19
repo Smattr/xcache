@@ -42,7 +42,7 @@ int sysenter_execve(inferior_t *inf, thread_t *thread) {
   DEBUG("TID %ld, execve(\"%s\", …)", (long)thread->id, path);
 
   // infer a read() from execve()
-  if (ERROR((rc = input_new_read(&saw, &(int){0}, abs))))
+  if (ERROR((rc = input_new_read(&saw, NULL, abs))))
     goto done;
   if (ERROR((rc = inferior_input_new(inf, saw))))
     goto done;
