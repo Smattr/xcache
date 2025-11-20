@@ -37,6 +37,8 @@ add_custom_target(check
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 add_dependencies(check
+  clone-exec-with-fd
+  close-fd
   close-fd2
   close-on-exec
   forker
