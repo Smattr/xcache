@@ -2,12 +2,13 @@
 
 #include "../../common/compiler.h"
 #include "list.h"
+#include <stdbool.h>
 #include <stddef.h>
 
 /// an open file descriptor in a subprocess
 typedef struct {
   char *path;
-  // TODO: close-on-exec
+  bool close_on_exec : 1; ///< was `O_CLOEXEC` set?
 } fd_t;
 
 /// a file descriptor table

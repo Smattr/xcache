@@ -595,9 +595,6 @@ def test_exec_dups_fds(debug: bool, record: bool, replay: bool, tmp_path: Path):
 def test_close_on_exec(debug: bool, record: bool, replay: bool, tmp_path: Path):
     """does xcache understand semantics of the close-on-exec flag?"""
 
-    if debug and record:
-        pytest.xfail("cannot record close-on-exec semantics")
-
     # First, `strace` the process we are about to test. If the test fails, the
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic

@@ -91,6 +91,8 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
 
     if (ERROR((rc = fd_open(thread->fd, (int)ret, abs))))
       goto done;
+
+    fd_at(thread->fd, (int)ret)->close_on_exec = !!(flags & O_CLOEXEC);
   }
 
   // discard the flags that have no relevance to us

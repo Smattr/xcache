@@ -105,6 +105,7 @@ fds_t *fds_dup(const fds_t *src) {
       continue;
     if (ERROR(fd_open(dst, (int)i, s->path) != 0))
       goto done;
+    fd_at(dst, (int)i)->close_on_exec = s->close_on_exec;
   }
 
   ret = dst;
@@ -123,16 +124,24 @@ int fds_unshare(fds_t **fds) {
   assert(src->ref_count > 0 &&
          "attempting to unshare unused file descriptor table");
 
-  // if the table is already not shared, nothing to be done
-  if (src->ref_count == 1)
-    return 0;
-
-  fds_t *const dst = fds_dup(src);
+  // if the table is already not shared, it does not need to be copied
+  fds_t *const dst = src->ref_count == 1 ? src : fds_dup(src);
   if (ERROR(dst == NULL))
     return ENOMEM;
 
+  // assume we are exec-ing and close any close-on-exec descriptors
+  for (size_t i = 0; i < LIST_SIZE(&dst->fds); ++i) {
+    fd_t *const f = *LIST_AT(&dst->fds, i);
+    if (f == NULL)
+      continue;
+    if (!f->close_on_exec)
+      continue;
+    fd_close(dst, (int)i);
+  }
+
   // swap to the new, unshared table
-  fds_release(src);
+  if (dst != src)
+    fds_release(src);
   *fds = dst;
 
   return 0;
