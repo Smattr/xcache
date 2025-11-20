@@ -577,3 +577,89 @@ def test_exec_dups_fds(debug: bool, record: bool, replay: bool, tmp_path: Path):
         else:
             assert "record failed" not in output, "record incorrectly enabled"
             assert "record succeeded" not in output, "record incorrectly enabled"
+
+
+@pytest.mark.parametrize(
+    "debug", (pytest.param(False, id="nodebug"), pytest.param(True, id="debug"))
+)
+@pytest.mark.parametrize(
+    "record",
+    (
+        pytest.param(False, id="norecord"),
+        pytest.param(True, id="record"),
+    ),
+)
+@pytest.mark.parametrize(
+    "replay", (pytest.param(False, id="noreplay"), pytest.param(True, id="replay"))
+)
+def test_close_on_exec(debug: bool, record: bool, replay: bool, tmp_path: Path):
+    """does xcache understand semantics of the close-on-exec flag?"""
+
+    if debug and record:
+        pytest.xfail("cannot record close-on-exec semantics")
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(["close-on-exec"])
+
+    args = ["xcache"]
+    if debug:
+        args += ["--debug"]
+    args += [f"--dir={tmp_path}/database"]
+    if record:
+        if replay:
+            args += ["--read-write"]
+        else:
+            args += ["--write-only"]
+    else:
+        if replay:
+            args += ["--read-only"]
+        else:
+            args += ["--disable"]
+    args += ["--", "close-on-exec"]
+
+    output = subprocess.check_output(
+        args,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+        timeout=120,
+    )
+
+    if debug:
+        if replay:
+            assert "replay failed" in output, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in output, "replay incorrectly enabled"
+            assert "replay succeeded" not in output, "replay incorrectly enabled"
+        if record:
+            assert "record succeeded" in output, "record failed"
+        else:
+            assert "record failed" not in output, "record incorrectly enabled"
+            assert "record succeeded" not in output, "record incorrectly enabled"
+
+    # try it again to see if we can replay
+    output = subprocess.check_output(
+        args,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+        timeout=120,
+    )
+
+    if debug:
+        if record and replay:
+            assert "replay succeeded" in output, "replay failed"
+        elif replay:
+            assert "replay failed" in output, "replay succeeded with no trace"
+        else:
+            assert "replay failed" not in output, "replay incorrectly enabled"
+            assert "replay succeeded" not in output, "replay incorrectly enabled"
+        if record and replay:
+            assert "record failed" not in output, "record still attempted after replay"
+            assert "record succeeded" not in output, "record after successful replay"
+        elif record:
+            assert "record succeeded" in output, "record failed"
+        else:
+            assert "record failed" not in output, "record incorrectly enabled"
+            assert "record succeeded" not in output, "record incorrectly enabled"

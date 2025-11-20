@@ -1,5 +1,7 @@
 add_executable(clone-exec-with-fd clone-exec-with-fd.c)
 add_executable(close-fd close-fd.c)
+add_executable(close-fd2 close-fd2.c)
+add_executable(close-on-exec close-on-exec.c)
 add_executable(forker forker.c)
 add_executable(forker-fork forker-fork.c)
 add_executable(forker-vfork forker-vfork.c)
@@ -35,6 +37,8 @@ add_custom_target(check
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 add_dependencies(check
+  close-fd2
+  close-on-exec
   forker
   forker-fork
   forker-vfork
