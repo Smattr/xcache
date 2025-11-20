@@ -151,8 +151,8 @@ int fd_open(fds_t *table, int fd, const char *path) {
       goto done;
   }
 
-  // close any previous entry
-  fd_close(table, fd);
+  assert(*LIST_AT(&table->fds, (size_t)fd) == NULL &&
+         "attempt to open an FD that is already open");
 
   *LIST_AT(&table->fds, (size_t)fd) = fd_new(path);
   if (ERROR(*LIST_AT(&table->fds, (size_t)fd) == NULL)) {
