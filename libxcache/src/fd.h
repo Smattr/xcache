@@ -57,7 +57,7 @@ INTERNAL fds_t *fds_release(fds_t *fd);
 ///
 /// @param src Object to copy
 /// @return Copy of `src` or `NULL` on out-of-memory
-INTERNAL fds_t *fds_dup(fds_t *src);
+INTERNAL fds_t *fds_dup(const fds_t *src);
 
 /// stop sharing a file descriptor table
 ///

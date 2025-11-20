@@ -90,7 +90,7 @@ fds_t *fds_release(fds_t *fd) {
   return NULL;
 }
 
-fds_t *fds_dup(fds_t *src) {
+fds_t *fds_dup(const fds_t *src) {
 
   fds_t *dst = NULL;
   fds_t *ret = NULL;
