@@ -51,7 +51,7 @@ INTERNAL int sysenter_clone3(inferior_t *inf, thread_t *thread);
 /// @param inf Tracee to which the target belongs
 /// @param thread Caller thread
 /// @return 0 on success or an errno on failure
-int sysenter_vfork(inferior_t *inf, thread_t *thread);
+INTERNAL int sysenter_vfork(inferior_t *inf, thread_t *thread);
 
 /// handle end of a syscall
 ///
