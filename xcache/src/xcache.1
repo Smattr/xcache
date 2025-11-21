@@ -112,6 +112,20 @@ If the \fB\-\-dir\fR option is not passed and the \fBXCACHE_DIR\fR environment
 variable is unset, \fB$XDG_CACHE_HOME/xcache\fR will be used as the cache
 directory.
 .RE
+.SH NOTES
+\fBxcache\fR will not record programs that misuse the Linux system call API. In
+particular, it will not record programs that e.g. pass invalid pointers for
+string arguments or pass combinations of arguments that the Linux documentation
+describes as having undefined behaviour. In these situations tracing will be
+gracefully abandoned; the program will run to completion but \fBxcache\fR will
+not record a trace for it.
+.PP
+\fBxcache\fR assumes the program it is recording does not include deliberate
+race conditions. That is, it assumes reading and re-reading system call
+arguments while a thread is stopped will consistently return the same result. If
+you attempt to record a program that contains threads that modify the system
+call arguments of one another while the calls are in progress, you may see
+surprising behaviour.
 .SH AUTHOR
 All comments, questions and complaints should be directed to Matthew Fernandez
 <matthew.fernandez@gmail.com>.
