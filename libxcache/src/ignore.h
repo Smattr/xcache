@@ -88,9 +88,6 @@ IGNORE(set_tid_address)
 #ifdef __NR_exit_group
 IGNORE(exit_group)
 #endif
-#ifdef __NR_openat
-SYSENTER_IGNORE(openat)
-#endif
 #ifdef __NR_newfstatat
 SYSENTER_IGNORE(newfstatat)
 #endif

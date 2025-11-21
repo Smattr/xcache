@@ -46,6 +46,13 @@ INTERNAL int sysenter_clone(inferior_t *inf, thread_t *thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int sysenter_clone3(inferior_t *inf, thread_t *thread);
 
+/// handle start of `openat`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysenter_openat(inferior_t *inf, thread_t *thread);
+
 /// handle start of `vfork`
 ///
 /// @param inf Tracee to which the target belongs

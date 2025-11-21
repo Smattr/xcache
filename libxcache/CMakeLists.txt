@@ -67,6 +67,7 @@ add_library(libxcache
   src/sysenter_clone.c
   src/sysenter_execve.c
   src/sysenter_ioctl.c
+  src/sysenter_open.c
   src/sysexit.c
   src/sysexit_access.c
   src/sysexit_chdir.c

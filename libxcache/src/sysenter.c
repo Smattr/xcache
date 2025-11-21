@@ -76,6 +76,13 @@ int sysenter(inferior_t *inf, thread_t *thread) {
   DO(execve);
 #endif
 
+  // We need to handle a subset of `openat` calls that create the target file
+  // conditionally dependent on whether it already exists. We cannot do this on
+  // sysexit because the file is already created by then.
+#ifdef __NR_openat
+  DO(openat);
+#endif
+
   rc = ENOTSUP;
 done: {
   int r = inferior_thread_continue(inf, thread, 0);
