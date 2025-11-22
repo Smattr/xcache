@@ -25,12 +25,6 @@ int sysexit_close(inferior_t *inf, thread_t *thread) {
   DEBUG("TID %ld, close(%d) = %d, errno == %d", (long)thread->id, fd,
         err == 0 ? 0 : -1, err);
 
-  // if the child closed our spy’s channel back to us, consider this unsupported
-  if (ERROR(fd == XCACHE_FILENO)) {
-    rc = ECHILD;
-    goto done;
-  }
-
   // if it succeeded, drop this from our tracking table
   if (err == 0) {
     if (ERROR(fd_at(thread->fd, fd) == NULL)) {
@@ -40,6 +34,12 @@ int sysexit_close(inferior_t *inf, thread_t *thread) {
     }
 
     fd_close(thread->fd, fd);
+  }
+
+  // if the child closed our spy’s channel back to us, consider this unsupported
+  if (ERROR(fd == XCACHE_FILENO)) {
+    rc = ECHILD;
+    goto done;
   }
 
 done:
