@@ -14,28 +14,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-int sysexit_readlinkat(inferior_t *inf, thread_t *thread) {
-
+/// core logic of handling a `readlink*` call
+///
+/// @param inf Tracee executing `readlink*`
+/// @param thread Thread executing `readlink*`
+/// @param dirfd The `dirfd` parameter to `readlinkat`
+/// @param path The `pathname` parameter to `readlink`/`readlinkat`
+/// @return 0 on success or an errno on failure
+static int core(inferior_t *inf, thread_t *thread, int dirfd,
+                const char *path) {
   assert(inf != NULL);
   assert(thread != NULL);
+  assert(path != NULL);
 
   char *abs = NULL;
-  char *path = NULL;
   input_t saw = {0};
   int rc = 0;
-
-  // extract the directory file descriptor
-  const int dirfd = (int)peek_syscall_arg(thread, 1);
-
-  // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 2);
-  if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
-    // if the read faulted, assume our side was correct and the tracee used a
-    // bad pointer, something we do not support recording
-    if (rc == EFAULT)
-      rc = ECHILD;
-    goto done;
-  }
 
   // extract the result
   const long ret = peek_ret(thread);
@@ -52,8 +46,11 @@ int sysexit_readlinkat(inferior_t *inf, thread_t *thread) {
   // make the path absolute
   if (path[0] == '/') {
     // dirfd is ignored
-    abs = path;
-    path = NULL;
+    abs = strdup(path);
+    if (ERROR(abs == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
   } else if (dirfd == AT_FDCWD) {
     if (strcmp(path, "") == 0) {
       abs = strdup(thread->fs->cwd);
@@ -100,6 +97,35 @@ int sysexit_readlinkat(inferior_t *inf, thread_t *thread) {
 done:
   input_free(saw);
   free(abs);
+
+  return rc;
+}
+
+int sysexit_readlinkat(inferior_t *inf, thread_t *thread) {
+
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  char *path = NULL;
+  int rc = 0;
+
+  // extract the directory file descriptor
+  const int dirfd = (int)peek_syscall_arg(thread, 1);
+
+  // extract the path
+  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 2);
+  if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
+    // if the read faulted, assume our side was correct and the tracee used a
+    // bad pointer, something we do not support recording
+    if (rc == EFAULT)
+      rc = ECHILD;
+    goto done;
+  }
+
+  if (ERROR((rc = core(inf, thread, dirfd, path))))
+    goto done;
+
+done:
   free(path);
 
   return rc;
