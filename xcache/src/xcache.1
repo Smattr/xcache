@@ -59,6 +59,37 @@ By default, both record and replay are enabled, subject to the effects of
 \fB$XCACHE_DISABLE\fR and \fB$XCACHE_READONLY\fR as discussed below.
 .RE
 .PP
+\fB\-\-mode=\fR\fIMODE\fR or \fB\-m\fR \fIMODE\fR
+.RS
+Select which mechanism \fBxcache\fR uses to record processes. Valid \fIMODE\fR
+strings are:
+.RS
+.IP \[bu] 2
+\fBall\fR Consider \fBptrace\fR, \fBseccomp-early\fR, and \fBseccomp-late\fR.
+The most efficient available mode will be used.
+.IP \[bu]
+\fBany\fR A synonym for \fBall\fR.
+.IP \[bu]
+\fBptrace\fR Intercept syscall entry and exit using the
+.BR ptrace (2)
+API.
+.IP \[bu]
+\fBseccomp\fR Consider \fBseccomp-early\fR and \fBseccomp-late\fR. The most
+efficient available mode will be used.
+.IP \[bu]
+\fBseccomp-early\fR Intercept syscall entry using the
+.BR seccomp (2)
+API. This mode is only available on or after Linux 3.5 and before Linux 4.8.
+.IP \[bu]
+\fBseccomp-late\fR Intercept syscall midpoint using the
+.BR seccomp (2)
+API. This mode is only available on or after Linux 4.8.
+.RE
+.PP
+If this option is not passed, the default is \fBptrace\fR, unless the
+environment variable \fB$XCACHE_MODE\fR is set (see below).
+.RE
+.PP
 \fB--help\fR
 .RS
 Display this information.
@@ -97,6 +128,13 @@ just call the command given without attempting record or replay. Passing any of
 If this is set, \fB\-\-debug\fR logging is enabled and log messages are directed
 to the path given by this variable. In contrast to a log configured by
 \fB\-\-debug\fR, the log file is appended to instead of overwritten.
+.RE
+.PP
+\fBXCACHE_MODE\fR
+.RS
+If this is set, \fB\-\-mode\fR will default to this value. Passing
+\fB\-\-mode\fR or \fB\-m\fR during an \fBxcache\fR invocation will override the
+default acquired from this environment variable.
 .RE
 .PP
 \fBXCACHE_READONLY\fR

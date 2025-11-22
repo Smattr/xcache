@@ -1,6 +1,7 @@
 #include "alloc.h"
 #include "debug.h"
 #include "help.h"
+#include <assert.h>
 #include <errno.h>
 #include <getopt.h>
 #include <linux/version.h>
@@ -24,6 +25,31 @@ static xc_cmd_t cmd;
 
 bool debug;
 FILE *debug_file;
+
+/// recording mode, default to ptrace
+static unsigned mode = XC_SYSCALL;
+
+/// parse a command line option to `--mode`
+///
+/// @param opt Mode string to parse
+/// @param source Where the mode string originated from
+/// @return A parsed mode
+static unsigned parse_mode(const char *opt, const char *source) {
+  assert(opt != NULL);
+  if (strcmp(opt, "all") == 0 || strcmp(opt, "any") == 0)
+    return XC_MODE_AUTO;
+  if (strcmp(opt, "ptrace") == 0)
+    return XC_SYSCALL;
+  if (strcmp(opt, "seccomp") == 0)
+    return XC_EARLY_SECCOMP | XC_LATE_SECCOMP;
+  if (strcmp(opt, "seccomp-early") == 0)
+    return XC_EARLY_SECCOMP;
+  if (strcmp(opt, "seccomp-late") == 0)
+    return XC_LATE_SECCOMP;
+  fprintf(stderr, "failed to parse %s, \"%s\" is not a valid recording mode\n",
+          source, opt);
+  exit(EXIT_FAILURE);
+}
 
 static int parse_args(int argc, char **argv) {
 
@@ -50,12 +76,20 @@ static int parse_args(int argc, char **argv) {
     }
   }
 
+  // set default tracing mode
+  {
+    const char *const xcache_mode = getenv("XCACHE_MODE");
+    if (xcache_mode != NULL)
+      mode = parse_mode(xcache_mode, "$XCACHE_MODE");
+  }
+
   while (true) {
     const struct option opts[] = {
         {"debug", optional_argument, 0, 130},
         {"dir", required_argument, 0, 'd'},
         {"disable", no_argument, 0, 131},
         {"help", no_argument, 0, 'h'},
+        {"mode", required_argument, 0, 'm'},
         {"read-only", no_argument, 0, 132},
         {"read-write", no_argument, 0, 133},
         {"ro", no_argument, 0, 131},
@@ -67,7 +101,7 @@ static int parse_args(int argc, char **argv) {
     };
 
     int index;
-    int c = getopt_long(argc, argv, "d:h", opts, &index);
+    int c = getopt_long(argc, argv, "d:hm:", opts, &index);
 
     if (c == -1)
       break;
@@ -110,6 +144,10 @@ static int parse_args(int argc, char **argv) {
       }
       exit(EXIT_SUCCESS);
     }
+
+    case 'm': // --mode, -m
+      mode = parse_mode(optarg, "--mode/-m");
+      break;
 
     case 132: // --read-only, --ro
       record_enabled = false;
@@ -272,7 +310,7 @@ int main(int argc, char **argv) {
   if (record_enabled) {
     DEBUG("attempting record");
     xc_record_t status = {0};
-    if ((rc = xc_record(db, cmd, XC_SYSCALL, &status))) {
+    if ((rc = xc_record(db, cmd, mode, &status))) {
       fprintf(stderr, "xc_record: %s\n", strerror(rc));
       goto done;
     } else if (status.exec_status != 0) {
