@@ -123,6 +123,13 @@ INTERNAL int sysexit_newfstatat(inferior_t *inf, thread_t *thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int sysexit_openat(inferior_t *inf, thread_t *thread);
 
+/// handle end of `readlink`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysexit_readlink(inferior_t *inf, thread_t *thread);
+
 /// handle end of `readlinkat`
 ///
 /// @param inf Tracee to which the target belongs

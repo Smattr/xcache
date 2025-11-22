@@ -101,6 +101,32 @@ done:
   return rc;
 }
 
+int sysexit_readlink(inferior_t *inf, thread_t *thread) {
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  char *path = NULL;
+  int rc = 0;
+
+  // extract the path
+  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 1);
+  if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
+    // if the read faulted, assume our side was correct and the tracee used a
+    // bad pointer, something we do not support recording
+    if (rc == EFAULT)
+      rc = ECHILD;
+    goto done;
+  }
+
+  if (ERROR((rc = core(inf, thread, AT_FDCWD, path))))
+    goto done;
+
+done:
+  free(path);
+
+  return rc;
+}
+
 int sysexit_readlinkat(inferior_t *inf, thread_t *thread) {
 
   assert(inf != NULL);

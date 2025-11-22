@@ -72,6 +72,9 @@ IGNORE(wait4)
 #ifdef __NR_chdir
 SYSENTER_IGNORE(chdir)
 #endif
+#ifdef __NR_readlink
+SYSENTER_IGNORE(readlink)
+#endif
 // see note about `getpid`
 #ifdef __NR_getppid
 IGNORE(getppid)
