@@ -80,9 +80,10 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
   if (UNLIKELY(xc_debug != NULL)) {
     char *fd_str = atfd_to_str(fd);
     char *flags_str = openflags_to_str(flags);
-    DEBUG("TID %ld, openat(%s, \"%s\", %s, …) = %d, errno == %d",
+    DEBUG("TID %ld, openat(%s, \"%s\", %s, …) = %ld, errno == %d",
           (long)thread->id, fd_str == NULL ? "<oom>" : fd_str, path,
-          flags_str == NULL ? "<oom>" : flags_str, err == 0 ? 0 : -1, err);
+          flags_str == NULL ? "<oom>" : flags_str,
+          err == 0 ? peek_ret(thread) : -1, err);
     free(flags_str);
     free(fd_str);
   }
