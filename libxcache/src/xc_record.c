@@ -148,16 +148,12 @@ static void *monitor(void *state) {
     if (is_syscall(status)) {
       if (thread->pending_sysexit) {
         const int r = sysexit(inf, thread);
-        if (ERROR(r != 0)) {
+        if (ERROR(r != 0))
           FAIL_TRACE(r);
-          continue;
-        }
       } else {
         const int r = sysenter(inf, thread);
-        if (ERROR(r != 0)) {
+        if (ERROR(r != 0))
           FAIL_TRACE(r);
-          continue;
-        }
       }
 
       thread->pending_sysexit = !thread->pending_sysexit;
