@@ -81,6 +81,8 @@ int sysexit(inferior_t *inf, thread_t *thread) {
 
 #undef DO
 
+  DEBUG("TID %ld, unhandled sysexit %s«%lu»", (long)thread->id,
+        syscall_to_str(syscall_no), syscall_no);
   rc = ENOTSUP;
 done: {
   // restart the process

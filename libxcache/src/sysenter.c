@@ -82,6 +82,8 @@ int sysenter(inferior_t *inf, thread_t *thread) {
   DO(openat);
 #endif
 
+  DEBUG("TID %ld, unhandled sysenter %s«%lu»", (long)thread->id,
+        syscall_to_str(syscall_no), syscall_no);
   rc = ENOTSUP;
 done: {
   int r = inferior_thread_continue(inf, thread, 0);
