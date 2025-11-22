@@ -27,12 +27,9 @@ int sysexit_close(inferior_t *inf, thread_t *thread) {
 
   // if it succeeded, drop this from our tracking table
   if (err == 0) {
-    if (ERROR(fd_at(thread->fd, fd) == NULL)) {
-      // the child somehow successfully closed something they did not have open
-      rc = ECHILD;
-      goto done;
-    }
-
+    assert(fd_at(thread->fd, fd) != NULL &&
+           "child successfully closed something we believed they did not have "
+           "open");
     fd_close(thread->fd, fd);
   }
 
