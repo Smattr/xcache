@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <stddef.h>
+#include <sys/ioctl.h>
 #include <sys/syscall.h>
 #include <xcache/record.h>
 
@@ -22,6 +23,23 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
 
   // extract the call number
   const long callno = peek_syscall_arg(thread, 2);
+
+  // ioctls we can reasonably ignore
+  const struct {
+    const char *name;
+    long value;
+  } SAFE[] = {
+#define X(v) {#v, v}
+      X(TCGETS),
+#undef X
+  };
+  for (size_t i = 0; i < sizeof(SAFE) / sizeof(SAFE[i]); ++i) {
+    if (callno == SAFE[i].value) {
+      DEBUG("TID %ld, ignoring safe ioctl(%d, %s, …)", (long)thread->id, fd,
+            SAFE[i].name);
+      goto done;
+    }
+  }
 
   // any ioctl except a communication from the spy is unsupported
   if (ERROR(fd != XCACHE_FILENO)) {
