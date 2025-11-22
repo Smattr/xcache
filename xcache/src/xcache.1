@@ -127,6 +127,13 @@ arguments while a thread is stopped will consistently return the same result. If
 you attempt to record a program that contains threads that modify the system
 call arguments of one another while the calls are in progress, you may see
 surprising behaviour.
+.PP
+\fBxcache\fR cannot accurately record daemon-like programs that expect to
+monitor files and react to changes to those files by other programs. More
+specifically, if the program being recorded (the tracee) repeatedly re-accesses
+a file expecting it to change, \fBxcache\fR will only see the initial content of
+the file. That is, \fBxcache\fR assumes no other program is concurrently
+touching the files being accessed by the tracee.
 .SH AUTHOR
 All comments, questions and complaints should be directed to Matthew Fernandez
 <matthew.fernandez@gmail.com>.
