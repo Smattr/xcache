@@ -9,9 +9,61 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <xcache/record.h>
+
+/// convert `access` mode to a readable string
+static char *mode_to_str(int mode) {
+
+  char *buffer = NULL;
+  size_t buffer_size = 0;
+  FILE *stream = NULL;
+  char *ret = NULL;
+
+  stream = open_memstream(&buffer, &buffer_size);
+  if (ERROR(stream == NULL))
+    goto done;
+
+  const struct {
+    const char *name;
+    int value;
+  } KNOWN[] = {
+#define X(v) {#v, v}
+      X(R_OK),
+      X(W_OK),
+      X(X_OK),
+      X(F_OK),
+#undef X
+  };
+  const char *separator = "";
+  for (size_t i = 0; i < sizeof(KNOWN) / sizeof(KNOWN[0]); ++i) {
+    if (!(mode & KNOWN[i].value))
+      continue;
+    if (fprintf(stream, "%s%s", separator, KNOWN[i].name) < 0)
+      goto done;
+    mode &= ~KNOWN[i].value;
+    separator = "|";
+  }
+
+  if (mode != 0) {
+    if (fprintf(stream, "%s%d", separator, mode) < 0)
+      goto done;
+  }
+
+  (void)fclose(stream);
+  stream = NULL;
+  ret = buffer;
+  buffer = NULL;
+
+done:
+  if (stream != NULL)
+    (void)fclose(stream);
+  free(buffer);
+
+  return ret;
+}
 
 int sysexit_access(inferior_t *inf, thread_t *thread) {
 
@@ -52,9 +104,12 @@ int sysexit_access(inferior_t *inf, thread_t *thread) {
   // extract the result
   const int err = peek_errno(thread);
 
-  // TODO: translate the flags. Reading them numerically is annoying.
-  DEBUG("TID %ld, access(\"%s\", %ld) = %d, errno == %d", (long)thread->id,
-        path, flags, err == 0 ? 0 : -1, err);
+  if (UNLIKELY(xc_debug != NULL)) {
+    char *const mode = mode_to_str((int)flags);
+    DEBUG("TID %ld, access(\"%s\", %s) = %d, errno == %d", (long)thread->id,
+          path, mode == NULL ? "<oom>" : mode, err == 0 ? 0 : -1, err);
+    free(mode);
+  }
 
   // record it
   if (ERROR((rc = input_new_access(&saw, &err, abs, (int)flags))))
