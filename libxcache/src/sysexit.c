@@ -17,12 +17,10 @@ int sysexit(inferior_t *inf, thread_t *thread) {
   int rc = 0;
 
   const unsigned long syscall_no = peek_syscall_no(thread);
-  DEBUG("TID %ld, sysexit %s«%lu»", (long)thread->id,
-        syscall_to_str(syscall_no), syscall_no);
 
   if (thread->ignoring) {
-    DEBUG("ignoring %s«%lu» on spy’s instruction", syscall_to_str(syscall_no),
-          syscall_no);
+    DEBUG("TID %ld, ignoring sysexit %s«%lu» on spy’s instruction",
+          (long)thread->id, syscall_to_str(syscall_no), syscall_no);
 
     goto done;
   }
@@ -32,7 +30,8 @@ int sysexit(inferior_t *inf, thread_t *thread) {
 #define SYSEXIT_IGNORE(call)                                                   \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
-      DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
+      DEBUG("TID %ld, ignoring sysexit %s«%lu»", (long)thread->id, #call,      \
+            syscall_no);                                                       \
       goto done;                                                               \
     }                                                                          \
   } while (0);

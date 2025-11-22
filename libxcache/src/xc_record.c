@@ -57,7 +57,6 @@ static void *monitor(void *state) {
       rc = errno;
       goto done;
     }
-    DEBUG("saw an event from TID %ld", (long)tid);
     assert((WIFEXITED(status) || WIFSIGNALED(status) || WIFSTOPPED(status) ||
             WIFCONTINUED(status)) &&
            "unknown waitpid status");
@@ -76,8 +75,8 @@ static void *monitor(void *state) {
         FAIL_TRACE(errno);
         // FIXME: what should we do here?
       } else {
+        DEBUG("TID %ld remapped to %lu", (long)tid, msg);
         tid = (pid_t)msg;
-        DEBUG("TID remapped to %ld", (long)tid);
       }
     }
 
@@ -114,7 +113,7 @@ static void *monitor(void *state) {
     }
 
     if (is_fork(status)) {
-      DEBUG("child forked");
+      DEBUG("TID %ld forked", (long)tid);
 
       // learn the TID of the new child
       unsigned long msg;

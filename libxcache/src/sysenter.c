@@ -17,8 +17,6 @@ int sysenter(inferior_t *inf, thread_t *thread) {
   int rc = 0;
 
   const unsigned long syscall_no = peek_syscall_no(thread);
-  DEBUG("TID %ld, sysenter %s«%lu»", (long)thread->id,
-        syscall_to_str(syscall_no), syscall_no);
 
   // the vast majority of syscalls either (1) have no relevance to us or (2) we
   // prefer to handle at exit because the return value is available
@@ -39,8 +37,8 @@ int sysenter(inferior_t *inf, thread_t *thread) {
   DO(ioctl);
 
   if (thread->ignoring) {
-    DEBUG("ignoring %s«%lu» on spy’s instruction", syscall_to_str(syscall_no),
-          syscall_no);
+    DEBUG("TID %ld, ignoring sysenter %s«%lu» on spy’s instruction",
+          (long)thread->id, syscall_to_str(syscall_no), syscall_no);
 
     goto done;
   }
@@ -49,7 +47,8 @@ int sysenter(inferior_t *inf, thread_t *thread) {
 #define SYSENTER_IGNORE(call)                                                  \
   do {                                                                         \
     if (syscall_no == __NR_##call) {                                           \
-      DEBUG("ignoring %s«%lu»", #call, syscall_no);                            \
+      DEBUG("TID %ld, ignoring sysenter %s«%lu»", (long)thread->id, #call,     \
+            syscall_no);                                                       \
       goto done;                                                               \
     }                                                                          \
   } while (0);
