@@ -27,6 +27,9 @@ SYSENTER_IGNORE(close)
 #ifdef __NR_fstat
 IGNORE(fstat)
 #endif
+#ifdef __NR_lseek
+IGNORE(lseek)
+#endif
 #ifdef __NR_mmap
 IGNORE(mmap)
 #endif
