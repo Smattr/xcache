@@ -14,6 +14,7 @@ typedef enum {
   INP_READ,     ///< open() with O_RDONLY or O_RDWR
   INP_READLINK, ///< readlink()
   INP_STAT,     ///< stat()
+  INP_SYSCONF,  ///< sysconf()
 } input_type_t;
 
 /// a file/directory that was read
@@ -40,6 +41,10 @@ typedef struct {
       struct timespec mtim; ///< modification time
       struct timespec ctim; ///< creation time
     } stat;
+    struct {
+      int name; ///< input `name` parameter to `sysconf`
+      long ret; ///< returned value
+    } sysconf;
   };
 } input_t;
 
@@ -80,6 +85,13 @@ INTERNAL int input_new_readlink(input_t *input, int expected_err,
 /// \return 0 on success or an errno on failure
 INTERNAL int input_new_stat(input_t *input, int expected_err, const char *path,
                             bool is_lstat);
+
+/// create an input for a sysconf() call
+///
+/// @param input [out] Created input on success
+/// @param name Name of the configuration looked up
+/// \return 0 on success or an errno on failure
+INTERNAL int input_new_sysconf(input_t *input, int name);
 
 /// deserialise an input from a file
 ///

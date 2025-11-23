@@ -36,6 +36,13 @@ bool input_is_valid(const input_t input) {
       return false;
     break;
   }
+
+  case INP_SYSCONF: {
+    const int r = input_new_sysconf(&attempt, input.sysconf.name);
+    if (r != 0)
+      return false;
+    break;
+  }
   }
 
   const bool is_valid = input_eq(input, attempt);

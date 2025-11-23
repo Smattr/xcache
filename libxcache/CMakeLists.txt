@@ -43,6 +43,7 @@ add_library(libxcache
   src/input_new_read.c
   src/input_new_readlink.c
   src/input_new_stat.c
+  src/input_new_sysconf.c
   src/input_save.c
   src/input_to_str.c
   src/list.c

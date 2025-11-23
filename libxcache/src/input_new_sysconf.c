@@ -1,0 +1,23 @@
+#include "input_t.h"
+#include <assert.h>
+#include <unistd.h>
+
+int input_new_sysconf(input_t *input, int name) {
+  assert(input != NULL);
+
+  *input = (input_t){0};
+  input_t i = {0};
+  int rc = 0;
+
+  i.tag = INP_SYSCONF;
+
+  i.sysconf.name = name;
+  i.sysconf.ret = sysconf(name);
+
+  *input = i;
+  i = (input_t){0};
+
+  input_free(i);
+
+  return rc;
+}

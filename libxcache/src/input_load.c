@@ -25,14 +25,16 @@ int input_load(input_t *input, FILE *stream) {
     i.tag = tag;
   }
 
-  if (ERROR((rc = cbor_read_str(stream, &i.path))))
-    goto done;
-
-  {
-    uint64_t err = 0;
-    if (ERROR((rc = cbor_read_u64(stream, &err))))
+  if (i.tag != INP_SYSCONF) {
+    if (ERROR((rc = cbor_read_str(stream, &i.path))))
       goto done;
-    i.err = (int)err;
+
+    {
+      uint64_t err = 0;
+      if (ERROR((rc = cbor_read_u64(stream, &err))))
+        goto done;
+      i.err = (int)err;
+    }
   }
 
   switch (i.tag) {
@@ -107,6 +109,20 @@ int input_load(input_t *input, FILE *stream) {
       if (ERROR((rc = cbor_read_u64(stream, &tv_nsec))))
         goto done;
       i.stat.ctim.tv_nsec = (long)tv_nsec;
+    }
+    break;
+
+  case INP_SYSCONF: {
+    uint64_t name = 0;
+    if (ERROR((rc = cbor_read_u64(stream, &name))))
+      goto done;
+    i.sysconf.name = (int)name;
+  }
+    {
+      uint64_t ret = 0;
+      if (ERROR((rc = cbor_read_u64(stream, &ret))))
+        goto done;
+      i.sysconf.ret = (long)ret;
     }
     break;
 

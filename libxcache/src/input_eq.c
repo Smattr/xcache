@@ -7,8 +7,13 @@ bool input_eq(const input_t a, const input_t b) {
 
   if (a.tag != b.tag)
     return false;
-  if (strcmp(a.path, b.path) != 0)
-    return false;
+  if (a.tag == INP_SYSCONF) {
+    if (a.path != b.path)
+      return false;
+  } else {
+    if (strcmp(a.path, b.path) != 0)
+      return false;
+  }
   if (a.err != b.err)
     return false;
 
@@ -41,6 +46,13 @@ bool input_eq(const input_t a, const input_t b) {
     if (a.stat.size != b.stat.size)
       return false;
     // TODO timespec
+    break;
+
+  case INP_SYSCONF:
+    if (a.sysconf.name != b.sysconf.name)
+      return false;
+    if (a.sysconf.ret != b.sysconf.ret)
+      return false;
     break;
   }
 

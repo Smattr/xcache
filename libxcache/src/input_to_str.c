@@ -39,16 +39,23 @@ char *input_to_str(const input_t input) {
       goto done;
     break;
 
+  case INP_SYSCONF:
+    if (fputs(".tag = INP_SYSCONF", stream) < 0)
+      goto done;
+    break;
+
   default:
     if (fprintf(stream, ".tag = %d (unknown)", (int)input.tag) < 0)
       goto done;
     break;
   }
 
-  if (fprintf(stream, ", .path = \"%s\"", input.path) < 0)
-    goto done;
-  if (fprintf(stream, ", .err = %d", input.err) < 0)
-    goto done;
+  if (input.tag != INP_SYSCONF) {
+    if (fprintf(stream, ", .path = \"%s\"", input.path) < 0)
+      goto done;
+    if (fprintf(stream, ", .err = %d", input.err) < 0)
+      goto done;
+  }
 
   switch (input.tag) {
 
@@ -81,6 +88,13 @@ char *input_to_str(const input_t input) {
     if (fprintf(stream, ", .stat.gid = %ld", (long)input.stat.gid) < 0)
       goto done;
     // TODO timespec
+    break;
+
+  case INP_SYSCONF:
+    if (fprintf(stream, ", .sysconf.name = %d", input.sysconf.name) < 0)
+      goto done;
+    if (fprintf(stream, ", .sysconf.ret = %ld", input.sysconf.ret) < 0)
+      goto done;
     break;
   }
 

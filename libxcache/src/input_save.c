@@ -16,11 +16,13 @@ int input_save(const input_t input, FILE *stream) {
   if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.tag))))
     goto done;
 
-  if (ERROR((rc = cbor_write_str(stream, input.path))))
-    goto done;
+  if (input.tag != INP_SYSCONF) {
+    if (ERROR((rc = cbor_write_str(stream, input.path))))
+      goto done;
 
-  if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.err))))
-    goto done;
+    if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.err))))
+      goto done;
+  }
 
   switch (input.tag) {
 
@@ -60,6 +62,13 @@ int input_save(const input_t input, FILE *stream) {
     if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.stat.ctim.tv_sec))))
       goto done;
     if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.stat.ctim.tv_nsec))))
+      goto done;
+    break;
+
+  case INP_SYSCONF:
+    if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.sysconf.name))))
+      goto done;
+    if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.sysconf.ret))))
       goto done;
     break;
   }
