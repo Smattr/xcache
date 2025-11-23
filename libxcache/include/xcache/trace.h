@@ -49,6 +49,9 @@ XCACHE_API int xc_trace_remove(xc_trace_t *trace);
 ///
 /// It is assumed the given trace is valid.
 ///
+/// This function modifies process-global state while running (umask), so is not
+/// safe to run concurrently with other threads performing I/O.
+///
 /// @param trace Trace to replay
 /// @return 0 on success or an errno on failure
 XCACHE_API int xc_replay(const xc_trace_t *trace);
