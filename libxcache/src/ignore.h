@@ -57,6 +57,9 @@ IGNORE(pread64)
 #ifdef __NR_access
 SYSENTER_IGNORE(access)
 #endif
+#ifdef __NR_getrusage
+IGNORE(getrusage)
+#endif
 // Tell a white lie that we are able to record and replay `getpid` without
 // seeing it. We can essentially choose an arbitrary return value for this, so
 // no need to cache it.
