@@ -29,8 +29,9 @@ enum { XCACHE_FILENO = 3 };
 /// convenience, they are chosen to be things that decode to an ASCII string
 /// shorthand name.
 enum {
-  CALL_OFF = 0x66666f, ///< stop recording syscalls until seeing `CALL_ON`
-  CALL_ON = 0x6e6f,    ///< start recording syscalls again
+  CALL_OFF = 0x66666f,      ///< stop recording syscalls until seeing `CALL_ON`
+  CALL_ON = 0x6e6f,         ///< start recording syscalls again
+  CALL_SYSCONF = 0x666e6f63 ///< tracee called `sysconf`
 };
 
 /// get a string representation of a call number
@@ -42,5 +43,7 @@ static inline const char *callno_to_str(long callno) {
     return "\"off\"";
   if (callno == CALL_ON)
     return "\"on\"";
+  if (callno == CALL_SYSCONF)
+    return "\"sysconf\"";
   return "<unknown>";
 }
