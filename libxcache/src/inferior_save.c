@@ -50,6 +50,7 @@ static int append_stream(outputs_t *outputs, const char *target,
     rc = ENOMEM;
     goto done;
   }
+  o.write.mode = 0; // ← will be ignored
   o.write.cached_copy = strdup(&copy[strlen(trace_root) + 1]);
   if (ERROR(o.write.cached_copy == NULL)) {
     rc = ENOMEM;

@@ -86,10 +86,9 @@ static int replay_write(const output_t output, const xc_trace_t *owner) {
     goto done;
   }
 
-  // we do not care so much about the mode because anything that was opened
-  // `O_CREAT` will have a following `chmod` action recorded too
   DEBUG("replaying open(\"%s\", …)", output.path);
-  dst = open(output.path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
+  dst = open(output.path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
+             output.write.mode);
   if (ERROR(dst < 0)) {
     rc = errno;
     goto done;

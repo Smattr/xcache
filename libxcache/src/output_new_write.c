@@ -2,10 +2,11 @@
 #include "output_t.h"
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stddef.h>
 #include <string.h>
 
-int output_new_write(output_t *output, const char *path) {
+int output_new_write(output_t *output, const char *path, mode_t mode) {
 
   assert(output != NULL);
   assert(path != NULL);
@@ -21,6 +22,8 @@ int output_new_write(output_t *output, const char *path) {
     rc = ENOMEM;
     goto done;
   }
+
+  o.write.mode = mode;
 
   *output = o;
   o = (output_t){0};

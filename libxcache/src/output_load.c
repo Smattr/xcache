@@ -56,10 +56,15 @@ int output_load(output_t *output, FILE *stream) {
     o.mkdir.mode = (mode_t)mode;
   } break;
 
-  case OUT_WRITE:
+  case OUT_WRITE: {
+    uint64_t mode = 0;
+    if (ERROR((rc = cbor_read_u64(stream, &mode))))
+      goto done;
+    o.write.mode = mode;
     if (ERROR((rc = cbor_read_opt_str(stream, &o.write.cached_copy))))
       goto done;
     break;
+  }
 
   default:
     DEBUG("invalid output tag %d\n", (int)o.tag);

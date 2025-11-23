@@ -161,25 +161,17 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
       goto done;
     }
 
+    // if this was creation, the mode is relevant
+    const mode_t mode =
+        (flags_relevant & O_CREAT) ? (mode_t)peek_syscall_arg(thread, 4) : 0;
+
     // record it
-    if (ERROR((rc = output_new_write(&seen_write, abs))))
+    if (ERROR((rc = output_new_write(&seen_write, abs, mode))))
       goto done;
 
     if (ERROR((rc = inferior_output_new(inf, seen_write))))
       goto done;
     seen_write = (output_t){0};
-
-    // if this was creation, record a post-chmod too
-    if (flags_relevant & O_CREAT) {
-      const mode_t mode = (mode_t)peek_syscall_arg(thread, 4);
-
-      if (ERROR((rc = output_new_chmod(&seen_write, abs, mode))))
-        goto done;
-
-      if (ERROR((rc = inferior_output_new(inf, seen_write))))
-        goto done;
-      seen_write = (output_t){0};
-    }
 
     break;
 

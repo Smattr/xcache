@@ -30,6 +30,7 @@ typedef struct {
       mode_t mode; ///< mkdir mode to set
     } mkdir;
     struct {
+      mode_t mode;       ///< mode passed to `open`
       char *cached_copy; ///< relative path to cached content
     } write;
   };
@@ -50,8 +51,9 @@ INTERNAL int output_new_chmod(output_t *output, const char *path, mode_t mode);
 ///
 /// @param output [out] Created output on success
 /// @param path Path being written
+/// @param mode Mode being set
 /// @return 0 on success or an errno on failure
-INTERNAL int output_new_write(output_t *output, const char *path);
+INTERNAL int output_new_write(output_t *output, const char *path, mode_t mode);
 
 /// deserialise an output from a file
 ///
