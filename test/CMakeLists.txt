@@ -10,6 +10,7 @@ add_executable(nop nop.c)
 add_executable(print-stderr print-stderr.c)
 add_executable(print-stdout print-stdout.c)
 add_executable(umask-open umask-open.c)
+add_executable(umask-open2 umask-open2.c)
 add_executable(uncacheable uncacheable.c)
 add_executable(write-file write-file.c)
 
@@ -50,6 +51,7 @@ add_dependencies(check
   print-stderr
   print-stdout
   umask-open
+  umask-open2
   uncacheable
   write-file
   xcache
