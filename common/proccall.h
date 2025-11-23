@@ -1,5 +1,5 @@
-/// \file
-/// \brief interface for IPC between tracer and subprocess
+/// @file
+/// @brief interface for IPC between tracer and subprocess
 ///
 /// The subprocess (tracee) needs to communicate certain out-of-band information
 /// to the tracer. That is, actions it takes that need to be recorded but do not
@@ -17,29 +17,26 @@
 
 #pragma once
 
-/** file descriptor subprocess uses to message the tracer
- *
- * This can be any arbitrary value, with the exception of STDIN_FILENO (0),
- * STDOUT_FILENO (1), or STDERR_FILENO (2).
- */
+/// file descriptor subprocess uses to message the tracer
+///
+/// This can be any arbitrary value, with the exception of STDIN_FILENO (0),
+/// STDOUT_FILENO (1), or STDERR_FILENO (2).
 enum { XCACHE_FILENO = 3 };
 
-/** identifiers for functions to request from the tracer
- *
- * These are arbitrary numbers passed as the `request` argument to `ioctl`. For
- * convenience, they are chosen to be things that decode to an ASCII string
- * shorthand name.
- */
+/// identifiers for functions to request from the tracer
+///
+/// These are arbitrary numbers passed as the `request` argument to `ioctl`. For
+/// convenience, they are chosen to be things that decode to an ASCII string
+/// shorthand name.
 enum {
   CALL_OFF = 0x66666f, ///< stop recording syscalls until seeing `CALL_ON`
   CALL_ON = 0x6e6f,    ///< start recording syscalls again
 };
 
-/** get a string representation of a call number
- *
- * \param callno Call number to convert
- * \return String representation
- */
+/// get a string representation of a call number
+///
+/// @param callno Call number to convert
+/// @return String representation
 static inline const char *callno_to_str(long callno) {
   if (callno == CALL_OFF)
     return "\"off\"";
