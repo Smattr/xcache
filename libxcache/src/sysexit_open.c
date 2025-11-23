@@ -161,9 +161,8 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
       goto done;
     }
 
-    // if this was creation, the mode is relevant
-    const mode_t mode =
-        (flags_relevant & O_CREAT) ? (mode_t)peek_syscall_arg(thread, 4) : 0;
+    // set a placeholder mode which will be updated later
+    const mode_t mode = 0;
 
     // record it
     if (ERROR((rc = output_new_write(&seen_write, abs, mode))))

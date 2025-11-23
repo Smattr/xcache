@@ -115,6 +115,17 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
         goto done;
       }
 
+      // update record of the output’s file mode
+      {
+        struct stat st;
+        if (ERROR(fstat(src, &st) < 0)) {
+          rc = errno;
+          goto done;
+        }
+        const mode_t S_IMODE = S_IRWXU | S_IRWXG | S_IRWXO;
+        back->write.mode = st.st_mode & S_IMODE;
+      }
+
       int dst = -1;
       if (ERROR((rc = path_make(trace_root, NULL, &dst,
                                 &back->write.cached_copy)))) {
