@@ -4,6 +4,7 @@ Xcache test suite
 
 import errno
 import os
+import stat
 import re
 import subprocess
 from pathlib import Path
@@ -660,3 +661,68 @@ def test_close_on_exec(debug: bool, record: bool, replay: bool, tmp_path: Path):
         else:
             assert "record failed" not in output, "record incorrectly enabled"
             assert "record succeeded" not in output, "record incorrectly enabled"
+
+
+@pytest.mark.parametrize(
+    "debug", (pytest.param(False, id="nodebug"), pytest.param(True, id="debug"))
+)
+@pytest.mark.parametrize(
+    "record",
+    (
+        pytest.param(False, id="norecord"),
+        pytest.param(True, id="record"),
+    ),
+)
+@pytest.mark.parametrize(
+    "replay", (pytest.param(False, id="noreplay"), pytest.param(True, id="replay"))
+)
+def test_umask(debug: bool, record: bool, replay: bool, tmp_path: Path):
+    """does xcache understand umask semantics?"""
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(["umask-open"], tmp_path)
+    foo = tmp_path / "foo"
+    foo.unlink()
+
+    args = ["xcache"]
+    if debug:
+        args += ["--debug"]
+    args += [f"--dir={tmp_path}/database"]
+    if record:
+        if replay:
+            args += ["--read-write"]
+        else:
+            args += ["--write-only"]
+    else:
+        if replay:
+            args += ["--read-only"]
+        else:
+            args += ["--disable"]
+    args += ["--", "umask-open"]
+
+    subprocess.check_call(
+        args,
+        cwd=tmp_path,
+        timeout=120,
+    )
+
+    assert foo.exists(), "expected output was not created"
+    assert (
+        stat.S_IMODE(foo.stat().st_mode) == 0o777
+    ), "expected file mode was not applied"
+
+    # try it again to see if we can replay
+    foo.unlink()
+    subprocess.check_call(
+        args,
+        cwd=tmp_path,
+        timeout=120,
+    )
+
+    assert foo.exists(), "expected output was not created"
+    assert (
+        stat.S_IMODE(foo.stat().st_mode) == 0o777
+    ), "expected file mode was not applied"

@@ -9,6 +9,7 @@ add_executable(my-echo my-echo.c)
 add_executable(nop nop.c)
 add_executable(print-stderr print-stderr.c)
 add_executable(print-stdout print-stdout.c)
+add_executable(umask-open umask-open.c)
 add_executable(uncacheable uncacheable.c)
 add_executable(write-file write-file.c)
 
@@ -48,6 +49,7 @@ add_dependencies(check
   nop
   print-stderr
   print-stdout
+  umask-open
   uncacheable
   write-file
   xcache
