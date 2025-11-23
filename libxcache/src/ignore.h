@@ -84,6 +84,12 @@ SYSENTER_IGNORE(chdir)
 #ifdef __NR_readlink
 SYSENTER_IGNORE(readlink)
 #endif
+// `umask` technically _is_ relevant to the tracer. But it can instead read the
+// mode of created files during trace finalisation (`inferior_save`), avoiding
+// the need to track umasks.
+#ifdef __NR_umask
+IGNORE(umask)
+#endif
 // see note about `getpid`
 #ifdef __NR_getppid
 IGNORE(getppid)
