@@ -75,6 +75,9 @@ SYSEXIT_IGNORE(execve)
 #ifdef __NR_wait4
 IGNORE(wait4)
 #endif
+#ifdef __NR_fcntl
+SYSENTER_IGNORE(fcntl)
+#endif
 #ifdef __NR_getcwd
 IGNORE(getcwd)
 #endif

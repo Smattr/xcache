@@ -74,6 +74,7 @@ add_library(libxcache
   src/sysexit_chdir.c
   src/sysexit_clone.c
   src/sysexit_close.c
+  src/sysexit_fcntl.c
   src/sysexit_open.c
   src/sysexit_readlink.c
   src/sysexit_stat.c
