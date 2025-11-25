@@ -153,8 +153,18 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
 
     break;
 
+  case O_RDWR:
+  case O_RDWR | O_CREAT:
+  case O_RDWR | O_TRUNC:
+  case O_RDWR | O_CREAT | O_TRUNC:
+  case O_RDWR | O_CREAT | O_EXCL:
+  case O_RDWR | O_CREAT | O_TRUNC | O_EXCL:
+  case O_WRONLY:
+  case O_WRONLY | O_CREAT:
   case O_WRONLY | O_TRUNC:
   case O_WRONLY | O_CREAT | O_TRUNC:
+  case O_WRONLY | O_CREAT | O_EXCL:
+  case O_WRONLY | O_CREAT | O_TRUNC | O_EXCL:
     // for now, do not support failing writes
     if (err < 0) {
       rc = ECHILD;
