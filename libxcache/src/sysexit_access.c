@@ -139,15 +139,18 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
   }
 
 #ifdef AT_EMPTY_PATH
+  // we do not need to track `AT_EMPTY_PATH` as we resolved its effects above
+  flags &= ~AT_EMPTY_PATH;
+#endif
+
   // reject flags we cannot yet handle
-  if (ERROR(flags & ~AT_EMPTY_PATH)) {
+  if (ERROR(flags & ~(AT_EACCESS | AT_SYMLINK_NOFOLLOW))) {
     rc = ECHILD;
     goto done;
   }
-#endif
 
   // record it
-  if (ERROR((rc = input_new_access(&saw, &err, abs, (int)mode))))
+  if (ERROR((rc = input_new_access(&saw, &err, abs, (int)mode, (int)flags))))
     goto done;
 
   if (ERROR((rc = inferior_input_new(inf, saw))))

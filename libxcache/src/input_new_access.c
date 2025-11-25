@@ -2,12 +2,13 @@
 #include "input_t.h"
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
 int input_new_access(input_t *input, const int *expected_err, const char *path,
-                     int mode) {
+                     int mode, int flags) {
 
   assert(input != NULL);
   assert(path != NULL);
@@ -25,7 +26,8 @@ int input_new_access(input_t *input, const int *expected_err, const char *path,
   }
 
   {
-    const int r = access(path, mode);
+    const int r = flags == 0 ? access(path, mode)
+                             : faccessat(AT_FDCWD, path, mode, flags);
     if (ERROR(r < 0 && expected_err != NULL && errno != *expected_err)) {
       rc = ECHILD;
       goto done;
@@ -38,6 +40,7 @@ int input_new_access(input_t *input, const int *expected_err, const char *path,
   }
 
   i.access.mode = mode;
+  i.access.flags = flags;
 
   *input = i;
   i = (input_t){0};

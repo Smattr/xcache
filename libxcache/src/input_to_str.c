@@ -60,7 +60,9 @@ char *input_to_str(const input_t input) {
   switch (input.tag) {
 
   case INP_ACCESS:
-    if (fprintf(stream, ", .access.flags = %d", input.access.mode) < 0)
+    if (fprintf(stream, ", .access.mode = %d", input.access.mode) < 0)
+      goto done;
+    if (fprintf(stream, ", .access.flags = %d", input.access.flags) < 0)
       goto done;
     break;
 

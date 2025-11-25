@@ -47,7 +47,7 @@ int sysexit_chdir(inferior_t *inf, thread_t *thread) {
         err == 0 ? 0 : -1, err);
 
   // record chdir() as if it were access()
-  if (ERROR((rc = input_new_access(&saw, &err, abs, R_OK))))
+  if (ERROR((rc = input_new_access(&saw, &err, abs, R_OK, 0))))
     goto done;
 
   if (ERROR((rc = inferior_input_new(inf, saw))))

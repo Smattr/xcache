@@ -29,6 +29,8 @@ int input_save(const input_t input, FILE *stream) {
   case INP_ACCESS:
     if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.access.mode))))
       goto done;
+    if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.access.flags))))
+      goto done;
     break;
 
   case INP_READ:

@@ -22,6 +22,8 @@ bool input_eq(const input_t a, const input_t b) {
   case INP_ACCESS:
     if (a.access.mode != b.access.mode)
       return false;
+    if (a.access.flags != b.access.flags)
+      return false;
     break;
 
   case INP_READ:

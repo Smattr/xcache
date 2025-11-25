@@ -44,8 +44,14 @@ int input_load(input_t *input, FILE *stream) {
     if (ERROR((rc = cbor_read_u64(stream, &mode))))
       goto done;
     i.access.mode = (int)mode;
-    break;
   }
+    {
+      uint64_t flags = 0;
+      if (ERROR((rc = cbor_read_u64(stream, &flags))))
+        goto done;
+      i.access.flags = (int)flags;
+    }
+    break;
 
   case INP_READ:
     if (ERROR((rc = cbor_read_u64(stream, &i.read.hash.data))))

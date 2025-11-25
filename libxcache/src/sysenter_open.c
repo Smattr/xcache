@@ -130,7 +130,7 @@ int sysenter_openat(inferior_t *inf, thread_t *thread) {
 
   // accrue the inferred check
   if (implies_access) {
-    if (ERROR((rc = input_new_access(&input, NULL, abs, F_OK))))
+    if (ERROR((rc = input_new_access(&input, NULL, abs, F_OK, 0))))
       goto done;
   } else {
     assert(implies_read);
