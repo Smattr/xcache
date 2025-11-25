@@ -104,7 +104,8 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
     free(mode_str);
   }
 
-  // make the path absolute
+  // Make the path absolute. These cases handle `AT_EMPTY_PATH` by default, as
+  // `path_join(foo, "")` is `foo`.
   if (pathname[0] == '/') {
     // dirfd is ignored
     abs = strdup(pathname);
@@ -136,6 +137,14 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
     rc = ECHILD;
     goto done;
   }
+
+#ifdef AT_EMPTY_PATH
+  // reject flags we cannot yet handle
+  if (ERROR(flags & ~AT_EMPTY_PATH)) {
+    rc = ECHILD;
+    goto done;
+  }
+#endif
 
   // record it
   if (ERROR((rc = input_new_access(&saw, &err, abs, (int)mode))))
