@@ -65,39 +65,27 @@ done:
   return ret;
 }
 
-int sysexit_access(inferior_t *inf, thread_t *thread) {
-
+/// handle a call to an `access` alike by the tracee
+///
+/// @param inf Inferior that made the call
+/// @param thread Thread that made the call
+/// @param pathname Path passed to `access`
+/// @param flags Mode passed to `access`
+/// @return 0 on success or an errno on failure
+static int handle_access(inferior_t *inf, thread_t *thread,
+                         const char *pathname, long flags) {
   assert(inf != NULL);
   assert(thread != NULL);
+  assert(pathname != NULL);
 
-  char *path = NULL;
   char *abs = NULL;
   input_t saw = {0};
   int rc = 0;
 
-  // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 1);
-  if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
-    // if the read faulted, assume our side was correct and the tracee used a
-    // bad pointer, something we do not support recording
-    if (rc == EFAULT)
-      rc = ECHILD;
-    goto done;
-  }
-
-  // make it absolute
-  abs = path_absolute(thread->fs->cwd, path);
+  // make the path absolute
+  abs = path_absolute(thread->fs->cwd, pathname);
   if (ERROR(abs == NULL)) {
     rc = ENOMEM;
-    goto done;
-  }
-
-  // extract the flags
-  const long flags = peek_syscall_arg(thread, 2);
-
-  // treat any flag we do not know as the child doing something unsupported
-  if (ERROR(flags & ~(R_OK | W_OK | X_OK | F_OK))) {
-    rc = ECHILD;
     goto done;
   }
 
@@ -107,8 +95,14 @@ int sysexit_access(inferior_t *inf, thread_t *thread) {
   if (UNLIKELY(xc_debug != NULL)) {
     char *const mode = mode_to_str((int)flags);
     DEBUG("TID %ld, access(\"%s\", %s) = %d, errno == %d", (long)thread->id,
-          path, mode == NULL ? "<oom>" : mode, err == 0 ? 0 : -1, err);
+          pathname, mode == NULL ? "<oom>" : mode, err == 0 ? 0 : -1, err);
     free(mode);
+  }
+
+  // treat any mode flag we do not know as the child doing something unsupported
+  if (ERROR(flags & ~(R_OK | W_OK | X_OK | F_OK))) {
+    rc = ECHILD;
+    goto done;
   }
 
   // record it
@@ -122,6 +116,35 @@ int sysexit_access(inferior_t *inf, thread_t *thread) {
 done:
   input_free(saw);
   free(abs);
+
+  return rc;
+}
+
+int sysexit_access(inferior_t *inf, thread_t *thread) {
+
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  char *path = NULL;
+  int rc = 0;
+
+  // extract the path
+  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 1);
+  if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
+    // if the read faulted, assume our side was correct and the tracee used a
+    // bad pointer, something we do not support recording
+    if (rc == EFAULT)
+      rc = ECHILD;
+    goto done;
+  }
+
+  // extract the flags
+  const long flags = peek_syscall_arg(thread, 2);
+
+  if (ERROR((rc = handle_access(inf, thread, path, flags))))
+    goto done;
+
+done:
   free(path);
 
   return rc;
