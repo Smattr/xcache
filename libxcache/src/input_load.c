@@ -40,10 +40,10 @@ int input_load(input_t *input, FILE *stream) {
   switch (i.tag) {
 
   case INP_ACCESS: {
-    uint64_t flags = 0;
-    if (ERROR((rc = cbor_read_u64(stream, &flags))))
+    uint64_t mode = 0;
+    if (ERROR((rc = cbor_read_u64(stream, &mode))))
       goto done;
-    i.access.flags = (int)flags;
+    i.access.mode = (int)mode;
     break;
   }
 

@@ -20,7 +20,7 @@ bool input_eq(const input_t a, const input_t b) {
   switch (a.tag) {
 
   case INP_ACCESS:
-    if (a.access.flags != b.access.flags)
+    if (a.access.mode != b.access.mode)
       return false;
     break;
 

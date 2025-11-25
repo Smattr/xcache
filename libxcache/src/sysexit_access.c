@@ -70,10 +70,10 @@ done:
 /// @param inf Inferior that made the call
 /// @param thread Thread that made the call
 /// @param pathname Path passed to `access`
-/// @param flags Mode passed to `access`
+/// @param mode Mode passed to `access`
 /// @return 0 on success or an errno on failure
 static int handle_access(inferior_t *inf, thread_t *thread,
-                         const char *pathname, long flags) {
+                         const char *pathname, long mode) {
   assert(inf != NULL);
   assert(thread != NULL);
   assert(pathname != NULL);
@@ -93,20 +93,21 @@ static int handle_access(inferior_t *inf, thread_t *thread,
   const int err = peek_errno(thread);
 
   if (UNLIKELY(xc_debug != NULL)) {
-    char *const mode = mode_to_str((int)flags);
+    char *const mode_str = mode_to_str((int)mode);
     DEBUG("TID %ld, access(\"%s\", %s) = %d, errno == %d", (long)thread->id,
-          pathname, mode == NULL ? "<oom>" : mode, err == 0 ? 0 : -1, err);
-    free(mode);
+          pathname, mode_str == NULL ? "<oom>" : mode_str, err == 0 ? 0 : -1,
+          err);
+    free(mode_str);
   }
 
   // treat any mode flag we do not know as the child doing something unsupported
-  if (ERROR(flags & ~(R_OK | W_OK | X_OK | F_OK))) {
+  if (ERROR(mode & ~(R_OK | W_OK | X_OK | F_OK))) {
     rc = ECHILD;
     goto done;
   }
 
   // record it
-  if (ERROR((rc = input_new_access(&saw, &err, abs, (int)flags))))
+  if (ERROR((rc = input_new_access(&saw, &err, abs, (int)mode))))
     goto done;
 
   if (ERROR((rc = inferior_input_new(inf, saw))))
@@ -138,10 +139,10 @@ int sysexit_access(inferior_t *inf, thread_t *thread) {
     goto done;
   }
 
-  // extract the flags
-  const long flags = peek_syscall_arg(thread, 2);
+  // extract the mode flags
+  const long mode = peek_syscall_arg(thread, 2);
 
-  if (ERROR((rc = handle_access(inf, thread, path, flags))))
+  if (ERROR((rc = handle_access(inf, thread, path, mode))))
     goto done;
 
 done:

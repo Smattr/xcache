@@ -24,7 +24,7 @@ typedef struct {
   int err;          ///< any errno that resulted
   union {
     struct {
-      int flags; ///< mask of F_OK, R_OK, W_OK, X_OK
+      int mode; ///< mask of F_OK, R_OK, W_OK, X_OK
     } access;
     struct {
       hash_t hash; ///< hash of the file’s content
@@ -53,10 +53,10 @@ typedef struct {
 /// @param input [out] Created input on success
 /// @param expected_err Optional expected error result
 /// @param path Absolute path to the target file/directory
-/// @param flags Flags to access()
+/// @param mode Mode to access()
 /// @return 0 on success or an errno on failure
 INTERNAL int input_new_access(input_t *input, const int *expected_err,
-                              const char *path, int flags);
+                              const char *path, int mode);
 
 /// create an input for a read open() call
 ///

@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 int input_new_access(input_t *input, const int *expected_err, const char *path,
-                     int flags) {
+                     int mode) {
 
   assert(input != NULL);
   assert(path != NULL);
@@ -25,7 +25,7 @@ int input_new_access(input_t *input, const int *expected_err, const char *path,
   }
 
   {
-    const int r = access(path, flags);
+    const int r = access(path, mode);
     if (ERROR(r < 0 && expected_err != NULL && errno != *expected_err)) {
       rc = ECHILD;
       goto done;
@@ -37,7 +37,7 @@ int input_new_access(input_t *input, const int *expected_err, const char *path,
     i.err = r == 0 ? 0 : errno;
   }
 
-  i.access.flags = flags;
+  i.access.mode = mode;
 
   *input = i;
   i = (input_t){0};
