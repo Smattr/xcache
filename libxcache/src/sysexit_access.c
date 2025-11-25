@@ -74,9 +74,10 @@ done:
 /// @param dirfd Directory from which `pathname` is relative
 /// @param pathname Path passed to `access`
 /// @param mode Mode passed to `access`
+/// @param flags Flags to an `faccessat2` call
 /// @return 0 on success or an errno on failure
 static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
-                         const char *pathname, long mode) {
+                         const char *pathname, long mode, long flags) {
   assert(inf != NULL);
   assert(thread != NULL);
   assert(pathname != NULL);
@@ -117,9 +118,15 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
 
   if (UNLIKELY(xc_debug != NULL)) {
     char *const mode_str = mode_to_str(mode);
-    DEBUG("TID %ld, access(\"%s\", %s) = %d, errno == %d", (long)thread->id,
-          pathname, mode_str == NULL ? "<oom>" : mode_str, err == 0 ? 0 : -1,
-          err);
+    if (dirfd == AT_FDCWD && flags == 0) {
+      DEBUG("TID %ld, access(\"%s\", %s) = %d, errno == %d", (long)thread->id,
+            pathname, mode_str == NULL ? "<oom>" : mode_str, err == 0 ? 0 : -1,
+            err);
+    } else {
+      DEBUG("TID %ld, faccessat2(%d, \"%s\", %s, %ld) = %d, errno == %d",
+            (long)thread->id, dirfd, abs, mode_str == NULL ? "<oom>" : mode_str,
+            flags, err == 0 ? 0 : -1, err);
+    }
     free(mode_str);
   }
 
@@ -165,7 +172,7 @@ int sysexit_access(inferior_t *inf, thread_t *thread) {
   // extract the mode flags
   const long mode = peek_syscall_arg(thread, 2);
 
-  if (ERROR((rc = handle_access(inf, thread, AT_FDCWD, path, mode))))
+  if (ERROR((rc = handle_access(inf, thread, AT_FDCWD, path, mode, 0))))
     goto done;
 
 done:
