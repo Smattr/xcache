@@ -84,6 +84,9 @@ int sysexit(inferior_t *inf, thread_t *thread) {
 #ifdef __NR_readlink
   DO(readlink);
 #endif
+#ifdef __NR_faccessat2
+  DO(faccessat2);
+#endif
 
 #undef DO
 

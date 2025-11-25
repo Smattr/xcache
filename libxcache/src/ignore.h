@@ -124,3 +124,6 @@ IGNORE(set_robust_list)
 #ifdef __NR_rseq
 IGNORE(rseq)
 #endif
+#ifdef __NR_faccessat2
+SYSENTER_IGNORE(faccessat2)
+#endif

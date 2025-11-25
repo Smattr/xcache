@@ -190,3 +190,38 @@ done:
 
   return rc;
 }
+
+int sysexit_faccessat2(inferior_t *inf, thread_t *thread) {
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  char *path = NULL;
+  int rc = 0;
+
+  // extract dirfd
+  const int dirfd = (int)peek_syscall_arg(thread, 1);
+
+  // extract the path
+  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 2);
+  if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
+    // if the read faulted, assume our side was correct and the tracee used a
+    // bad pointer, something we do not support recording
+    if (rc == EFAULT)
+      rc = ECHILD;
+    goto done;
+  }
+
+  // extract the mode flags
+  const long mode = peek_syscall_arg(thread, 3);
+
+  // extract the flags
+  const long flags = peek_syscall_arg(thread, 4);
+
+  if (ERROR((rc = handle_access(inf, thread, dirfd, path, mode, flags))))
+    goto done;
+
+done:
+  free(path);
+
+  return rc;
+}
