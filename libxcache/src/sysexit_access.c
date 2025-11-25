@@ -15,7 +15,7 @@
 #include <xcache/record.h>
 
 /// convert `access` mode to a readable string
-static char *mode_to_str(int mode) {
+static char *mode_to_str(long mode) {
 
   char *buffer = NULL;
   size_t buffer_size = 0;
@@ -28,7 +28,7 @@ static char *mode_to_str(int mode) {
 
   const struct {
     const char *name;
-    int value;
+    long value;
   } KNOWN[] = {
 #define X(v) {#v, v}
       X(R_OK),
@@ -48,7 +48,7 @@ static char *mode_to_str(int mode) {
   }
 
   if (mode != 0) {
-    if (fprintf(stream, "%s%d", separator, mode) < 0)
+    if (fprintf(stream, "%s%ld", separator, mode) < 0)
       goto done;
   }
 
@@ -93,7 +93,7 @@ static int handle_access(inferior_t *inf, thread_t *thread,
   const int err = peek_errno(thread);
 
   if (UNLIKELY(xc_debug != NULL)) {
-    char *const mode_str = mode_to_str((int)mode);
+    char *const mode_str = mode_to_str(mode);
     DEBUG("TID %ld, access(\"%s\", %s) = %d, errno == %d", (long)thread->id,
           pathname, mode_str == NULL ? "<oom>" : mode_str, err == 0 ? 0 : -1,
           err);
