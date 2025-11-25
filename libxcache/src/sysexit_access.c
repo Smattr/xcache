@@ -86,6 +86,24 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
   input_t saw = {0};
   int rc = 0;
 
+  // extract the result
+  const int err = peek_errno(thread);
+
+  if (UNLIKELY(xc_debug != NULL)) {
+    char *const mode_str = mode_to_str(mode);
+    if (dirfd == AT_FDCWD && flags == 0) {
+      DEBUG("TID %ld, access(\"%s\", %s) = %d, errno == %d", (long)thread->id,
+            pathname, mode_str == NULL ? "<oom>" : mode_str, err == 0 ? 0 : -1,
+            err);
+    } else {
+      DEBUG("TID %ld, faccessat2(%d, \"%s\", %s, %ld) = %d, errno == %d",
+            (long)thread->id, dirfd, pathname,
+            mode_str == NULL ? "<oom>" : mode_str, flags, err == 0 ? 0 : -1,
+            err);
+    }
+    free(mode_str);
+  }
+
   // make the path absolute
   if (pathname[0] == '/') {
     // dirfd is ignored
@@ -111,23 +129,6 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
       rc = ENOMEM;
       goto done;
     }
-  }
-
-  // extract the result
-  const int err = peek_errno(thread);
-
-  if (UNLIKELY(xc_debug != NULL)) {
-    char *const mode_str = mode_to_str(mode);
-    if (dirfd == AT_FDCWD && flags == 0) {
-      DEBUG("TID %ld, access(\"%s\", %s) = %d, errno == %d", (long)thread->id,
-            pathname, mode_str == NULL ? "<oom>" : mode_str, err == 0 ? 0 : -1,
-            err);
-    } else {
-      DEBUG("TID %ld, faccessat2(%d, \"%s\", %s, %ld) = %d, errno == %d",
-            (long)thread->id, dirfd, abs, mode_str == NULL ? "<oom>" : mode_str,
-            flags, err == 0 ? 0 : -1, err);
-    }
-    free(mode_str);
   }
 
   // treat any mode flag we do not know as the child doing something unsupported
