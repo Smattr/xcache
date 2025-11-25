@@ -21,9 +21,9 @@ int sysenter_openat(inferior_t *inf, thread_t *thread) {
   // sysexit, the behaviour of this function is _heavily_ coupled with the
   // behaviour of its other half, `sysexit_openat`. In particular it, (1)
   // returns 0 for some failure cases where it knows `sysexit_openat` will catch
-  // the failure, (2) omits handling anything that `sysexit_openat` can handle,
-  // and (3) omits handling anything that it knows will result in a `ECHILD` or
-  // `ENOTSUP` from `sysexit_openat`.
+  // the failure, (2) omits handling some things that `sysexit_openat` can
+  // handle, and (3) omits handling anything that it knows will result in a
+  // `ECHILD` or `ENOTSUP` from `sysexit_openat`.
   //
   // The relationship between `sysenter_openat` and `sysexit_openat` is
   // asymmetric. `sysenter_openat` is allowed to handle scenarios that
@@ -43,58 +43,94 @@ int sysenter_openat(inferior_t *inf, thread_t *thread) {
   const bool is_wr = rw == O_WRONLY || rw == O_RDWR;
   const bool is_creat = !!(flags & O_CREAT);
   const bool is_trunc = !!(flags & O_TRUNC);
+  const bool is_excl = !!(flags & O_EXCL);
 
   // We have a number of possible relevant scenarios:
   //
-  //   ┌────────────────────────────────────────────────────┬──────┐
-  //   │ flags & (O_RDONLY|O_WRONLY|O_RDWR|O_CREAT|O_TRUNC) │ case │
-  //   ├────────────────────────────────────────────────────┼──────┤
-  //   │ O_RDONLY                                           │  1   │
-  //   │ O_RDONLY | O_CREAT                                 │  2¹  │
-  //   │ O_RDONLY |           O_TRUNC                       │  3   │
-  //   │ O_RDONLY | O_CREAT | O_TRUNC                       │  3   │
-  //   │ O_WRONLY                                           │  4   │
-  //   │ O_WRONLY | O_CREAT                                 │  4   │
-  //   │ O_WRONLY |           O_TRUNC                       │  1   │
-  //   │ O_WRONLY | O_CREAT | O_TRUNC                       │  5   │
-  //   │ O_RDWR                                             │  4   │
-  //   │ O_RDWR   | O_CREAT                                 │  4   │
-  //   │ O_RDWR             | O_TRUNC                       │  1   │
-  //   │ O_RDWR   | O_CREAT | O_TRUNC                       │  5   │
-  //   └────────────────────────────────────────────────────┴──────┘
+  //   ┌───────────────────────────────────────────────────────────┬──────────┐
+  //   │ flags & (O_RDONLY|O_WRONLY|O_RDWR|O_CREAT|O_TRUNC|O_EXCL) │   case   │
+  //   ├───────────────────────────────────────────────────────────┼──────────┤
+  //   │ O_RDONLY                                                  │    N/A   │
+  //   │ O_RDONLY | O_CREAT                                        │   F_OK¹  │
+  //   │ O_RDONLY |           O_TRUNC                              │  unspec  │
+  //   │ O_RDONLY | O_CREAT | O_TRUNC                              │  unspec  │
+  //   │ O_RDONLY |                     O_EXCL                     │    UB²   │
+  //   │ O_RDONLY | O_CREAT |           O_EXCL                     │ F_OK (2)¹│
+  //   │ O_RDONLY |           O_TRUNC | O_EXCL                     │    UB²   │
+  //   │ O_RDONLY | O_CREAT | O_TRUNC | O_EXCL                     │  unspec  │
+  //   │ O_WRONLY                                                  │ O_RDONLY │
+  //   │ O_WRONLY | O_CREAT                                        │ O_RDONLY │
+  //   │ O_WRONLY |           O_TRUNC                              │ F_OK (2) │
+  //   │ O_WRONLY | O_CREAT | O_TRUNC                              │   none   │
+  //   │ O_WRONLY |                     O_EXCL                     │    UB²   │
+  //   │ O_WRONLY | O_CREAT |           O_EXCL                     │ F_OK (2) │
+  //   │ O_WRONLY |           O_TRUNC | O_EXCL                     │    UB²   │
+  //   │ O_WRONLY | O_CREAT | O_TRUNC | O_EXCL                     │ F_OK (2) │
+  //   │ O_RDWR                                                    │ O_RDONLY │
+  //   │ O_RDWR   | O_CREAT                                        │ O_RDONLY │
+  //   │ O_RDWR   |           O_TRUNC                              │ F_OK (2) │
+  //   │ O_RDWR   | O_CREAT | O_TRUNC                              │   none   │
+  //   │ O_RDWR   |                     O_EXCL                     │    UB²   │
+  //   │ O_RDWR   | O_CREAT |           O_EXCL                     │ F_OK (2) │
+  //   │ O_RDWR   |           O_TRUNC | O_EXCL                     │    UB²   │
+  //   │ O_RDWR   | O_CREAT | O_TRUNC | O_EXCL                     │ F_OK (2) │
+  //   └───────────────────────────────────────────────────────────┴──────────┘
   //
-  //   1. Depends on the prior state of the file, but only in a way that does
-  //      not need sysenter handling.
-  //   2. Depends on the prior state of the file in a way that implies a
-  //      `access(…, F_OK)` call.
-  //   3. Unspecified behaviour. We can safely ignore these cases and let
-  //      `sysexit_openat` bail out when seeing them.
-  //   4. Depends on the prior state of the file in a way that implies a
-  //      `open(…, O_RDONLY)` call.
-  //   5. Does not depend on the prior state of the file.
+  //   [N/A]
+  //     Depends on the prior state of the file, but only in a way that does not
+  //     need sysenter handling.
   //
-  // TODO: O_EXCL
+  //   [F_OK]
+  //     Depends on the prior state of the file in a way that implies a
+  //     `access(…, F_OK)` call.
+  //
+  //   [unspec]
+  //     Unspecified behaviour. We can safely ignore these cases and let
+  //     `sysexit_openat` bail out when seeing them.
+  //
+  //   [UB]
+  //     Undefined behaviour. We can safely ignore these cases and let
+  //     `sysexit_openat` bail out when seeing them.
+  //
+  //   [F_OK (2)]
+  //     Depends on the prior state of the file in a way that implies a
+  //     `access(…, F_OK)` call but technically can be inferred by
+  //     `sysexit_openat`. Still, it is easier to handle here.
+  //
+  //   [O_RDONLY]
+  //     Depends on the prior state of the file in a way that implies a
+  //     `open(…, O_RDONLY)` call.
+  //
+  //   [none]
+  //     Does not depend on the prior state of the file.
   //
   // ¹ Bizarrely yes, `O_RDONLY|O_CREAT` is a legal flag combination.
+  // ² There is an exception where `O_EXCL` without `O_CREAT` is defined on
+  //   block devices. But we reject this in `sysexit_openat`.
 
-  // nothing to be done for (1) cases
-  if (rw == O_RDONLY && !is_creat && !is_trunc)
+  // nothing to be done for [N/A] cases
+  if (rw == O_RDONLY && !is_creat && !is_trunc && !is_excl)
     goto done;
-  if (is_wr && !is_creat && is_trunc)
-    goto done;
 
-  // the (2) cases will need to be dealt with later
-  const bool implies_access = rw == O_RDONLY && is_creat;
+  // the [F_OK] cases and [F_OK (2)] cases will need to be dealt with later
+  bool implies_access = false;
+  implies_access |= rw == O_RDONLY && is_creat && !is_trunc;
+  implies_access |= is_wr && !is_creat && is_trunc && !is_excl;
+  implies_access |= is_wr && is_creat && is_excl;
 
-  // ignore the (3) cases that `sysexit_openat` will reject
+  // ignore the [unspec] cases that `sysexit_openat` will reject
   if (rw == O_RDONLY && is_trunc)
     goto done;
 
-  // the (4) cases will need to be dealt with later
-  const bool implies_read = is_wr && !is_trunc;
+  // ignore the [UB] cases that `sysexit_openat` will reject
+  if (!is_creat && is_excl)
+    goto done;
 
-  // nothing to be done for (5) cases
-  if (is_wr && is_creat && is_trunc)
+  // the [O_RDONLY] cases will need to be dealt with later
+  const bool implies_read = is_wr && !is_trunc && !is_excl;
+
+  // nothing to be done for [none] cases
+  if (is_wr && is_creat && is_trunc && !is_excl)
     goto done;
 
   // we should now have covered everything
