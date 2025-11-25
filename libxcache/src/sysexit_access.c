@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "fd.h"
 #include "fs.h"
 #include "inferior_t.h"
 #include "input_t.h"
@@ -8,6 +9,7 @@
 #include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,10 +71,11 @@ done:
 ///
 /// @param inf Inferior that made the call
 /// @param thread Thread that made the call
+/// @param dirfd Directory from which `pathname` is relative
 /// @param pathname Path passed to `access`
 /// @param mode Mode passed to `access`
 /// @return 0 on success or an errno on failure
-static int handle_access(inferior_t *inf, thread_t *thread,
+static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
                          const char *pathname, long mode) {
   assert(inf != NULL);
   assert(thread != NULL);
@@ -83,10 +86,30 @@ static int handle_access(inferior_t *inf, thread_t *thread,
   int rc = 0;
 
   // make the path absolute
-  abs = path_absolute(thread->fs->cwd, pathname);
-  if (ERROR(abs == NULL)) {
-    rc = ENOMEM;
-    goto done;
+  if (pathname[0] == '/') {
+    // dirfd is ignored
+    abs = strdup(pathname);
+    if (ERROR(abs == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+  } else if (dirfd == AT_FDCWD) {
+    abs = path_absolute(thread->fs->cwd, pathname);
+    if (ERROR(abs == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+  } else {
+    const fd_t *const root = fd_at(thread->fd, dirfd);
+    if (ERROR(root == NULL)) {
+      rc = ECHILD;
+      goto done;
+    }
+    abs = path_join(root->path, pathname);
+    if (ERROR(abs == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
   }
 
   // extract the result
@@ -142,7 +165,7 @@ int sysexit_access(inferior_t *inf, thread_t *thread) {
   // extract the mode flags
   const long mode = peek_syscall_arg(thread, 2);
 
-  if (ERROR((rc = handle_access(inf, thread, path, mode))))
+  if (ERROR((rc = handle_access(inf, thread, AT_FDCWD, path, mode))))
     goto done;
 
 done:
