@@ -5,6 +5,8 @@ add_library(libxcache-spy SHARED
   src/init.c
 )
 
+target_compile_options(libxcache-spy PRIVATE -D_GNU_SOURCE)
+
 if(APPLE)
   target_compile_options(libxcache-spy PRIVATE -fno-common)
 endif()
