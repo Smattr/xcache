@@ -54,5 +54,6 @@ add_dependencies(check
   umask-open2
   uncacheable
   write-file
+  libxcache-spy
   xcache
 )
