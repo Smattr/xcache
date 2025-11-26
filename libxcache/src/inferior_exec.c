@@ -1,4 +1,3 @@
-#include "../../common/proccall.h"
 #include "inferior_t.h"
 #include "list.h"
 #include "thread_t.h"
@@ -59,12 +58,6 @@ _Noreturn void inferior_exec(inferior_t *inf, const xc_cmd_t cmd,
     goto fail;
   }
   if (dup2(inf->t_err->pipe[1], STDERR_FILENO) < 0) {
-    rc = errno;
-    goto fail;
-  }
-
-  // setup our bridge for out-of-band messages
-  if (dup2(inf->proccall[1], XCACHE_FILENO) < 0) {
     rc = errno;
     goto fail;
   }

@@ -1,4 +1,3 @@
-#include "../../common/proccall.h"
 #include "debug.h"
 #include "fd.h"
 #include "find_me.h"
@@ -62,8 +61,6 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
   if (ERROR((rc = fd_open(thread->fd, STDOUT_FILENO, "/dev/stdout"))))
     goto done;
   if (ERROR((rc = fd_open(thread->fd, STDERR_FILENO, "/dev/stderr"))))
-    goto done;
-  if (ERROR((rc = fd_open(thread->fd, XCACHE_FILENO, ""))))
     goto done;
 
   // make the first thread export its eventual exit status as the process’ exit

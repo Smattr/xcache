@@ -18,8 +18,6 @@ typedef struct {
   tee_t *t_out; ///< pipe for communicating stdout content
   tee_t *t_err; ///< pipe for communicating stderr content
 
-  int proccall[2]; ///< pipe for the libxcache-spy to message us
-
   int exec_status[2]; ///< pipe for propagating initial `execve` result
 
   int exit_status; ///< exit status on completion

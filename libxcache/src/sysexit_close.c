@@ -1,4 +1,3 @@
-#include "../../common/proccall.h"
 #include "debug.h"
 #include "fd.h"
 #include "inferior_t.h"
@@ -33,12 +32,5 @@ int sysexit_close(inferior_t *inf, thread_t *thread) {
     fd_close(thread->fd, fd);
   }
 
-  // if the child closed our spy’s channel back to us, consider this unsupported
-  if (ERROR(fd == XCACHE_FILENO)) {
-    rc = ECHILD;
-    goto done;
-  }
-
-done:
   return rc;
 }

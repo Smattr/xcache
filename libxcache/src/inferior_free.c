@@ -25,11 +25,6 @@ void inferior_free(inferior_t *inf) {
   if (inf->exec_status[1] > 0)
     (void)close(inf->exec_status[1]);
 
-  if (inf->proccall[0] > 0)
-    (void)close(inf->proccall[0]);
-  if (inf->proccall[1] > 0)
-    (void)close(inf->proccall[1]);
-
   tee_cancel(inf->t_err);
   tee_cancel(inf->t_out);
 

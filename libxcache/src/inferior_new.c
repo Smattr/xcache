@@ -35,12 +35,6 @@ int inferior_new(inferior_t *inf, unsigned mode, const char *trace_root) {
   if (ERROR((rc = tee_new(&i.t_err, STDERR_FILENO, trace_root))))
     goto done;
 
-  // setup a bridge the subprocess will use to send us out-of-band messages
-  if (ERROR(pipe2(i.proccall, O_CLOEXEC) < 0)) {
-    rc = errno;
-    goto done;
-  }
-
   // setup a bridge `inferior_exec` will use to notify us of initial failure
   if (ERROR(pipe2(i.exec_status, O_CLOEXEC) < 0)) {
     rc = errno;
