@@ -20,9 +20,7 @@ def last_release() -> str:
     The version of the last release. This will be used as the version number if no
     Git information is available.
     """
-    with open(
-        Path(__file__).parent / "../../CHANGELOG.rst", "rt", encoding="utf-8"
-    ) as f:
+    with open(Path(__file__).parent / "../CHANGELOG.rst", "rt", encoding="utf-8") as f:
         for line in f:
             m = re.match(r"(v\d{4}\.\d{2}\.\d{2})$", line)
             if m is not None:
@@ -41,7 +39,7 @@ def has_git() -> bool:
         return False
 
     # return False if we have no Git repository information
-    if not (Path(__file__).parent / "../../.git").exists():
+    if not (Path(__file__).parent / "../.git").exists():
         return False
 
     return True

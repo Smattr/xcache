@@ -106,11 +106,11 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 add_custom_command(
   OUTPUT version.c
-  COMMAND src/make-version.py
+  COMMAND ../common/make-version.py
     --preamble=\#include\ \\\<xcache/version.h\\\>
     --name=xc_version
     --output=${CMAKE_CURRENT_BINARY_DIR}/version.c
-  MAIN_DEPENDENCY src/make-version.py
+  MAIN_DEPENDENCY ../common/make-version.py
   DEPENDS always_run
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
