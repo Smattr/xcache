@@ -97,6 +97,7 @@ def main(args: [str]) -> int:
 
     # parse command line options
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--preamble", default="", help="header text to include")
     parser.add_argument("--name", required=True, help="version function symbol")
     parser.add_argument("--output", required=True, help="file to write code to")
     options = parser.parse_args(args[1:])
@@ -126,7 +127,7 @@ def main(args: [str]) -> int:
 
     new = textwrap.dedent(
         f"""\
-    #include <xcache/version.h>
+    {options.preamble}
 
     const char *{options.name}(void) {{
       return "{version}";
