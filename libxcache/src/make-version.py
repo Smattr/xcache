@@ -4,6 +4,7 @@
 Generate contents of a version.c.
 """
 
+import argparse
 import os
 import re
 import shutil
@@ -94,16 +95,15 @@ def is_dirty() -> bool:
 
 def main(args: [str]) -> int:
 
-    if len(args) != 2 or args[1] == "--help":
-        sys.stderr.write(
-            f"usage: {args[0]} file\n write version information as a C source file\n"
-        )
-        return -1
+    # parse command line options
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", required=True, help="file to write code to")
+    options = parser.parse_args(args[1:])
 
     # get the contents of the old version file if it exists
     old = None
-    if os.path.exists(args[1]):
-        old = Path(args[1]).read_text(encoding="utf-8")
+    if os.path.exists(options.output):
+        old = Path(options.output).read_text(encoding="utf-8")
 
     version = None
 
@@ -136,7 +136,7 @@ def main(args: [str]) -> int:
     # If the version has changed, update the output. Otherwise we leave the old
     # contents – and more importantly, the timestamp – intact.
     if old != new:
-        Path(args[1]).write_text(new, encoding="utf-8")
+        Path(options.output).write_text(new, encoding="utf-8")
 
     return 0
 
