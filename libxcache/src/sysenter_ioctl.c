@@ -130,7 +130,7 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
 
   default:
     DEBUG("unrecognised message from libxcache-spy: %ld", callno);
-    assert(callno == CALL_OFF || callno == CALL_ON || callno == CALL_SYSCONF);
+    rc = ECHILD;
   }
 
 done:
