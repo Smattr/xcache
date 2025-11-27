@@ -1,5 +1,6 @@
 #include "../../common/proccall.h"
 #include "call.h"
+#include "version.h"
 #include <assert.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -18,6 +19,9 @@ static long (*real_sysconf)(int name);
 
 /// actions to perform before entering main
 static __attribute__((constructor)) void init(void) {
+
+  // alert the tracer to our presence
+  call(CALL_HELLO, xc_spy_version());
 
   // tell our tracer to ignore any syscalls that occur below
   call(CALL_OFF, NULL);

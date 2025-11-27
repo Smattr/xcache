@@ -7,11 +7,49 @@
 #include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
-#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <xcache/record.h>
+#include <xcache/version.h>
+
+/// handle the tracee having signalled us with `CALL_HELLO`
+static int handle_hello(inferior_t *inf, thread_t *thread) {
+  assert(thread != NULL);
+
+  (void)inf;
+
+  char *their_version = NULL;
+  int rc = 0;
+
+  // our own believed xcache version
+  const char *const our_version = xc_version();
+
+  // retrieve the version the spy passed us
+  const uintptr_t arg = (uintptr_t)peek_syscall_arg(thread, 3);
+  if (ERROR((rc = peek_str(&their_version, thread->proc, arg)))) {
+    // if the read faulted, assume our side was correct and the spy used a
+    // bad pointer, something we do not support recording
+    if (rc == EFAULT)
+      rc = ECHILD;
+    goto done;
+  }
+
+  DEBUG("spy sent us HELLO with version \"%s\" (our’s is \"%s\")",
+        their_version, our_version);
+  if (ERROR(strcmp(our_version, their_version) != 0)) {
+    rc = ECHILD;
+    goto done;
+  }
+
+done:
+  free(their_version);
+
+  return rc;
+}
 
 /// handle the tracee having signalled us with `CALL_SYSCONF`
 static int handle_sysconf(inferior_t *inf, thread_t *thread) {
@@ -113,6 +151,11 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
 
   // dispatch call
   switch (callno) {
+  case CALL_HELLO:
+    if (ERROR((rc = handle_hello(inf, thread))))
+      goto done;
+    break;
+
   case CALL_OFF:
     assert(!thread->ignoring && "duplicate monitor disable messages");
     thread->ignoring = true;
