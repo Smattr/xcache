@@ -74,7 +74,7 @@ static bool is_dominated_by_output(const input_t sub, const output_t dom) {
   return false;
 }
 
-int inferior_input_new(inferior_t *inf, const input_t input) {
+int inferior_input_new(inferior_t *inf, input_t input) {
 
   assert(inf != NULL);
 
@@ -83,15 +83,19 @@ int inferior_input_new(inferior_t *inf, const input_t input) {
   // we can elide this input if it is dominated by an earlier output
   for (size_t i = LIST_SIZE(&inf->outputs) - 1; i != SIZE_MAX; --i) {
     const output_t prior = *LIST_AT(&inf->outputs, i);
-    if (is_dominated_by_output(input, prior))
+    if (is_dominated_by_output(input, prior)) {
+      input_free(input);
       goto done;
+    }
   }
 
   // we can elide this input if it is dominated by an earlier input
   for (size_t i = LIST_SIZE(&inf->inputs) - 1; i != SIZE_MAX; --i) {
     const input_t prior = *LIST_AT(&inf->inputs, i);
-    if (is_dominated_by_input(input, prior))
+    if (is_dominated_by_input(input, prior)) {
+      input_free(input);
       goto done;
+    }
   }
 
   if (ERROR((rc = LIST_PUSH_BACK(&inf->inputs, input))))

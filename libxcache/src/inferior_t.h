@@ -68,7 +68,7 @@ INTERNAL _Noreturn void inferior_exec(inferior_t *inf, const xc_cmd_t cmd,
 /// @param inf Inferior to append input to
 /// @param input Input to append
 /// @return 0 on success or an errno on failure
-INTERNAL int inferior_input_new(inferior_t *inf, const input_t input);
+INTERNAL int inferior_input_new(inferior_t *inf, input_t input);
 
 /// append a new output
 ///
