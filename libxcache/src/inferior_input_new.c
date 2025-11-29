@@ -3,7 +3,25 @@
 #include "input_t.h"
 #include "list.h"
 #include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
+
+/// does one input make the other redundant?
+///
+/// @param sub The current input we are processing
+/// @param dom An earlier input that may subsume `sub`
+/// @return True if `dom` dominates `sub`
+static bool is_dominated_by_input(const input_t sub, const input_t dom) {
+
+  // `read;read` can be de-duped into just `read`
+  if (sub.tag == INP_READ && dom.tag == INP_READ) {
+    if (strcmp(sub.path, dom.path) == 0)
+      return true;
+  }
+
+  return false;
+}
 
 int inferior_input_new(inferior_t *inf, const input_t input) {
 
@@ -28,6 +46,13 @@ int inferior_input_new(inferior_t *inf, const input_t input) {
   }
 
   int rc = 0;
+
+  // we can elide this input if it is dominated by an earlier input
+  for (size_t i = LIST_SIZE(&inf->inputs) - 1; i != SIZE_MAX; --i) {
+    const input_t prior = *LIST_AT(&inf->inputs, i);
+    if (is_dominated_by_input(input, prior))
+      goto done;
+  }
 
   if (ERROR((rc = LIST_PUSH_BACK(&inf->inputs, input))))
     goto done;
