@@ -44,6 +44,10 @@ static bool is_supported(const char *abs_path) {
     return false;
   }
 
+  // consider opening any sysfs file unsupported
+  if (strncmp(abs_path, "/sys/", strlen("/sys/")) == 0)
+    return false;
+
   return true;
 }
 
