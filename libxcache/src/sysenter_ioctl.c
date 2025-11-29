@@ -113,13 +113,13 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
   const int fd = (int)peek_syscall_arg(thread, 1);
 
   // extract the call number
-  const long callno = peek_syscall_arg(thread, 2);
+  const int callno = (int)peek_syscall_arg(thread, 2);
 
   if (fd != XCACHE_FILENO) {
     // ioctls we can reasonably ignore
     const struct {
       const char *name;
-      long value;
+      int value;
     } SAFE[] = {
 #define X(v) {#v, v}
         X(TCGETS),
@@ -136,7 +136,7 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
 
   // any ioctl except a communication from the spy is unsupported
   if (ERROR(fd != XCACHE_FILENO)) {
-    DEBUG("TID %ld, ioctl(%d, %ld, …)", (long)thread->id, fd, callno);
+    DEBUG("TID %ld, ioctl(%d, %d, …)", (long)thread->id, fd, callno);
     if (thread->ignoring) {
       DEBUG("ignoring ioctl«%lu» on spy’s instruction",
             (unsigned long)__NR_ioctl);
@@ -146,7 +146,7 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
     goto done;
   }
 
-  DEBUG("TID %ld, ioctl(%d (XCACHE_FILENO), 0x%lx (%s), …)", (long)thread->id,
+  DEBUG("TID %ld, ioctl(%d (XCACHE_FILENO), 0x%x (%s), …)", (long)thread->id,
         fd, callno, callno_to_str(callno));
 
   // dispatch call
@@ -172,7 +172,7 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
     break;
 
   default:
-    DEBUG("unrecognised message from libxcache-spy: %ld", callno);
+    DEBUG("unrecognised message from libxcache-spy: %d", callno);
     rc = ECHILD;
   }
 

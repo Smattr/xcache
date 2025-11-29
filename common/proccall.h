@@ -50,7 +50,7 @@ enum {
 ///
 /// @param callno Call number to convert
 /// @return String representation
-static inline const char *callno_to_str(long callno) {
+static inline const char *callno_to_str(int callno) {
   if (callno == CALL_HELLO)
     return "\"hello\"";
   if (callno == CALL_OFF)
