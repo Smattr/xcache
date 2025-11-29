@@ -139,6 +139,21 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
       if (ERROR(rc))
         goto done;
     }
+
+    // if this was a `chmod`, finalise it now
+    if (back->tag == OUT_CHMOD) {
+
+      struct stat st;
+      if (ERROR(stat(back->path, &st) < 0)) {
+        rc = errno;
+        goto done;
+      }
+
+      // quoting `man -s7 inode`, “POSIX refers to the `stat.st_mode` bits
+      // corresponding to the mask `S_IFMT` (see below) as the file type, the 12
+      // bits corresponding to the mask 07777 as the file mode bits…”
+      back->chmod.mode = st.st_mode & 07777;
+    }
   }
 
   // create a new trace file to save to

@@ -73,6 +73,7 @@ add_library(libxcache
   src/sysexit.c
   src/sysexit_access.c
   src/sysexit_chdir.c
+  src/sysexit_chmod.c
   src/sysexit_clone.c
   src/sysexit_close.c
   src/sysexit_fcntl.c
