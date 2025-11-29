@@ -791,3 +791,61 @@ def test_umask2(debug: bool, record: bool, replay: bool, tmp_path: Path):
     assert (
         stat.S_IMODE(foo.stat().st_mode) == 0o666
     ), "expected file mode was not applied"
+
+
+@pytest.mark.parametrize(
+    "CLONE_FILES",
+    (pytest.param(False, id="~CLONE_FILES"), pytest.param(True, id="CLONE_FILES")),
+)
+@pytest.mark.parametrize(
+    "CLONE_FS", (pytest.param(False, id="~CLONE_FS"), pytest.param(True, id="CLONE_FS"))
+)
+@pytest.mark.parametrize(
+    "CLONE_VM", (pytest.param(False, id="~CLONE_VM"), pytest.param(True, id="CLONE_VM"))
+)
+def test_ld_preload_in_child(
+    CLONE_FILES: bool, CLONE_FS: bool, CLONE_VM: bool, tmp_path: Path
+):
+    """
+    does libxcache-spy correctly propagate to cloned children?
+
+    When cloning (or forking, vforking, etc), the child needs to receive a copy of
+    libxcache-spy or reuse the parent’s libxcache-spy. Without this, relevant userspace
+    actions performed in the child will go unseen. This test checks that various clone
+    operations do propagate this correctly.
+    """
+
+    tracee = ["ld-preload-in-child"]
+    if CLONE_FILES:
+        tracee += ["CLONE_FILES"]
+    if CLONE_FS:
+        tracee += ["CLONE_FS"]
+    if CLONE_VM:
+        tracee += ["CLONE_VM"]
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(tracee)
+
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+    ] + tracee
+
+    output = subprocess.check_output(
+        args,
+        stderr=subprocess.STDOUT,
+        text=True,
+        timeout=120,
+    )
+
+    assert "record succeeded" in output, "record failed"
+
+    # if tracing successfully propagated libxcache-spy to the child, we should
+    # perceive the child’s `sysconf`
+    assert "called sysconf(30 /* _SC_PAGESIZE */)" in output, "sysconf in child unseen"
