@@ -40,10 +40,10 @@ enum { XCACHE_FILENO = -100 - EBADF };
 /// convenience, they are chosen to be things that decode to an ASCII string
 /// shorthand name.
 enum {
-  CALL_HELLO = 0x6f6c6c6568, ///< initial startup message from the spy
-  CALL_OFF = 0x66666f,       ///< stop recording syscalls until seeing `CALL_ON`
-  CALL_ON = 0x6e6f,          ///< start recording syscalls again
-  CALL_SYSCONF = 0x666e6f63  ///< tracee called `sysconf`
+  CALL_HELLO = 0x6f6c6568,  ///< initial startup message from the spy
+  CALL_OFF = 0x66666f,      ///< stop recording syscalls until seeing `CALL_ON`
+  CALL_ON = 0x6e6f,         ///< start recording syscalls again
+  CALL_SYSCONF = 0x666e6f63 ///< tracee called `sysconf`
 };
 
 /// get a string representation of a call number
