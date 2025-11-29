@@ -72,6 +72,9 @@ IGNORE(getpid)
 #ifdef __NR_execve
 SYSEXIT_IGNORE(execve)
 #endif
+#ifdef __NR_exit
+IGNORE(exit)
+#endif
 #ifdef __NR_wait4
 IGNORE(wait4)
 #endif
