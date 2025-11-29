@@ -24,6 +24,16 @@ static bool is_dominated_by_input(const input_t sub, const input_t dom) {
     }
   }
 
+  // `readlink;readlink` can be de-duped into just `readlink`
+  if (sub.tag == INP_READLINK && dom.tag == INP_READLINK) {
+    if (strcmp(sub.path, dom.path) == 0) {
+      DEBUG("skipping readlink of \"%s\" as input because a readlink of it is "
+            "already an input",
+            sub.path);
+      return true;
+    }
+  }
+
   return false;
 }
 
