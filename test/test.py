@@ -849,3 +849,42 @@ def test_ld_preload_in_child(
     # if tracing successfully propagated libxcache-spy to the child, we should
     # perceive the child’s `sysconf`
     assert "called sysconf(30 /* _SC_PAGESIZE */)" in output, "sysconf in child unseen"
+
+
+def test_exec_sysconf(tmp_path: Path):
+    """
+    do exec-ed children correctly pick up libxcache-spy?
+
+    When exec-ing, ones address space is replaced. This means getting a new copy of
+    libxcache-spy. This test checks whether this new spy correctly starts up and
+    observes the new process’ actions.
+    """
+
+    tracee = ["my-execvp", "my-sysconf", "_SC_PAGESIZE"]
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(tracee)
+
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+    ] + tracee
+
+    output = subprocess.check_output(
+        args,
+        stderr=subprocess.STDOUT,
+        text=True,
+        timeout=120,
+    )
+
+    assert "record succeeded" in output, "record failed"
+
+    # if tracing successfully propagated libxcache-spy to the child, we should
+    # perceive the child’s `sysconf`
+    assert "called sysconf(30 /* _SC_PAGESIZE */)" in output, "sysconf in child unseen"

@@ -7,6 +7,8 @@ add_executable(forker-fork forker-fork.c)
 add_executable(forker-vfork forker-vfork.c)
 add_executable(ld-preload-in-child ld-preload-in-child.c)
 add_executable(my-echo my-echo.c)
+add_executable(my-execvp my-execvp.c)
+add_executable(my-sysconf my-sysconf.c)
 add_executable(nop nop.c)
 add_executable(print-stderr print-stderr.c)
 add_executable(print-stdout print-stdout.c)
@@ -49,6 +51,8 @@ add_dependencies(check
   forker-vfork
   ld-preload-in-child
   my-echo
+  my-execvp
+  my-sysconf
   nop
   print-stderr
   print-stdout
