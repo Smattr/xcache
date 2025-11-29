@@ -7,6 +7,7 @@
 #include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -149,9 +150,24 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
   DEBUG("TID %ld, ioctl(%d (XCACHE_FILENO), 0x%x (%s), …)", (long)thread->id,
         fd, callno, callno_to_str(callno));
 
+  // give up if we seem to have missed the libxcache-spy constructor
+  if (ERROR(!thread->seen_spy_hello && callno != CALL_HELLO)) {
+    rc = ECHILD;
+    goto done;
+  }
+
+  // Give up if we seem to be re-running the libxcache-spy constructor. This is
+  // not strictly necessary, but observing this seems to indicate that our model
+  // of process startup is incorrect.
+  if (ERROR(thread->seen_spy_hello && callno == CALL_HELLO)) {
+    rc = ECHILD;
+    goto done;
+  }
+
   // dispatch call
   switch (callno) {
   case CALL_HELLO:
+    thread->seen_spy_hello = true;
     if (ERROR((rc = handle_hello(inf, thread))))
       goto done;
     break;

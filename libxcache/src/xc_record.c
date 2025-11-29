@@ -169,6 +169,10 @@ static void *monitor(void *state) {
         if (ERROR(r != 0))
           FAIL_TRACE(r);
       }
+
+      // the spy will be re-initialised in an exec-ed child
+      thread->seen_spy_hello = false;
+
       const int r = inferior_thread_continue(inf, thread, 0);
       if (ERROR(r != 0))
         FAIL_TRACE(r);

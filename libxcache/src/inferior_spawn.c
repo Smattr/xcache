@@ -69,6 +69,9 @@ int inferior_spawn(inferior_t *inf, thread_t *parent, pid_t child) {
   // note that the new thread will start with a `SIGSTOP`
   new->pending_sigstop = true;
 
+  // replicate whether libxcache-spy has initialised
+  new->seen_spy_hello = parent->seen_spy_hello;
+
   if (ERROR((rc = LIST_PUSH_BACK(&inf->threads, new))))
     goto done;
   new = NULL;
