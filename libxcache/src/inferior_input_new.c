@@ -27,29 +27,41 @@ static bool is_dominated_by_input(const input_t sub, const input_t dom) {
   return false;
 }
 
-int inferior_input_new(inferior_t *inf, const input_t input) {
-
-  assert(inf != NULL);
+/// does an output make a later input?
+///
+/// @param sub The current input we are processing
+/// @param dom An earlier output that may subsume `sub`
+/// @return True if `dom` dominates `sub`
+static bool is_dominated_by_output(const input_t sub, const output_t dom) {
 
   // A prior file write “dominates” a file read, in the sense that the read is
   // only consuming data the tracee already had, not new external input.This can
   // happen when e.g. the target writes out a temporary file and then reads it
   // back in.
-  if (input.tag == INP_READ) {
-    for (size_t i = 0; i < LIST_SIZE(&inf->outputs); ++i) {
-      const output_t *const output = LIST_AT(&inf->outputs, i);
-      if (output->tag != OUT_WRITE)
-        continue;
-      if (strcmp(output->path, input.path) == 0) {
-        DEBUG("skipping read of \"%s\" as input because a write of it is "
-              "already an output",
-              input.path);
-        return 0;
-      }
+  if (sub.tag == INP_READ && dom.tag == OUT_WRITE) {
+    if (strcmp(sub.path, dom.path) == 0) {
+      DEBUG("skipping read of \"%s\" as input because a write of it is "
+            "already an output",
+            sub.path);
+      return true;
     }
   }
 
+  return false;
+}
+
+int inferior_input_new(inferior_t *inf, const input_t input) {
+
+  assert(inf != NULL);
+
   int rc = 0;
+
+  // we can elide this input if it is dominated by an earlier output
+  for (size_t i = LIST_SIZE(&inf->outputs) - 1; i != SIZE_MAX; --i) {
+    const output_t prior = *LIST_AT(&inf->outputs, i);
+    if (is_dominated_by_output(input, prior))
+      goto done;
+  }
 
   // we can elide this input if it is dominated by an earlier input
   for (size_t i = LIST_SIZE(&inf->inputs) - 1; i != SIZE_MAX; --i) {
