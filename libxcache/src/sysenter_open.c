@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 int sysenter_openat(inferior_t *inf, thread_t *thread) {
@@ -161,6 +162,18 @@ int sysenter_openat(inferior_t *inf, thread_t *thread) {
   } else {
     // TODO
     rc = ENOTSUP;
+    goto done;
+  }
+
+  if (ERROR(!path_is_cacheable(abs))) {
+    rc = ECHILD;
+    goto done;
+  }
+
+  // ignore reads of /proc/self/cmdline that we have effectively already
+  // recorded through the name of the command itself
+  if (strcmp(abs, "/proc/self/cmdline") == 0) {
+    DEBUG("ignoring open of \"/proc/self/cmdline\"");
     goto done;
   }
 

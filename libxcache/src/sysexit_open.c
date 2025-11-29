@@ -12,44 +12,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <xcache/record.h>
-
-/// is I/O to the given path something we can record?
-static bool is_supported(const char *abs_path) {
-  assert(abs_path != NULL);
-  assert(abs_path[0] == '/');
-
-  // consider opening any device except well known ones unsupported
-  if (strncmp(abs_path, "/dev/", strlen("/dev/")) == 0) {
-    // note that the pre-opened FDs 0-2 are handled separately during spawn
-    const char *SAFE[] = {"/dev/null"};
-    for (size_t i = 0; i < sizeof(SAFE) / sizeof(SAFE[0]); ++i) {
-      if (strcmp(abs_path, SAFE[i]) == 0)
-        return true;
-    }
-    return false;
-  }
-
-  // consider opening any proc file except well known ones unsupported
-  if (strncmp(abs_path, "/proc/", strlen("/proc/")) == 0) {
-    const char *SAFE[] = {"/proc/self/cmdline"};
-    for (size_t i = 0; i < sizeof(SAFE) / sizeof(SAFE[0]); ++i) {
-      if (strcmp(abs_path, SAFE[i]) == 0)
-        return true;
-    }
-    return false;
-  }
-
-  // consider opening any sysfs file unsupported
-  if (strncmp(abs_path, "/sys/", strlen("/sys/")) == 0)
-    return false;
-
-  return true;
-}
 
 int sysexit_openat(inferior_t *inf, thread_t *thread) {
 
@@ -127,7 +93,7 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
     fd_at(thread->fd, (int)ret)->close_on_exec = !!(flags & O_CLOEXEC);
   }
 
-  if (ERROR(!is_supported(abs))) {
+  if (ERROR(!path_is_cacheable(abs))) {
     rc = ECHILD;
     goto done;
   }
