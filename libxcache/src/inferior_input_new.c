@@ -14,6 +14,20 @@
 /// @return True if `dom` dominates `sub`
 static bool is_dominated_by_input(const input_t sub, const input_t dom) {
 
+  // `access;access` with the same options can be de-duped into just `access`
+  if (sub.tag == INP_ACCESS && dom.tag == INP_ACCESS) {
+    if (sub.access.mode == dom.access.mode) {
+      if (sub.access.flags == dom.access.flags) {
+        if (strcmp(sub.path, dom.path) == 0) {
+          DEBUG("skipping access of \"%s\" as input because an access of it is "
+                "already an input",
+                sub.path);
+          return true;
+        }
+      }
+    }
+  }
+
   // `read;read` can be de-duped into just `read`
   if (sub.tag == INP_READ && dom.tag == INP_READ) {
     if (strcmp(sub.path, dom.path) == 0) {
