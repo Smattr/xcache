@@ -16,8 +16,12 @@ static bool is_dominated_by_input(const input_t sub, const input_t dom) {
 
   // `read;read` can be de-duped into just `read`
   if (sub.tag == INP_READ && dom.tag == INP_READ) {
-    if (strcmp(sub.path, dom.path) == 0)
+    if (strcmp(sub.path, dom.path) == 0) {
+      DEBUG("skipping read of \"%s\" as input because a read of it is already "
+            "an input",
+            sub.path);
       return true;
+    }
   }
 
   return false;
