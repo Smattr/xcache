@@ -21,6 +21,20 @@ static bool is_dominated_by(const output_t sub, const output_t dom) {
     }
   }
 
+  // `write;write` can be de-duped into just `write`
+  if (sub.tag == OUT_WRITE && dom.tag == OUT_WRITE) {
+    assert(sub.write.mode == 0 &&
+           "write output’s mode is not set to placeholder");
+    assert(dom.write.mode == 0 &&
+           "write output’s mode is not set to placeholder");
+    if (strcmp(sub.path, dom.path) == 0) {
+      DEBUG("dropping write of \"%s\" as output because a later write of it "
+            "was seen",
+            sub.path);
+      return true;
+    }
+  }
+
   return false;
 }
 
