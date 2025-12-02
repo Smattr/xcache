@@ -15,6 +15,7 @@ typedef enum {
   INP_READLINK, ///< readlink()
   INP_STAT,     ///< stat()
   INP_SYSCONF,  ///< sysconf()
+  INP_GETENV,   ///< getenv()
 } input_type_t;
 
 /// a file/directory that was read
@@ -46,6 +47,9 @@ typedef struct {
       int name; ///< input `name` parameter to `sysconf`
       long ret; ///< returned value
     } sysconf;
+    struct {
+      char *value; ///< return from `getenv`
+    } getenv;
   };
 } input_t;
 
@@ -94,6 +98,15 @@ INTERNAL int input_new_stat(input_t *input, int expected_err, const char *path,
 /// @param name Name of the configuration looked up
 /// \return 0 on success or an errno on failure
 INTERNAL int input_new_sysconf(input_t *input, int name);
+
+/// create an input for a getenv() call
+///
+/// @param input [out] Created input on success
+/// @param name Environment key looked up
+/// @param value Returned value from `getenv`
+/// @return 0 on success or an errno on failure
+INTERNAL int input_new_getenv(input_t *input, const char *name,
+                              const char *value);
 
 /// deserialise an input from a file
 ///

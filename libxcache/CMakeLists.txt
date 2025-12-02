@@ -40,6 +40,7 @@ add_library(libxcache
   src/input_is_valid.c
   src/input_load.c
   src/input_new_access.c
+  src/input_new_getenv.c
   src/input_new_read.c
   src/input_new_readlink.c
   src/input_new_stat.c

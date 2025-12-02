@@ -73,6 +73,11 @@ int input_save(const input_t input, FILE *stream) {
     if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.sysconf.ret))))
       goto done;
     break;
+
+  case INP_GETENV:
+    if (ERROR((rc = cbor_write_opt_str(stream, input.getenv.value))))
+      goto done;
+    break;
   }
 
 done:

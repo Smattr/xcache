@@ -56,6 +56,17 @@ bool input_eq(const input_t a, const input_t b) {
     if (a.sysconf.ret != b.sysconf.ret)
       return false;
     break;
+
+  case INP_GETENV:
+    if (a.getenv.value == NULL) {
+      if (b.getenv.value != NULL)
+        return false;
+    } else if (b.getenv.value == NULL) {
+      return false;
+    } else if (strcmp(a.getenv.value, b.getenv.value) != 0) {
+      return false;
+    }
+    break;
   }
 
   return true;

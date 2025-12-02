@@ -1,5 +1,6 @@
 #include "input_t.h"
 #include <stdbool.h>
+#include <stdlib.h>
 
 bool input_is_valid(const input_t input) {
 
@@ -39,6 +40,14 @@ bool input_is_valid(const input_t input) {
 
   case INP_SYSCONF: {
     const int r = input_new_sysconf(&attempt, input.sysconf.name);
+    if (r != 0)
+      return false;
+    break;
+  }
+
+  case INP_GETENV: {
+    const char *const value = getenv(input.path);
+    const int r = input_new_getenv(&attempt, input.path, value);
     if (r != 0)
       return false;
     break;

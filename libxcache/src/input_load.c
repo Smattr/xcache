@@ -132,6 +132,11 @@ int input_load(input_t *input, FILE *stream) {
     }
     break;
 
+  case INP_GETENV:
+    if (ERROR((rc = cbor_read_opt_str(stream, &i.getenv.value))))
+      goto done;
+    break;
+
   default:
     DEBUG("invalid input tag %d", (int)i.tag);
     rc = EPROTO;

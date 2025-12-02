@@ -44,6 +44,11 @@ char *input_to_str(const input_t input) {
       goto done;
     break;
 
+  case INP_GETENV:
+    if (fputs(".tag = INP_GETENV", stream) < 0)
+      goto done;
+    break;
+
   default:
     if (fprintf(stream, ".tag = %d (unknown)", (int)input.tag) < 0)
       goto done;
@@ -98,6 +103,15 @@ char *input_to_str(const input_t input) {
     if (fprintf(stream, ", .sysconf.ret = %ld", input.sysconf.ret) < 0)
       goto done;
     break;
+
+  case INP_GETENV:
+    if (input.getenv.value == NULL) {
+      if (fputs(", .getenv.value = NULL", stream) < 0)
+        goto done;
+    } else {
+      if (fprintf(stderr, ", .getenv.value = \"%s\"", input.getenv.value) < 0)
+        goto done;
+    }
   }
 
   if (fputs("}", stream) < 0)
