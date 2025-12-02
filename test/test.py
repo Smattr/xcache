@@ -888,3 +888,97 @@ def test_exec_sysconf(tmp_path: Path):
     # if tracing successfully propagated libxcache-spy to the child, we should
     # perceive the child’s `sysconf`
     assert "called sysconf(30 /* _SC_PAGESIZE */)" in output, "sysconf in child unseen"
+
+
+@pytest.mark.parametrize("export1", (False, True))
+@pytest.mark.parametrize("export2", (False, True))
+def test_getenv(export1: bool, export2: bool, tmp_path: Path):
+    """
+    does xcache understand `getenv` dependencies?
+
+    Some programs call `getenv` to look at environment variables and then modify their
+    behaviour based on the value of those environment variables. Xcache needs to see and
+    account for such calls in order to correctly trace and replay these programs.
+
+    Args:
+        export1: Should `$FOO` be exported when running the command for the first time?
+        export2: Should `$FOO` be exported when running the command for the second time?
+        tmp_path: Temporary directory supplied by Pytest
+    """
+
+    if export1 != export2:
+        pytest.xfail("FIXME")
+
+    # create an environment for running our process
+    env = os.environ.copy()
+    if export1:
+        env["FOO"] = "bar"
+    else:
+        if "FOO" in env:
+            del env["FOO"]
+
+    # run the command under xcache
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+        "xcache-test-getenv",
+    ]
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        env=env,
+    )
+
+    assert "record succeeded" in p.stdout, "record failed"
+
+    # if `FOO` was set, we should have written the output file
+    foo = tmp_path / "foo"
+    if export1:
+        assert foo.exists(), "output file not written"
+        assert (
+            foo.read_text(encoding="utf-8") == "hello world"
+        ), "incorrect content written"
+        foo.unlink()
+    else:
+        assert not foo.exists(), "output file written"
+
+    # create an environment for the second run
+    env = os.environ.copy()
+    if export2:
+        env["FOO"] = "bar"
+    else:
+        if "FOO" in env:
+            del env["FOO"]
+
+    # run the command a second time
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        env=env,
+    )
+
+    # replay should be dependent on the environment variable matching
+    if export1 == export2:
+        assert "replay succeeded" in p.stdout, "replay failed"
+    else:
+        assert "replay succeeded" not in p.stdout, "replay incorrectly succeeded"
+
+    # if `FOO` was set, we should have written the output file
+    if export2:
+        assert foo.exists(), "output file not written"
+        assert (
+            foo.read_text(encoding="utf-8") == "hello world"
+        ), "incorrect content written"
+    else:
+        assert not foo.exists(), "output file written"

@@ -16,6 +16,7 @@ add_executable(umask-open umask-open.c)
 add_executable(umask-open2 umask-open2.c)
 add_executable(uncacheable uncacheable.c)
 add_executable(write-file write-file.c)
+add_executable(xcache-test-getenv getenv.c)
 
 find_package(Python3 COMPONENTS Interpreter)
 if(NOT Python3_FOUND)
@@ -62,4 +63,5 @@ add_dependencies(check
   write-file
   libxcache-spy
   xcache
+  xcache-test-getenv
 )
