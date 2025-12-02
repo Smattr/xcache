@@ -1,11 +1,22 @@
 #include "proc.h"
 #include "debug.h"
+#include "list.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <sys/types.h>
 
+/// deallocate a key-value pair
+static void kv_free(kv_t kv) {
+  free(kv.name);
+  free(kv.value);
+}
+
 /// deallocate a process
-static void proc_free(proc_t *proc) { free(proc); }
+static void proc_free(proc_t *proc) {
+  if (proc != NULL)
+    LIST_FREE(&proc->env, kv_free);
+  free(proc);
+}
 
 proc_t *proc_new(pid_t pid) {
 
