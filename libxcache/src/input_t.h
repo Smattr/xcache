@@ -88,7 +88,7 @@ INTERNAL int input_new_readlink(input_t *input, int expected_err,
 /// @param expected_err Expected error result
 /// @param path Absolute path to the target file/directory
 /// @param is_lstat Whether to use `stat` or `lstat`
-/// \return 0 on success or an errno on failure
+/// @return 0 on success or an errno on failure
 INTERNAL int input_new_stat(input_t *input, int expected_err, const char *path,
                             bool is_lstat);
 
@@ -96,7 +96,7 @@ INTERNAL int input_new_stat(input_t *input, int expected_err, const char *path,
 ///
 /// @param input [out] Created input on success
 /// @param name Name of the configuration looked up
-/// \return 0 on success or an errno on failure
+/// @return 0 on success or an errno on failure
 INTERNAL int input_new_sysconf(input_t *input, int name);
 
 /// create an input for a getenv() call

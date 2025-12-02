@@ -76,16 +76,16 @@ INTERNAL int sysexit_access(inferior_t *inf, thread_t *thread);
 
 /// handle end of `chdir`
 ///
-/// \param inf Tracee to which the target belongs
-/// \param thread Caller thread
-/// \return 0 on success or an errno on failure
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
 INTERNAL int sysexit_chdir(inferior_t *inf, thread_t *thread);
 
 /// handle end of `chmod`
 ///
-/// \param inf Tracee to which the target belongs
-/// \param thread Caller thread
-/// \return 0 on success or an errno on failure
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
 INTERNAL int sysexit_chmod(inferior_t *inf, thread_t *thread);
 
 /// handle end of `clone`
