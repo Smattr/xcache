@@ -103,6 +103,56 @@ done:
   return rc;
 }
 
+/// handle the tracee having signalled us with `CALL_GETENV`
+static int handle_getenv(inferior_t *inf, thread_t *thread) {
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  char *name = NULL;
+  input_t input = {0};
+  int rc = 0;
+
+  // retrieve the environment variable being looked up
+  const uintptr_t arg = (uintptr_t)peek_syscall_arg(thread, 3);
+  if (arg == 0) {
+    // tracee called `getenv(NULL)`; give up
+    DEBUG("TID %ld called getenv(NULL)", (long)thread->id);
+    rc = ECHILD;
+    goto done;
+  }
+  if (ERROR((rc = peek_str(&name, thread->proc, arg)))) {
+    // if the read faulted, assume our side was correct and the spy used a
+    // bad pointer, something we do not support recording
+    if (rc == EFAULT)
+      rc = ECHILD;
+    goto done;
+  }
+
+  // Figure out what value the tracee saw. We could equally well have the spy
+  // tell us the return value of `getenv`, but our tracking of the tracee’s
+  // environment(s) is intended to be fully accurate, so this should be
+  // equivalent.
+  // TODO: the tracking referred to above does not yet exist. We will need to
+  // track the effects of things like `setenv` and differing environments for
+  // different address spaces.
+  const char *const value = getenv(name);
+
+  DEBUG("TID %ld called getenv(\"%s\") == %s%s%s", (long)thread->id, name,
+        value == NULL ? "" : "\"", value == NULL ? "NULL" : value,
+        value == NULL ? "" : "\"");
+
+  if (ERROR((rc = input_new_getenv(&input, name, value))))
+    goto done;
+  if (ERROR((rc = inferior_input_new(inf, input))))
+    goto done;
+  input = (input_t){0};
+
+done:
+  free(name);
+
+  return rc;
+}
+
 int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
 
   assert(inf != NULL);
@@ -184,6 +234,11 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
 
   case CALL_SYSCONF:
     if (ERROR((rc = handle_sysconf(inf, thread))))
+      goto done;
+    break;
+
+  case CALL_GETENV:
+    if (ERROR((rc = handle_getenv(inf, thread))))
       goto done;
     break;
 

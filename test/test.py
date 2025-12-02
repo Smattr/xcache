@@ -906,9 +906,6 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         tmp_path: Temporary directory supplied by Pytest
     """
 
-    if export1 != export2:
-        pytest.xfail("FIXME")
-
     # create an environment for running our process
     env = os.environ.copy()
     if export1:
