@@ -18,6 +18,7 @@ add_executable(uncacheable uncacheable.c)
 add_executable(write-file write-file.c)
 add_executable(xcache-test-getenv getenv.c)
 add_executable(xcache-test-setenv setenv.c)
+add_executable(xcache-test-unsetenv unsetenv.c)
 
 find_package(Python3 COMPONENTS Interpreter)
 if(NOT Python3_FOUND)
@@ -66,4 +67,5 @@ add_dependencies(check
   xcache
   xcache-test-getenv
   xcache-test-setenv
+  xcache-test-unsetenv
 )
