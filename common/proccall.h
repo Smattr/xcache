@@ -45,6 +45,7 @@ enum {
   CALL_ON = 0x6e6f,          ///< start recording syscalls again
   CALL_SYSCONF = 0x666e6f63, ///< tracee called `sysconf`
   CALL_GETENV = 0x766e6567,  ///< tracee called `getenv`
+  CALL_SETENV = 0x766e6573,  ///< tracee called `setenv`
 };
 
 /// get a string representation of a call number

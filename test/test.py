@@ -981,7 +981,6 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         assert not foo.exists(), "output file written"
 
 
-@pytest.mark.xfail(strict=True)
 def test_setenv(tmp_path: Path):
     """
     does xcache understand `setenv`?
