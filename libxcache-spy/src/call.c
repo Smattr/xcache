@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <sys/ioctl.h>
 
-void call(unsigned long callno, const char *arg) {
+void call(unsigned long callno, const void *arg) {
 
   // message the tracer
   int rc __attribute__((unused)) = ioctl(XCACHE_FILENO, callno, arg);

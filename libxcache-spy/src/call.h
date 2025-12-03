@@ -10,4 +10,4 @@
 ///
 /// @param callno A `CALL_*` value from ../../common/proccall.h
 /// @param arg Any parameter the call takes or else `NULL`
-INTERNAL void call(unsigned long callno, const char *arg);
+INTERNAL void call(unsigned long callno, const void *arg);
