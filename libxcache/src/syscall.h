@@ -171,6 +171,13 @@ INTERNAL int sysexit_vfork(inferior_t *inf, thread_t *thread);
 /// @return The name of the syscall of "<unknown>" if there was no match
 INTERNAL const char *syscall_to_str(unsigned long number);
 
+/// handle call to `putenv`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int libc_putenv(inferior_t *inf, thread_t *thread);
+
 /// handle call to `setenv`
 ///
 /// @param inf Tracee to which the target belongs

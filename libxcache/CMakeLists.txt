@@ -47,6 +47,7 @@ add_library(libxcache
   src/input_new_sysconf.c
   src/input_save.c
   src/input_to_str.c
+  src/libc_putenv.c
   src/libc_setenv.c
   src/libc_unsetenv.c
   src/list.c

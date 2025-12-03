@@ -172,6 +172,20 @@ specifically, if the program being recorded (the tracee) repeatedly re-accesses
 a file expecting it to change, \fBxcache\fR will only see the initial content of
 the file. That is, \fBxcache\fR assumes no other program is concurrently
 touching the files being accessed by the tracee.
+.PP
+\fBxcache\fR can record reads and writes to the environment of a process through
+functions like \fBgetenv\fR and \fBsetenv\fR. There are two main limitations in
+its tracking of environment usage:
+.RS
+.IP \[bu] 2
+Calling \fBputenv\fR and then later modifying the \fBstring\fR that was passed
+to \fBputenv\fR is not seen by xcache.
+.IP \[bu]
+Directly reading and writing the \fBenviron\fR array is not seen by xcache.
+.RE
+.PP
+Programs that have either of these behaviours may suffer from false positives
+where \fBxcache\fR incorrectly replays a stale trace.
 .SH AUTHOR
 All comments, questions and complaints should be directed to Matthew Fernandez
 <matthew.fernandez@gmail.com>.
