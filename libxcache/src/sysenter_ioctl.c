@@ -3,6 +3,7 @@
 #include "inferior_t.h"
 #include "input_t.h"
 #include "peek.h"
+#include "set.h"
 #include "syscall.h"
 #include "thread_t.h"
 #include <assert.h>
@@ -125,6 +126,14 @@ static int handle_getenv(inferior_t *inf, thread_t *thread) {
     // bad pointer, something we do not support recording
     if (rc == EFAULT)
       rc = ECHILD;
+    goto done;
+  }
+
+  // if this `getenv` is reading a variable that was previously set (as opposed
+  // to something externally provided), ignore it
+  if (set_contains(&thread->proc->env, name)) {
+    DEBUG("TID %ld called getenv(\"%s\") but previously set $%s, so ignoring",
+          (long)thread->id, name, name);
     goto done;
   }
 
