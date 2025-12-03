@@ -52,3 +52,25 @@ static inline int peek_errno(const thread_t *thread) {
 /// @param addr Address to read from
 /// @return 0 on success or an errno on failure
 INTERNAL int peek_str(char **out, const proc_t *proc, uintptr_t addr);
+
+/// read a block of data out of a child’s address space
+///
+/// This should generally not be called directly but instead accessed through
+/// `PEEK_DATA`.
+///
+/// @param out [out] Read data on success
+/// @param size Byte length of the data
+/// @param proc Process to read from
+/// @param addr Address to read from
+/// @return 0 on success or an errno on failure
+INTERNAL int peek_data(void *out, size_t size, const proc_t *proc,
+                       uintptr_t addr);
+
+/// read an object out of a child’s address space
+///
+/// @param obj [out] Read object on success
+/// @param proc Process to read from
+/// @param addr Address to read from
+/// @return 0 on success or an errno on failure
+#define PEEK_OBJ(out, proc, addr)                                              \
+  peek_data((out), sizeof(*(out)), (proc), (addr))
