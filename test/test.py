@@ -981,6 +981,63 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         assert not foo.exists(), "output file written"
 
 
+@pytest.mark.xfail(strict=True)
+def test_putenv(tmp_path: Path):
+    """
+    does xcache understand `putenv`?
+
+    Some programs call `putenv` to modify their environment. In this situation, xcache
+    should recognise that the set variable no longer represents data from an external
+    source. Reading this variable should not incur a dependency.
+
+    Args:
+        tmp_path: Temporary directory supplied by Pytest
+    """
+
+    # create an environment for running our process
+    env = os.environ.copy()
+    env["FOO"] = "baz"
+
+    # run the command under xcache
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+        "xcache-test-putenv",
+    ]
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        env=env,
+    )
+
+    assert "record succeeded" in p.stdout, "record failed"
+
+    # set the environment variable differently for a second run
+    env = os.environ.copy()
+    env["FOO"] = "qux"
+
+    # run the command a second time
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        env=env,
+    )
+
+    # replay should be independent of the environment variable
+    assert "replay succeeded" in p.stdout, "replay failed"
+
+
 def test_setenv(tmp_path: Path):
     """
     does xcache understand `setenv`?

@@ -17,6 +17,7 @@ add_executable(umask-open2 umask-open2.c)
 add_executable(uncacheable uncacheable.c)
 add_executable(write-file write-file.c)
 add_executable(xcache-test-getenv getenv.c)
+add_executable(xcache-test-putenv putenv.c)
 add_executable(xcache-test-setenv setenv.c)
 add_executable(xcache-test-unsetenv unsetenv.c)
 
@@ -66,6 +67,7 @@ add_dependencies(check
   libxcache-spy
   xcache
   xcache-test-getenv
+  xcache-test-putenv
   xcache-test-setenv
   xcache-test-unsetenv
 )
