@@ -9,15 +9,9 @@
 #pragma once
 
 #include "../../common/compiler.h"
-#include "list.h"
+#include "set.h"
 #include <stddef.h>
 #include <sys/types.h>
-
-/// an environment key-value pair
-typedef struct {
-  char *name;  ///< name of the environment variable
-  char *value; ///< value of the environment variable (can be `NULL`)
-} kv_t;
 
 /// a process being traced
 typedef struct {
@@ -25,16 +19,10 @@ typedef struct {
 
   /// environment variables set during the lifetime of this process
   ///
-  /// This collection is maintained sorted by the `name` of entries.
-  ///
   /// This only tracks new variables that were set by this process or its
   /// parent. Any variables that were present in the environment at the time the
   /// tracee was started are not tracked here.
-  ///
-  /// Unlike `environ`, variables in this collection can have a `NULL` value to
-  /// capture variables that have been unset. In this way, this collection is
-  /// layered “on top” of `environ`.
-  LIST(kv_t) env;
+  set_t env;
 
   /// number of threads homed within this process
   ///

@@ -4,6 +4,7 @@
 #include "inferior_t.h"
 #include "list.h"
 #include "proc.h"
+#include "set.h"
 #include "thread_t.h"
 #include <assert.h>
 #include <errno.h>
@@ -44,24 +45,8 @@ int inferior_spawn(inferior_t *inf, thread_t *parent, pid_t child) {
     }
 
     // copy the set environment variables
-    for (size_t i = 0; i < LIST_SIZE(&parent->proc->env); ++i) {
-      const kv_t src = *LIST_AT(&parent->proc->env, i);
-      kv_t dst = {.name = strdup(src.name)};
-      if (ERROR(dst.name == NULL)) {
-        rc = ENOMEM;
-        goto done;
-      }
-      if (src.value != NULL) {
-        dst.value = strdup(src.value);
-        if (ERROR(dst.value == NULL)) {
-          free(dst.name);
-          rc = ENOMEM;
-          goto done;
-        }
-      }
-      if (ERROR((rc = LIST_PUSH_BACK(&new->proc->env, dst))))
-        goto done;
-    }
+    if (ERROR((rc = set_copy(&new->proc->env, &parent->proc->env))))
+      goto done;
   }
 
   // will the child have the same filesystem information as the parent?
