@@ -177,3 +177,10 @@ INTERNAL const char *syscall_to_str(unsigned long number);
 /// @param thread Caller thread
 /// @return 0 on success or an errno on failure
 INTERNAL int libc_setenv(inferior_t *inf, thread_t *thread);
+
+/// handle call to `unsetenv`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int libc_unsetenv(inferior_t *inf, thread_t *thread);

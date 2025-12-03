@@ -47,6 +47,7 @@ enum {
   CALL_SYSCONF = 0x666e6f63, ///< tracee called `sysconf`
   CALL_GETENV = 0x766e6567,  ///< tracee called `getenv`
   CALL_SETENV = 0x766e6573,  ///< tracee called `setenv`
+  CALL_UNSETENV = 0x766e6575, ///< tracee called `unsetenv`
 };
 
 /// the payload for a `CALL_SETENV`
@@ -55,6 +56,12 @@ typedef struct {
   int overwrite;  ///< `overwrite` parameter to `setenv`
   int ret;        ///< return value from `setenv`
 } setenv_t;
+
+/// the payload for a `CALL_UNSETENV`
+typedef struct {
+  uintptr_t name; ///< `name` parameter to `unsetenv`
+  int ret;        ///< return value from `unsetenv`
+} unsetenv_t;
 
 /// get a string representation of a call number
 ///

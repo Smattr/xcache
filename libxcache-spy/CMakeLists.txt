@@ -4,6 +4,7 @@ add_library(libxcache-spy SHARED
   src/call.c
   src/init.c
   src/setenv.c
+  src/unsetenv.c
   ${CMAKE_CURRENT_BINARY_DIR}/version.c
 )
 

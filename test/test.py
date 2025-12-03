@@ -1037,7 +1037,6 @@ def test_setenv(tmp_path: Path):
     assert "replay succeeded" in p.stdout, "replay failed"
 
 
-@pytest.mark.xfail(strict=True)
 def test_unsetenv(tmp_path: Path):
     """
     does xcache understand `unsetenv`?
