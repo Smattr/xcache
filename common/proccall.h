@@ -20,6 +20,7 @@
 #pragma once
 
 #include <errno.h>
+#include <stdint.h>
 
 /// file descriptor subprocess uses to message the tracer
 ///
@@ -47,6 +48,13 @@ enum {
   CALL_GETENV = 0x766e6567,  ///< tracee called `getenv`
   CALL_SETENV = 0x766e6573,  ///< tracee called `setenv`
 };
+
+/// the payload for a `CALL_SETENV`
+typedef struct {
+  uintptr_t name; ///< `name` parameter to `setenv`
+  int overwrite;  ///< `overwrite` parameter to `setenv`
+  int ret;        ///< return value from `setenv`
+} setenv_t;
 
 /// get a string representation of a call number
 ///

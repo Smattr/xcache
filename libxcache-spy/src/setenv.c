@@ -2,6 +2,7 @@
 #include "call.h"
 #include <dlfcn.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 /// handle to libc’s `setenv`
@@ -19,7 +20,11 @@ int setenv(const char *name, const char *value, int overwrite) {
     }
   }
 
-  call(CALL_SETENV, name);
+  const int ret = real_setenv(name, value, overwrite);
 
-  return real_setenv(name, value, overwrite);
+  const setenv_t payload = {
+      .name = (uintptr_t)name, .overwrite = overwrite, .ret = ret};
+  call(CALL_SETENV, &payload);
+
+  return ret;
 }

@@ -141,9 +141,6 @@ static int handle_getenv(inferior_t *inf, thread_t *thread) {
   // tell us the return value of `getenv`, but our tracking of the tracee’s
   // environment(s) is intended to be fully accurate, so this should be
   // equivalent.
-  // TODO: the tracking referred to above does not yet exist. We will need to
-  // track the effects of things like `setenv` and differing environments for
-  // different address spaces.
   const char *const value = getenv(name);
 
   DEBUG("TID %ld called getenv(\"%s\") == %s%s%s", (long)thread->id, name,
