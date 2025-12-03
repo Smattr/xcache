@@ -8,8 +8,8 @@ void call(unsigned long callno, const void *arg) {
   // message the tracer
   int rc __attribute__((unused)) = ioctl(XCACHE_FILENO, callno, arg);
 
-  // We expect `ioctl` to fail because we called it on a pipe. We were not
-  // calling it for its actual effects but rather the side effect of our parent
-  // (the tracer) seeing the call and acting on it.
+  // We expect `ioctl` to fail because we called it on an invalid file
+  // descriptor. We were not calling it for its actual effects but rather the
+  // side effect of our parent (the tracer) seeing the call and acting on it.
   assert(rc != 0);
 }
