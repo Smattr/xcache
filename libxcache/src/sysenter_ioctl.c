@@ -157,6 +157,7 @@ static int handle_getenv(inferior_t *inf, thread_t *thread) {
   input = (input_t){0};
 
 done:
+  input_free(input);
   free(name);
 
   return rc;
