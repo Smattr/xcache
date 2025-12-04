@@ -890,6 +890,101 @@ def test_exec_sysconf(tmp_path: Path):
     assert "called sysconf(30 /* _SC_PAGESIZE */)" in output, "sysconf in child unseen"
 
 
+@pytest.mark.parametrize("export1", (None, "foo", "bar"))
+@pytest.mark.parametrize("export2", (None, "foo", "bar"))
+@pytest.mark.parametrize("export3", (None, "foo", "bar"))
+@pytest.mark.xfail()
+def test_clearenv(
+    export1: None | str, export2: None | str, export3: None | str, tmp_path: Path
+):
+    """
+    does xcache understand `clearenv`?
+
+    Some programs call `clearenv` to wipe their environment. In this situation, xcache
+    should recognise that no variable reads after this represent data from an external
+    source.
+
+    Args:
+        export1: What to export as `$FOO` during the first run
+        export2: What to export as `$FOO` during the second run
+        export3: What to export as `$FOO` during the third run
+        tmp_path: Temporary directory supplied by Pytest
+    """
+
+    # create an environment for running our process
+    env = os.environ.copy()
+    if export1 is None:
+        if "FOO" in env:
+            del env["FOO"]
+    else:
+        env["FOO"] = export1
+
+    # run the command under xcache
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+        "xcache-test-clearenv",
+    ]
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        env=env,
+    )
+
+    assert "record succeeded" in p.stdout, "record failed"
+
+    # set the environment variable for a second run
+    env = os.environ.copy()
+    if export2 is None:
+        if "FOO" in env:
+            del env["FOO"]
+    else:
+        env["FOO"] = export2
+
+    # run the command a second time
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        env=env,
+    )
+
+    # replay should be independent of the environment variable
+    assert "replay succeeded" in p.stdout, "replay failed"
+
+    # set the environment variable for a third run
+    env = os.environ.copy()
+    if export3 is None:
+        if "FOO" in env:
+            del env["FOO"]
+    else:
+        env["FOO"] = export3
+
+    # run the command a second time
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        env=env,
+    )
+
+    # replay should be independent of the environment variable
+    assert "replay succeeded" in p.stdout, "replay failed"
+
+
 @pytest.mark.parametrize("export1", (False, True))
 @pytest.mark.parametrize("export2", (False, True))
 def test_getenv(export1: bool, export2: bool, tmp_path: Path):
