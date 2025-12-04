@@ -3,6 +3,7 @@ project(libxcache-spy LANGUAGES C)
 add_library(libxcache-spy SHARED
   src/call.c
   src/clearenv.c
+  src/getenv.c
   src/init.c
   src/putenv.c
   src/setenv.c

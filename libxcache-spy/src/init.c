@@ -17,9 +17,6 @@ static bool tracing_disabled;
 /// handle to libc’s `sysconf`
 static long (*real_sysconf)(int name);
 
-/// handle to libc’s `getenv`
-static char *(*real_getenv)(const char *name);
-
 /// actions to perform before entering main
 static __attribute__((constructor)) void init(void) {
 
@@ -29,15 +26,6 @@ static __attribute__((constructor)) void init(void) {
   // tell our tracer to ignore any syscalls that occur below
   call(CALL_OFF, NULL);
   tracing_disabled = true;
-
-  // interpose on environment functions
-  assert(real_getenv == NULL);
-  real_getenv = dlsym(RTLD_NEXT, "getenv");
-  if (real_getenv == NULL) {
-    fprintf(stderr, "libxcache-spy: failed to locate `getenv` symbol: %s\n",
-            dlerror());
-    abort();
-  }
 
   // Some tracees (e.g. GCC) call `sysconf` to probe characteristics of the
   // platform they are running on. For things like `_SC_PAGESIZE` and
@@ -147,13 +135,4 @@ long sysconf(int name) {
   call(CALL_ON, NULL);
 
   return ret;
-}
-
-/// `getenv` wrapper
-char *getenv(const char *name) {
-
-  // tell our tracer about this call
-  call(CALL_GETENV, name);
-
-  return real_getenv(name);
 }
