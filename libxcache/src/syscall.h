@@ -178,6 +178,13 @@ INTERNAL const char *syscall_to_str(unsigned long number);
 /// @return 0 on success or an errno on failure
 INTERNAL int libc_clearenv(inferior_t *inf, thread_t *thread);
 
+/// handle call to `getenv`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int libc_getenv(inferior_t *inf, thread_t *thread);
+
 /// handle call to `putenv`
 ///
 /// @param inf Tracee to which the target belongs

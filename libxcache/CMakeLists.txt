@@ -48,6 +48,7 @@ add_library(libxcache
   src/input_save.c
   src/input_to_str.c
   src/libc_clearenv.c
+  src/libc_getenv.c
   src/libc_putenv.c
   src/libc_setenv.c
   src/libc_unsetenv.c
