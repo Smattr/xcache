@@ -890,6 +890,39 @@ def test_exec_sysconf(tmp_path: Path):
     assert "called sysconf(30 /* _SC_PAGESIZE */)" in output, "sysconf in child unseen"
 
 
+def test_bug_set_size(tmp_path: Path):
+    """
+    can we insert multiple entries into the `getenv`-looked-up set?
+
+    There was previously a bug wherein the size of the set of looked up environment
+    variables was not incremented. This does not quite test that case but probes
+    something along the same lines.
+
+    Args:
+        tmp_path: Temporary directory supplied by Pytest
+    """
+
+    # run the command under xcache
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+        "xcache-test-bug-set-size",
+    ]
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+    )
+
+    assert "record succeeded" in p.stdout, "record failed"
+
+
 @pytest.mark.parametrize("export1", (None, "foo", "bar"))
 @pytest.mark.parametrize("export2", (None, "foo", "bar"))
 @pytest.mark.parametrize("export3", (None, "foo", "bar"))

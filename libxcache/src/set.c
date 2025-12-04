@@ -62,6 +62,7 @@ int set_add(set_t *set, const char *item) {
     set->data = d;
     set->buckets = b;
   }
+  assert(set->size < set->buckets);
 
   // insert the item
   char **const dst = find_for_insert(set->data, set->buckets, item);
@@ -70,6 +71,9 @@ int set_add(set_t *set, const char *item) {
   *dst = strdup(item);
   if (ERROR(*dst == NULL))
     return ENOMEM;
+  ++set->size;
+
+  assert(set->size > 0);
 
   return 0;
 }
