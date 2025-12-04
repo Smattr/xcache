@@ -1,5 +1,8 @@
 /// @file
 /// @brief Interface to a set of strings
+///
+/// This set implementation is pretty standard except for one wrinkle. A set can
+/// contain the “universe”, a symbolic representation of every possible string.
 
 #pragma once
 
@@ -20,6 +23,12 @@ typedef struct {
 /// @param item Item to insert
 /// @return 0 on success or an errno on failure
 INTERNAL int set_add(set_t *set, const char *item);
+
+/// add every possible string to a set
+///
+/// @param set Set to operate on
+/// @return 0 on success or an errno on failure
+INTERNAL int set_add_universe(set_t *set);
 
 /// does an item exist within a set?
 ///

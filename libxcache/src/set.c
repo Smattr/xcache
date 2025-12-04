@@ -4,7 +4,14 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
+
+/// does this set contain the universe?
+static bool is_universe(const set_t set) {
+  // use `{0, SIZE_MAX, 0}` as a convenient universe representation
+  return set.size == SIZE_MAX;
+}
 
 static size_t hash(const char *s) {
   assert(s != NULL);
@@ -29,6 +36,10 @@ static char **find_for_insert(char **data, size_t buckets, const char *item) {
 int set_add(set_t *set, const char *item) {
   assert(set != NULL);
   assert(item != NULL);
+
+  // the universe already contains everything, so skip insertion in that case
+  if (is_universe(*set))
+    return 0;
 
   // do we need to expand the backing storage?
   enum { OCCUPANCY_THRESHOLD = 70 /* percent */ };
@@ -63,9 +74,22 @@ int set_add(set_t *set, const char *item) {
   return 0;
 }
 
+int set_add_universe(set_t *set) {
+  assert(set != NULL);
+
+  set_free(*set);
+  *set = (set_t){.size = SIZE_MAX}; // see `is_universe`
+
+  return 0;
+}
+
 bool set_contains(const set_t *set, const char *item) {
   assert(set != NULL);
   assert(item != NULL);
+
+  // the universe contains everything
+  if (is_universe(*set))
+    return true;
 
   const size_t h = hash(item);
   for (size_t i = 0; i < set->buckets; ++i) {
@@ -87,6 +111,9 @@ int set_copy(set_t *dst, const set_t *src) {
   *dst = (set_t){0};
   set_t d = {0};
   int rc = 0;
+
+  if (is_universe(*src))
+    return set_add_universe(dst);
 
   d.data = calloc(src->buckets, sizeof(d.data[0]));
   if (ERROR(src->buckets > 0 && d.data == NULL)) {
