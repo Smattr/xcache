@@ -51,6 +51,7 @@ add_library(libxcache
   src/libc_getenv.c
   src/libc_putenv.c
   src/libc_setenv.c
+  src/libc_sysconf.c
   src/libc_unsetenv.c
   src/list.c
   src/openflags_to_str.c

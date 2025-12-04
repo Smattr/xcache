@@ -199,6 +199,13 @@ INTERNAL int libc_putenv(inferior_t *inf, thread_t *thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int libc_setenv(inferior_t *inf, thread_t *thread);
 
+/// handle call to `sysconf`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int libc_sysconf(inferior_t *inf, thread_t *thread);
+
 /// handle call to `unsetenv`
 ///
 /// @param inf Tracee to which the target belongs
