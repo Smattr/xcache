@@ -893,7 +893,6 @@ def test_exec_sysconf(tmp_path: Path):
 @pytest.mark.parametrize("export1", (None, "foo", "bar"))
 @pytest.mark.parametrize("export2", (None, "foo", "bar"))
 @pytest.mark.parametrize("export3", (None, "foo", "bar"))
-@pytest.mark.xfail()
 def test_clearenv(
     export1: None | str, export2: None | str, export3: None | str, tmp_path: Path
 ):

@@ -49,6 +49,7 @@ enum {
   CALL_SETENV = 0x766e6573,  ///< tracee called `setenv`
   CALL_UNSETENV = 0x766e6575, ///< tracee called `unsetenv`
   CALL_PUTENV = 0x766e6570,   ///< tracee called `putenv`
+  CALL_CLEARENV = 0x766e6563, ///< tracee called `clearenv`
 };
 
 /// the payload for a `CALL_SETENV`

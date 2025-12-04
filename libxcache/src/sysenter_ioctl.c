@@ -264,6 +264,11 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
       goto done;
     break;
 
+  case CALL_CLEARENV:
+    if (ERROR((rc = libc_clearenv(inf, thread))))
+      goto done;
+    break;
+
   default:
     DEBUG("unrecognised message from libxcache-spy: %d", callno);
     rc = ECHILD;
