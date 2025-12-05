@@ -57,6 +57,7 @@ int set_add(set_t *set, const char *item) {
         continue;
       char **const dst = find_for_insert(d, b, src);
       assert(dst != NULL);
+      assert(*dst == NULL);
       *dst = src;
     }
 
