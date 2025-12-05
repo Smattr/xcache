@@ -31,3 +31,19 @@ void call_on(void) {
   if (call_offs == 0)
     call(CALL_ON, NULL);
 }
+
+/// how many `call_rng_off`s have we seen with no matching `call_rng_on`?
+static thread_local size_t call_rng_offs;
+
+void call_rng_off(void) {
+  if (call_rng_offs == 0)
+    call(CALL_RNG_OFF, NULL);
+  ++call_rng_offs;
+}
+
+void call_rng_on(void) {
+  assert(call_rng_offs > 0);
+  --call_rng_offs;
+  if (call_rng_offs == 0)
+    call(CALL_RNG_ON, NULL);
+}

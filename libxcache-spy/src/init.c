@@ -1,14 +1,7 @@
 #include "../../common/proccall.h"
 #include "call.h"
 #include "version.h"
-#include <assert.h>
-#include <dlfcn.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 /// actions to perform before entering main
 static __attribute__((constructor)) void init(void) {
@@ -37,33 +30,6 @@ static __attribute__((constructor)) void init(void) {
       abort();
     *ignored = 0;
     free((char *)ignored);
-  }
-
-  // `mktemp` and its cousins call `getrandom` to seed themselves. We want to
-  // avoid seeing these (unreplayable) `getrandom` calls that are inessential to
-  // reproducing behaviour. So make a spurious `mktemp` call to force seeding
-  // now.
-  {
-    const char *tmp = getenv("TMPDIR");
-    if (tmp == NULL)
-      tmp = "/tmp";
-    const int required = snprintf(NULL, 0, "%s/probe.XXXXXX", tmp);
-    assert(required > 0);
-    char *const buffer = malloc((size_t)required + 1);
-    if (buffer == NULL) {
-      fputs("libxcache-spy: out of memory\n", stderr);
-      abort();
-    }
-    (void)snprintf(buffer, (size_t)required + 1, "%s/probe.XXXXXX", tmp);
-    const int fd = mkostemp(buffer, O_CLOEXEC);
-    if (fd < 0) {
-      fprintf(stderr, "libxcache-spy: failed to create temporary file: %s\n",
-              strerror(errno));
-      abort();
-    }
-    (void)close(fd);
-    (void)unlink(buffer);
-    free(buffer);
   }
 
   // tell our tracer to resume paying attention

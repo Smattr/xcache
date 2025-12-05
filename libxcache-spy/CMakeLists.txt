@@ -5,6 +5,7 @@ add_library(libxcache-spy SHARED
   src/clearenv.c
   src/getenv.c
   src/init.c
+  src/mktemp.c
   src/putenv.c
   src/setenv.c
   src/sysconf.c
