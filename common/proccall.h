@@ -40,7 +40,7 @@ enum { XCACHE_FILENO = -100 - EBADF };
 /// These are arbitrary numbers passed as the `request` argument to `ioctl`. For
 /// convenience, they are chosen to be things that decode to an ASCII string
 /// shorthand name.
-enum {
+enum call {
   CALL_HELLO = 0x6f6c6568,   ///< initial startup message from the spy
   CALL_OFF = 0x66666f,       ///< stop recording syscalls until seeing `CALL_ON`
   CALL_ON = 0x6e6f,          ///< start recording syscalls again
@@ -75,14 +75,16 @@ typedef struct {
 ///
 /// @param callno Call number to convert
 /// @return String representation
-static inline const char *callno_to_str(int callno) {
-  if (callno == CALL_HELLO)
+static inline const char *callno_to_str(enum call callno) {
+  switch (callno) {
+  case CALL_HELLO:
     return "\"hello\"";
-  if (callno == CALL_OFF)
+  case CALL_OFF:
     return "\"off\"";
-  if (callno == CALL_ON)
+  case CALL_ON:
     return "\"on\"";
-  if (callno == CALL_SYSCONF)
+  case CALL_SYSCONF:
     return "\"sysconf\"";
+  }
   return "<unknown>";
 }
