@@ -85,6 +85,16 @@ static inline const char *callno_to_str(enum call callno) {
     return "\"on\"";
   case CALL_SYSCONF:
     return "\"sysconf\"";
+  case CALL_GETENV:
+    return "\"getenv\"";
+  case CALL_SETENV:
+    return "\"setenv\"";
+  case CALL_UNSETENV:
+    return "\"unsetenv\"";
+  case CALL_PUTENV:
+    return "\"putenv\"";
+  case CALL_CLEARENV:
+    return "\"clearenv\"";
   }
   return "<unknown>";
 }
