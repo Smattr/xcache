@@ -101,7 +101,7 @@ bool set_contains(const set_t *set, const char *item) {
 
   const size_t h = hash(item);
   for (size_t i = 0; i < set->buckets; ++i) {
-    const size_t index = h % set->buckets + i;
+    const size_t index = (h + i) % set->buckets;
     const char *const candidate = set->data[index];
     if (candidate == NULL)
       return false;
