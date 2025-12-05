@@ -26,7 +26,7 @@ static char **find_for_insert(char **data, size_t buckets, const char *item) {
 
   const size_t h = hash(item);
   for (size_t i = 0; i < buckets; ++i) {
-    const size_t index = h % buckets + i;
+    const size_t index = (h + i) % buckets;
     if (data[index] == NULL)
       return &data[index];
   }
