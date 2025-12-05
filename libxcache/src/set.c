@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 /// does this set contain the universe?
@@ -148,6 +149,52 @@ done:
   set_free(d);
 
   return rc;
+}
+
+void set_dump(const set_t *set, FILE *sink, size_t indent) {
+  assert(set != NULL);
+  assert(sink != NULL);
+
+#define INDENT(levels)                                                         \
+  do {                                                                         \
+    for (size_t i_ = 0; i_ < (levels); ++i_) {                                 \
+      fputs("  ", sink);                                                       \
+    }                                                                          \
+  } while (0)
+
+  INDENT(indent);
+  fputs("(set_t){\n", sink);
+  INDENT(indent + 1);
+  fputs(".data = {", sink);
+
+  for (size_t i = 0; i < set->buckets; ++i) {
+    const char *const slot = set->data[i];
+    fputc('\n', sink);
+    INDENT(indent + 2);
+    if (slot == NULL) {
+      fputs("NULL,", sink);
+    } else {
+      fprintf(sink, "\"%s\",", slot);
+    }
+  }
+
+  fputc('\n', sink);
+  INDENT(indent + 1);
+  fputs("},", sink);
+
+  fputc('\n', sink);
+  INDENT(indent + 1);
+  fprintf(sink, ".size = %zu,", set->size);
+
+  fputc('\n', sink);
+  INDENT(indent + 1);
+  fprintf(sink, ".buckets = %zu,", set->buckets);
+
+  fputc('\n', sink);
+  INDENT(indent);
+  fputc('}', sink);
+
+#undef INDENT
 }
 
 void set_free(set_t set) {

@@ -9,6 +9,7 @@
 #include "../../common/compiler.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 /// a set of strings
 typedef struct {
@@ -43,6 +44,13 @@ INTERNAL bool set_contains(const set_t *set, const char *item);
 /// @param src Set to copy
 /// @return 0 on success or an errno on failure
 INTERNAL int set_copy(set_t *dst, const set_t *src);
+
+/// print a set to a stream for debugging
+///
+/// @param set Set to inspect
+/// @param sink Output to print to
+/// @param indent Initial 2-space level of indentation
+INTERNAL void set_dump(const set_t *set, FILE *sink, size_t indent);
 
 /// deallocate resources for a set
 ///
