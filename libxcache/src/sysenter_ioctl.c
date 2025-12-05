@@ -160,6 +160,16 @@ int sysenter_ioctl(inferior_t *inf, thread_t *thread) {
       goto done;
     break;
 
+  case CALL_RNG_OFF:
+    assert(!thread->ignoring_rng && "duplicate \"RNG off\" messages");
+    thread->ignoring_rng = true;
+    break;
+
+  case CALL_RNG_ON:
+    assert(thread->ignoring_rng && "unmatched \"RNG off\"/\"RNG on\" messages");
+    thread->ignoring_rng = false;
+    break;
+
   default:
     DEBUG("unrecognised message from libxcache-spy: %d", callno);
     rc = ECHILD;

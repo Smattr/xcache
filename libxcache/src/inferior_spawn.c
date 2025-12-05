@@ -16,6 +16,12 @@ int inferior_spawn(inferior_t *inf, thread_t *parent, pid_t child) {
   assert(parent != NULL);
   assert(parent->id != child && "thread claims to be spawning itself");
 
+  // We only expect `getrandom` calls to be ignored for short, contained
+  // segments. So a thread should not be able to call exec while `getrandom` is
+  // ignored.
+  assert(!parent->ignoring_rng &&
+         "thread called execve while `getrandom` was being ignored");
+
   thread_t *new = NULL;
   int rc = 0;
 

@@ -127,6 +127,9 @@ IGNORE(prlimit64)
 #ifdef __NR_set_robust_list
 IGNORE(set_robust_list)
 #endif
+#ifdef __NR_getrandom
+SYSENTER_IGNORE(getrandom)
+#endif
 #ifdef __NR_rseq
 IGNORE(rseq)
 #endif

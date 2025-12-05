@@ -50,6 +50,9 @@ enum call {
   CALL_UNSETENV = 0x766e6575, ///< tracee called `unsetenv`
   CALL_PUTENV = 0x766e6570,   ///< tracee called `putenv`
   CALL_CLEARENV = 0x766e6563, ///< tracee called `clearenv`
+  CALL_RNG_OFF =
+      0x30676e72, ///< stop recording `getrandom` until seeing `CALL_RNG_ON`
+  CALL_RNG_ON = 0x31676e72, ///< start recording `getrandom` again
 };
 
 /// the payload for a `CALL_SETENV`
@@ -95,6 +98,10 @@ static inline const char *callno_to_str(enum call callno) {
     return "\"putenv\"";
   case CALL_CLEARENV:
     return "\"clearenv\"";
+  case CALL_RNG_OFF:
+    return "\"RNG off\"";
+  case CALL_RNG_ON:
+    return "\"RNG on\"";
   }
   return "<unknown>";
 }
