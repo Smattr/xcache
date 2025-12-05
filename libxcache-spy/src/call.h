@@ -12,14 +12,14 @@
 /// @param arg Any parameter the call takes or else `NULL`
 INTERNAL void call(unsigned long callno, const void *arg);
 
-/// disabled recording of syscalls
+/// disable recording of syscalls
 ///
 /// This is a shortcut for `call(CALL_OFF, NULL)` but handles the possibility of
 /// recursing into the caller or another function that calls `call_off` while
 /// syscall recording is disabled.
 INTERNAL void call_off(void);
 
-/// disabled recording of syscalls
+/// re-enable recording of syscalls
 ///
 /// This is a shortcut for `call(CALL_ON, NULL)` but handles the possibility of
 /// recursing into the caller or another function that calls `call_on` while
