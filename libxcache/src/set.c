@@ -52,6 +52,8 @@ int set_add(set_t *set, const char *item) {
     // migrate everything into the new set
     for (size_t i = 0; i < set->buckets; ++i) {
       char *const src = set->data[i];
+      if (src == NULL)
+        continue;
       char **const dst = find_for_insert(d, b, src);
       assert(dst != NULL);
       *dst = src;
