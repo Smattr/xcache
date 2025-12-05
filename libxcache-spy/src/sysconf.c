@@ -23,7 +23,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <threads.h>
 #include <unistd.h>
 
 /// handle to libc’s `sysconf`
@@ -57,23 +56,17 @@ long sysconf(int name) {
   if (!known_sysconf(name))
     return real_sysconf(name);
 
-  static thread_local size_t call_depth;
-
   // pass the name of the `sysconf` to our tracer
   call(CALL_SYSCONF, (void *)(intptr_t)name);
 
   // tell our tracer to ignore any syscalls that occur below
-  if (call_depth == 0)
-    call(CALL_OFF, NULL);
-  ++call_depth;
+  call_off();
 
   // make the actual call, that may transitively involve syscalls
   const long ret = real_sysconf(name);
 
   // tell our tracer to resume paying attention
-  --call_depth;
-  if (call_depth == 0)
-    call(CALL_ON, NULL);
+  call_on();
 
   return ret;
 }

@@ -17,7 +17,7 @@ static __attribute__((constructor)) void init(void) {
   call(CALL_HELLO, xc_spy_version());
 
   // tell our tracer to ignore any syscalls that occur below
-  call(CALL_OFF, NULL);
+  call_off();
 
   // Glibc’s allocator implements a thread-local cache it calls “tcache”. During
   // its initialisation, it calls `getrandom`, a function Xcache would usually
@@ -67,5 +67,5 @@ static __attribute__((constructor)) void init(void) {
   }
 
   // tell our tracer to resume paying attention
-  call(CALL_ON, NULL);
+  call_on();
 }
