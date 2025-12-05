@@ -16,12 +16,11 @@ int sysexit_getrandom(inferior_t *inf, thread_t *thread) {
 
   DEBUG("TID %ld, getrandom(…)", (long)thread->id);
 
-  // if the spy told us to ignore these calls, ignore it
-  if (thread->ignoring_rng)
+  // if the spy has not told us to ignore these calls, give up
+  if (ERROR(!thread->ignoring_rng)) {
+    rc = ECHILD;
     goto done;
-
-  // otherwise, consider `getrandom` unsupported
-  rc = ECHILD;
+  }
 
 done:
   return rc;
