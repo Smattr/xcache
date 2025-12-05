@@ -54,6 +54,7 @@ CHECK_C_COMPILER_FLAG(-Wundef HAS_WARNING_UNDEF)
 if(HAS_WARNING_UNDEF)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wundef")
 endif()
+CHECK_C_COMPILER_FLAG(-fno-sanitize=all HAS_NO_SANITIZE_ALL)
 
 # enable --as-needed, present on GNU ld on Linux, to minimise dependencies
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed")
