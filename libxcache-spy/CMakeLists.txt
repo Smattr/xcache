@@ -32,13 +32,6 @@ add_custom_command(
 
 target_compile_options(libxcache-spy PRIVATE -D_GNU_SOURCE)
 
-# in case our caller has enabled ASan and friends, disable them for the spy
-# under the assumption tracees were not built with sanitizers enabled
-if(HAS_NO_SANITIZE_ALL)
-  target_compile_options(libxcache-spy PRIVATE -fno-sanitize=all)
-  target_link_options(libxcache-spy PRIVATE -fno-sanitize=all)
-endif()
-
 if(APPLE)
   target_compile_options(libxcache-spy PRIVATE -fno-common)
 endif()
