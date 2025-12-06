@@ -92,10 +92,10 @@ static int parse_args(int argc, char **argv) {
         {"mode", required_argument, 0, 'm'},
         {"read-only", no_argument, 0, 132},
         {"read-write", no_argument, 0, 133},
-        {"ro", no_argument, 0, 131},
-        {"rw", no_argument, 0, 132},
+        {"ro", no_argument, 0, 132},
+        {"rw", no_argument, 0, 133},
         {"version", no_argument, 0, 'V'},
-        {"wo", no_argument, 0, 133},
+        {"wo", no_argument, 0, 134},
         {"write-only", no_argument, 0, 134},
         {0},
     };
