@@ -59,9 +59,9 @@ INTERNAL int inferior_start(inferior_t *inf, const xc_cmd_t cmd);
 ///
 /// @param inf Tracee container for the new process
 /// @param cmd Command describing what to `exec`
-/// @param spy Absolute path to parasite library to inject
+/// @param ld_preload Value to set `$LD_PRELOAD` to prior to exec
 INTERNAL _Noreturn void inferior_exec(inferior_t *inf, const xc_cmd_t cmd,
-                                      const char *spy);
+                                      const char *ld_preload);
 
 /// append a new input
 ///

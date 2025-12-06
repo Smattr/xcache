@@ -12,6 +12,7 @@
 #include <linux/version.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
@@ -25,11 +26,26 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
   assert(LIST_SIZE(&inf->threads) == 0 && "inferior already started?");
 
   char *spy = NULL;
+  char *ld_preload = NULL;
   thread_t *thread = NULL;
   int rc = 0;
 
   if (ERROR((rc = find_spy(&spy))))
     goto done;
+
+  // prepend the spy to any existing `$LD_PRELOAD`
+  {
+    const char *const previous_preload = getenv("LD_PRELOAD");
+    if (previous_preload == NULL) {
+      ld_preload = spy;
+      spy = NULL;
+    } else {
+      if (ERROR(asprintf(&ld_preload, "%s:%s", spy, previous_preload) < 0)) {
+        rc = ENOMEM;
+        goto done;
+      }
+    }
+  }
 
   thread = calloc(1, sizeof(*thread));
   if (ERROR(thread == NULL)) {
@@ -80,7 +96,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
     }
 
     if (pid == 0) {
-      inferior_exec(inf, cmd, spy);
+      inferior_exec(inf, cmd, ld_preload);
       // unreachable
     }
 
@@ -162,6 +178,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
 done:
   if (thread != NULL)
     thread_exit(thread, EXIT_FAILURE);
+  free(ld_preload);
   free(spy);
 
   return rc;

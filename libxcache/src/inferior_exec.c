@@ -23,7 +23,7 @@
 #endif
 
 _Noreturn void inferior_exec(inferior_t *inf, const xc_cmd_t cmd,
-                             const char *spy) {
+                             const char *ld_preload) {
 
   assert(inf != NULL);
   assert(inf->t_out->pipe[1] > 0);
@@ -35,7 +35,7 @@ _Noreturn void inferior_exec(inferior_t *inf, const xc_cmd_t cmd,
   for (size_t i = 0; i < cmd.argc; ++i)
     assert(cmd.argv[i] != NULL);
   assert(cmd.argv[cmd.argc] == NULL);
-  assert(spy != NULL);
+  assert(ld_preload != NULL);
 
   int rc = 0;
 
@@ -71,8 +71,7 @@ _Noreturn void inferior_exec(inferior_t *inf, const xc_cmd_t cmd,
   }
 
   // setup our spy to be injected
-  // FIXME: account for other LD_PRELOADs
-  if (setenv("LD_PRELOAD", spy, 1) < 0) {
+  if (setenv("LD_PRELOAD", ld_preload, 1) < 0) {
     rc = errno;
     goto fail;
   }

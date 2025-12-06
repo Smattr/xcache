@@ -1110,7 +1110,6 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         assert not foo.exists(), "output file written"
 
 
-@pytest.mark.xfail(strict=True)
 def test_previous_ld_preload(tmp_path: Path):
     """are `$LD_PRELOAD`s set by the user preserved under tracing?"""
 
