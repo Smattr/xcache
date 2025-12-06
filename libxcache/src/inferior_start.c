@@ -25,45 +25,30 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd, bool preload_prepend) {
   assert(inf != NULL);
   assert(LIST_SIZE(&inf->threads) == 0 && "inferior already started?");
 
-  char *asan = NULL;
   char *spy = NULL;
   char *ld_preload = NULL;
   thread_t *thread = NULL;
   int rc = 0;
 
-  {
-    const int r = find_asan(&asan);
-    // if `find_asan` returned `ENOENT` we were not linked against ASan
-    if (ERROR(r != 0 && r != ENOENT)) {
-      rc = r;
-      goto done;
-    }
-  }
-
   if (ERROR((rc = find_spy(&spy))))
     goto done;
 
-  // add the spy and optionally ASan to any existing `$LD_PRELOAD`
+  // add the spy to any existing `$LD_PRELOAD`
   {
     const char *const previous_preload = getenv("LD_PRELOAD");
-    // make "[libasan.so:][libxcache-spy.so:][LD_PRELOAD][:libxcache-spy.so]"
-    //        └───┬────┘▲  └──────┬───────┘▲  └────┬───┘  ▲└──────┬───────┘
-    //       preload[0] │     preload[1]   │  preload[2]  │   preload[3]
-    //             separator[0]       separator[1]   separator[2]
-    const char *preload[] = {asan == NULL ? "" : asan,
-                             preload_prepend ? spy : "",
-                             previous_preload == NULL ? "" : previous_preload,
-                             preload_prepend ? "" : spy};
-#define SEP(x, y) ((strcmp((x), "") != 0 && strcmp((y), "") != 0) ? ":" : "")
-    const char *separator[] = {SEP(preload[0], preload[1]),
-                               SEP(preload[1], preload[2]),
-                               SEP(preload[2], preload[3])};
-#undef SEP
-    if (ERROR(asprintf(&ld_preload, "%s%s%s%s%s%s%s", preload[0], separator[0],
-                       preload[1], separator[1], preload[2], separator[2],
-                       preload[3]) < 0)) {
-      rc = ENOMEM;
-      goto done;
+    if (previous_preload == NULL) {
+      ld_preload = spy;
+      spy = NULL;
+    } else if (preload_prepend) {
+      if (ERROR(asprintf(&ld_preload, "%s:%s", spy, previous_preload) < 0)) {
+        rc = ENOMEM;
+        goto done;
+      }
+    } else {
+      if (ERROR(asprintf(&ld_preload, "%s:%s", previous_preload, spy) < 0)) {
+        rc = ENOMEM;
+        goto done;
+      }
     }
   }
 
@@ -200,7 +185,6 @@ done:
     thread_exit(thread, EXIT_FAILURE);
   free(ld_preload);
   free(spy);
-  free(asan);
 
   return rc;
 }
