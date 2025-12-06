@@ -50,6 +50,7 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd, bool preload_prepend) {
         goto done;
       }
     }
+    DEBUG("set LD_PRELOAD=\"%s\"", ld_preload);
   }
 
   thread = calloc(1, sizeof(*thread));
