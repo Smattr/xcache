@@ -60,6 +60,9 @@ IGNORE(pread64)
 #ifdef __NR_access
 SYSENTER_IGNORE(access)
 #endif
+#ifdef __NR_madvise
+IGNORE(madvise)
+#endif
 #ifdef __NR_getrusage
 IGNORE(getrusage)
 #endif
