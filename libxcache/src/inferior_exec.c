@@ -62,8 +62,6 @@ _Noreturn void inferior_exec(inferior_t *inf, const xc_cmd_t cmd,
     goto fail;
   }
 
-  // FIXME: if we are running under ASan, LD_PRELOAD libasan?
-
   // LeakSanitizer does not work under ptrace (as we will be), so disable it
   if (setenv("ASAN_OPTIONS", "detect_leaks=0", 1) < 0) {
     rc = errno;
