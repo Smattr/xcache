@@ -1110,8 +1110,15 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         assert not foo.exists(), "output file written"
 
 
-def test_previous_ld_preload(tmp_path: Path):
-    """are `$LD_PRELOAD`s set by the user preserved under tracing?"""
+@pytest.mark.parametrize("preload", ("append", "either", "prepend"))
+def test_previous_ld_preload(preload: str, tmp_path: Path):
+    """
+    are `$LD_PRELOAD`s set by the user preserved under tracing?
+
+    Args:
+        preload: `--preload-*` option to pass to xcache
+        tmp_path: Temporary directory supplied by Pytest
+    """
 
     exe = Path(shutil.which("xcache-test-ld-preload"))
     so = exe.parent / "libxcache-test-ld-preload-cos.so"
@@ -1124,6 +1131,7 @@ def test_previous_ld_preload(tmp_path: Path):
         "--debug",
         f"--dir={tmp_path}/database",
         "--read-write",
+        f"--preload-{preload}",
         "--",
         "xcache-test-ld-preload",
     ]

@@ -6,6 +6,7 @@
 #include "output_t.h"
 #include "tee_t.h"
 #include "thread_t.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
 #include <xcache/cmd.h>
@@ -49,8 +50,11 @@ INTERNAL int inferior_new(inferior_t *inf, unsigned mode,
 ///
 /// \param inf Tracee container for the new process
 /// \param cmd Command to start running
+/// \param preload_prepend When setting up the spy, preprend to `$LD_PRELOAD`
+///   instead of appending
 /// \return 0 on success or an errno on failure
-INTERNAL int inferior_start(inferior_t *inf, const xc_cmd_t cmd);
+INTERNAL int inferior_start(inferior_t *inf, const xc_cmd_t cmd,
+                            bool preload_prepend);
 
 /// execute a process
 ///

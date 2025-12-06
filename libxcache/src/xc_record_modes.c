@@ -7,7 +7,8 @@
 unsigned xc_record_modes(unsigned request) {
 
   // mask down to known modes
-  unsigned answer = request & XC_MODE_AUTO;
+  unsigned answer =
+      request & (XC_MODE_AUTO | XC_PRELOAD_PREPEND | XC_PRELOAD_APPEND);
 
 // if we were compiled on an older kernel
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 0)

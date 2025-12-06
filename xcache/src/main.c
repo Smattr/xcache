@@ -29,6 +29,9 @@ FILE *debug_file;
 /// recording mode, default to ptrace
 static unsigned mode = XC_SYSCALL;
 
+/// how to manipulate `$LD_PRELOAD`
+static unsigned preload = XC_PRELOAD_PREPEND | XC_PRELOAD_APPEND;
+
 /// parse a command line option to `--mode`
 ///
 /// @param opt Mode string to parse
@@ -90,6 +93,9 @@ static int parse_args(int argc, char **argv) {
         {"disable", no_argument, 0, 131},
         {"help", no_argument, 0, 'h'},
         {"mode", required_argument, 0, 'm'},
+        {"preload-append", no_argument, 0, 135},
+        {"preload-either", no_argument, 0, 136},
+        {"preload-prepend", no_argument, 0, 137},
         {"read-only", no_argument, 0, 132},
         {"read-write", no_argument, 0, 133},
         {"ro", no_argument, 0, 132},
@@ -184,6 +190,18 @@ static int parse_args(int argc, char **argv) {
     case 134: // --write-only, --wo
       record_enabled = true;
       replay_enabled = false;
+      break;
+
+    case 135: // --preload-append
+      preload = XC_PRELOAD_APPEND;
+      break;
+
+    case 136: // --preload-either
+      preload = XC_PRELOAD_APPEND | XC_PRELOAD_PREPEND;
+      break;
+
+    case 137: // --preload-prepend
+      preload = XC_PRELOAD_PREPEND;
       break;
 
     default:
@@ -310,7 +328,7 @@ int main(int argc, char **argv) {
   if (record_enabled) {
     DEBUG("attempting record");
     xc_record_t status = {0};
-    if ((rc = xc_record(db, cmd, mode, &status))) {
+    if ((rc = xc_record(db, cmd, mode | preload, &status))) {
       fprintf(stderr, "xc_record: %s\n", strerror(rc));
       goto done;
     } else if (status.exec_status != 0) {

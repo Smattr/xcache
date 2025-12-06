@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/ptrace.h>
@@ -24,7 +25,8 @@
 typedef struct {
   inferior_t inf;
   const xc_cmd_t cmd;
-  int *trace_status; ///< result of tracing
+  bool preload_prepend; ///< prepend to `$LD_PRELOAD`, as opposed to appending
+  int *trace_status;    ///< result of tracing
 } state_t;
 
 static void *monitor(void *state) {
@@ -42,7 +44,7 @@ static void *monitor(void *state) {
   } while (0)
 
   // start our initial process
-  if (ERROR((rc = inferior_start(inf, st->cmd))))
+  if (ERROR((rc = inferior_start(inf, st->cmd, st->preload_prepend))))
     goto done;
 
   while (true) {
@@ -222,18 +224,23 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
   if (ERROR((mode & XC_MODE_AUTO) == 0))
     return EINVAL;
 
+  if (ERROR((mode & (XC_PRELOAD_PREPEND | XC_PRELOAD_APPEND)) == 0))
+    return EINVAL;
+
   if (ERROR(status == NULL))
     return EINVAL;
 
   *status = (xc_record_t){0};
   char *trace_root = NULL;
-  state_t st = {.cmd = cmd, .trace_status = &status->trace_status};
+  state_t st = {.cmd = cmd,
+                .preload_prepend = !!(mode & XC_PRELOAD_PREPEND),
+                .trace_status = &status->trace_status};
   inferior_t *inf = &st.inf;
   int rc = 0;
 
   // find a usable recording mode
   mode = xc_record_modes(mode);
-  if (ERROR(mode == 0)) {
+  if (ERROR((mode & XC_MODE_AUTO) == 0)) {
     rc = ENOSYS;
     goto done;
   }

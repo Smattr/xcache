@@ -33,6 +33,9 @@ typedef enum {
 
   /// alias for using any available mode
   XC_MODE_AUTO = XC_SYSCALL | XC_EARLY_SECCOMP | XC_LATE_SECCOMP,
+
+  XC_PRELOAD_PREPEND, ///< prepend libxcache-spy.so when setting `$LD_PRELOAD`
+  XC_PRELOAD_APPEND,  ///< append libxcache-spy.so when setting `$LD_PRELOAD`
 } xc_record_mode_t;
 
 /// which recording techniques are available?

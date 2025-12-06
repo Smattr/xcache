@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <xcache/cmd.h>
 
-int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
+int inferior_start(inferior_t *inf, const xc_cmd_t cmd, bool preload_prepend) {
 
   assert(inf != NULL);
   assert(LIST_SIZE(&inf->threads) == 0 && "inferior already started?");
@@ -33,14 +33,19 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd) {
   if (ERROR((rc = find_spy(&spy))))
     goto done;
 
-  // prepend the spy to any existing `$LD_PRELOAD`
+  // add the spy to any existing `$LD_PRELOAD`
   {
     const char *const previous_preload = getenv("LD_PRELOAD");
     if (previous_preload == NULL) {
       ld_preload = spy;
       spy = NULL;
-    } else {
+    } else if (preload_prepend) {
       if (ERROR(asprintf(&ld_preload, "%s:%s", spy, previous_preload) < 0)) {
+        rc = ENOMEM;
+        goto done;
+      }
+    } else {
+      if (ERROR(asprintf(&ld_preload, "%s:%s", previous_preload, spy) < 0)) {
         rc = ENOMEM;
         goto done;
       }

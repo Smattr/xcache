@@ -95,6 +95,30 @@ environment variable \fB$XCACHE_MODE\fR is set (see below).
 Display this information.
 .RE
 .PP
+\fB\-\-preload\-append\fR
+\fB\-\-preload\-either\fR
+\fB\-\-preload\-prepend\fR
+.RS
+During recording, a monitor is injected into the tracee via the \fBLD_PRELOAD\fR
+environment variable. If the environment in which \fBxcache\fR is run already
+has \fBLD_PRELOAD\fR set, this monitor is added to the existing content. How
+this addition is made can be affected by passing one of the following options:
+.RS
+.IP \[bu] 2
+\fB\-\-preload\-append\fR Add the monitor to the end of the \fBLD_PRELOAD\fR
+list.
+.IP \[bu]
+\fB\-\-preload\-either\fR Add the monitor to either the start or end of the
+\fBLD_PRELOAD\fR list. Currently this defaults to adding to the start.
+.IP \[bu]
+\fB\-\-preload\-prepend\fR Add the monitor to the start of the \fBLD_PRELOAD\fR
+list.
+.RE
+.PP
+If \fBLD_PRELOAD\fR is not set in the environment in which \fBxcache\fR runs,
+these options have no effect.
+.RE
+.PP
 \fB\-\-version\fR or \f\-V\fR
 .RS
 Display version information and exit.
@@ -107,6 +131,14 @@ The behaviour of xcache is affected by the following environment variables.
 If the \fB\-\-dir\fR option is not passed and the \fBXCACHE_DIR\fR environment
 variable is unset and the \fBXDG_CACHE_HOME\fR environment variable is unset,
 \fB$HOME/.xcache\fR will be used as the cache directory.
+.RE
+.PP
+\fBLD_PRELOAD\fR
+.RS
+\fBxcache\fR, like all dynamically linked binaries, is affected by the content
+of the \fBLD_PRELOAD\fR variable. It also uses this variable to inject a monitor
+into the tracee. See above discussion of the \fB\-\-preload\-append\fR,
+\fB\-\-preload\-either\fR, and \fB\-\-preload\-prepend\fR command line options.
 .RE
 .PP
 \fBXCACHE_DIR\fR
