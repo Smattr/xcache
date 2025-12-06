@@ -12,5 +12,10 @@ bool path_is_ignorable(const char *abs_path) {
   if (strcmp(abs_path, "/proc/self/cmdline") == 0)
     return true;
 
+  // we have effectively already recorded /proc/self/maps through loading the
+  // tracee
+  if (strcmp(abs_path, "/proc/self/maps") == 0)
+    return true;
+
   return false;
 }
