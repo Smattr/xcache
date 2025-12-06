@@ -1111,6 +1111,7 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
 
 
 @pytest.mark.parametrize("preload", ("append", "either", "prepend"))
+@pytest.mark.skipif(shutil.which("ldd") is None, reason="ldd not available")
 def test_previous_ld_preload(preload: str, tmp_path: Path):
     """
     are `$LD_PRELOAD`s set by the user preserved under tracing?
@@ -1123,9 +1124,20 @@ def test_previous_ld_preload(preload: str, tmp_path: Path):
     exe = Path(shutil.which("xcache-test-ld-preload"))
     so = exe.parent / "libxcache-test-ld-preload-cos.so"
 
+    # was xcache compiled with `-fsanitize=address`?
+    xcache = shutil.which("xcache")
+    links = subprocess.check_output(["ldd", "--", xcache], text=True)
+    libasan: None | Path = None
+    for line in links.splitlines():
+        m = re.match(r"\s*libasan.*\s+=>\s+(?P<path>/[^\s]+)", line)
+        if m is None:
+            continue
+        libasan = Path(m.group("path"))
+        break
+
     # xcache should be able to record this binary
     env = os.environ.copy()
-    env["LD_PRELOAD"] = str(so)
+    env["LD_PRELOAD"] = str(so) if libasan is None else f"{libasan}:{so}"
     args = [
         "xcache",
         "--debug",
@@ -1144,10 +1156,15 @@ def test_previous_ld_preload(preload: str, tmp_path: Path):
         env=env,
     )
 
-    assert "record succeeded" in p.stdout, "record failed"
+    # if libasan.so was loaded some unreplayable things like `clock_gettime()` will have
+    # happened, but otherwise we expect a successful record
+    if libasan is None:
+        assert "record succeeded" in p.stdout, "record failed"
 
-    # the preload should have worked
-    assert p.returncode == 42, "$LD_PRELOAD was not preserved under tracing"
+    # the preload should have worked as long as either (1) libasan.so was not required
+    # or (2) the spy was added to `$LD_PRELOAD` after libasan.so
+    if libasan is None or preload == "append":
+        assert p.returncode == 42, "$LD_PRELOAD was not preserved under tracing"
 
 
 def test_previous_ld_preload_smoke():
