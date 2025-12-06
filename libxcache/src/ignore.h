@@ -106,6 +106,9 @@ IGNORE(umask)
 #ifdef __NR_getppid
 IGNORE(getppid)
 #endif
+#ifdef __NR_sigaltstack
+IGNORE(sigaltstack)
+#endif
 #ifdef __NR_arch_prctl
 IGNORE(arch_prctl)
 #endif
