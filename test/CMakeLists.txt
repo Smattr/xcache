@@ -1,3 +1,11 @@
+# Even if we have been asked to enable sanitizers, disable them for test
+# binaries. The sanitizers, in particular ASan, cause tracees to make extra
+# syscalls that are frequently ones we cannot replay.
+if(HAS_NO_SANITIZE_ALL)
+  add_compile_options(-fno-sanitize=all)
+  add_link_options(-fno-sanitize=all)
+endif()
+
 add_executable(clone-exec-with-fd clone-exec-with-fd.c)
 add_executable(close-fd close-fd.c)
 add_executable(close-fd2 close-fd2.c)
