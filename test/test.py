@@ -30,29 +30,6 @@ def strace(args: list[Path | str], cwd: Path | None = None):
     subprocess.run(["strace", "-f", "--"] + args, env=env, check=True, **kwargs)
 
 
-def find_asan(library: Path) -> None | Path:
-    """
-    find an absolute path to a linked libasan
-
-    Args:
-        library: A compiled library that may or may not have been compiled with
-            Address Sanitizer instrumentation
-
-    Returns:
-        An absolute path to libasan if the given library was linked to libasan
-    """
-
-    links = subprocess.check_output(["ldd", "--", library], text=True)
-
-    for line in links.splitlines():
-        m = re.match(r"\s*libasan.*\s+=>\s+(?P<path>/[^\s]+)", line)
-        if m is None:
-            continue
-        return Path(m.group("path"))
-
-    return None
-
-
 @pytest.mark.parametrize(
     "debug", (pytest.param(False, id="nodebug"), pytest.param(True, id="debug"))
 )
@@ -1192,12 +1169,9 @@ def test_previous_ld_preload_smoke():
         math.cos(1) * 10
     ), "misbehaviour without preload"
 
-    # do we need to preload libasan?
-    libasan = find_asan(exe)
-
     # with the preload active, the binary should return 42
     env = os.environ.copy()
-    env["LD_PRELOAD"] = str(so) if libasan is None else f"{libasan}:{so}"
+    env["LD_PRELOAD"] = str(so)
     assert subprocess.call([exe], env=env) == 42, "misbehaviour with preload"
 
 
