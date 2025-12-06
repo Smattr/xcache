@@ -23,6 +23,11 @@ add_executable(xcache-test-putenv putenv.c)
 add_executable(xcache-test-setenv setenv.c)
 add_executable(xcache-test-unsetenv unsetenv.c)
 
+add_library(xcache-test-ld-preload-cos SHARED preload.c)
+find_library(M m REQUIRED)
+add_executable(xcache-test-ld-preload preload-main.c)
+target_link_libraries(xcache-test-ld-preload PRIVATE ${M})
+
 find_package(Python3 COMPONENTS Interpreter)
 if(NOT Python3_FOUND)
   message(WARNING "python3 not found; disabling make check")
@@ -71,6 +76,8 @@ add_dependencies(check
   xcache-test-bug-set-size
   xcache-test-clearenv
   xcache-test-getenv
+  xcache-test-ld-preload
+  xcache-test-ld-preload-cos
   xcache-test-putenv
   xcache-test-setenv
   xcache-test-unsetenv

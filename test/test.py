@@ -3,9 +3,11 @@ Xcache test suite
 """
 
 import errno
+import math
 import os
-import stat
 import re
+import shutil
+import stat
 import subprocess
 from pathlib import Path
 
@@ -1106,6 +1108,64 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         ), "incorrect content written"
     else:
         assert not foo.exists(), "output file written"
+
+
+@pytest.mark.xfail(strict=True)
+def test_previous_ld_preload(tmp_path: Path):
+    """are `$LD_PRELOAD`s set by the user preserved under tracing?"""
+
+    exe = Path(shutil.which("xcache-test-ld-preload"))
+    so = exe.parent / "libxcache-test-ld-preload-cos.so"
+
+    # xcache should be able to record this binary
+    env = os.environ.copy()
+    env["LD_PRELOAD"] = str(so)
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+        "xcache-test-ld-preload",
+    ]
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        text=True,
+        env=env,
+    )
+
+    assert "record succeeded" in p.stdout, "record failed"
+
+    # the preload should have worked
+    assert p.returncode == 42, "$LD_PRELOAD was not preserved under tracing"
+
+
+def test_previous_ld_preload_smoke():
+    """
+    test that the `xcache-test-ld-preload` binary behaves as expected
+
+    If this test fails, the results of `test_previous_ld_preload` can be considered
+    invalid.
+    """
+
+    exe = Path(shutil.which("xcache-test-ld-preload"))
+    so = exe.parent / "libxcache-test-ld-preload-cos.so"
+
+    assert exe.exists(), "missing binary"
+    assert so.exists(), "missing library to preload"
+
+    # without the preload active, the binary should return `floor(cos(1) * 10)`
+    assert subprocess.call([exe]) == math.floor(
+        math.cos(1) * 10
+    ), "misbehaviour without preload"
+
+    # with the preload active, the binary should return 42
+    env = os.environ.copy()
+    env["LD_PRELOAD"] = str(so)
+    assert subprocess.call([exe], env=env) == 42, "misbehaviour with preload"
 
 
 def test_putenv(tmp_path: Path):
