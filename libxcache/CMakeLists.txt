@@ -67,6 +67,7 @@ add_library(libxcache
   src/page_size.c
   src/path_absolute.c
   src/path_is_cacheable.c
+  src/path_is_ignorable.c
   src/path_join.c
   src/path_make.c
   src/peek_data.c

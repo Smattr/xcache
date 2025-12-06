@@ -165,15 +165,15 @@ int sysenter_openat(inferior_t *inf, thread_t *thread) {
     goto done;
   }
 
-  if (ERROR(!path_is_cacheable(abs))) {
-    rc = ECHILD;
+  // ignore reads of some procfs files that we have effectively already recorded
+  // through the command itself
+  if (path_is_ignorable(abs)) {
+    DEBUG("ignoring open of \"%s\"", abs);
     goto done;
   }
 
-  // ignore reads of /proc/self/cmdline that we have effectively already
-  // recorded through the name of the command itself
-  if (strcmp(abs, "/proc/self/cmdline") == 0) {
-    DEBUG("ignoring open of \"/proc/self/cmdline\"");
+  if (ERROR(!path_is_cacheable(abs))) {
+    rc = ECHILD;
     goto done;
   }
 

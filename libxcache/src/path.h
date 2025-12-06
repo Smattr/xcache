@@ -34,3 +34,9 @@ INTERNAL int path_make(const char *root, const char *suffix, int *fd,
 /// @param abs_path Absolute path to file to consider
 /// @return True if I/O to the file can be cached
 INTERNAL bool path_is_cacheable(const char *abs_path);
+
+/// is this a file whose reads we can ignore?
+///
+/// @param abs_path Absolute path to file to consider
+/// @return True if reads of this path can be ignored
+INTERNAL bool path_is_ignorable(const char *abs_path);

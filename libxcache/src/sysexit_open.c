@@ -106,10 +106,10 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
   switch (flags_relevant) {
 
   case O_RDONLY:
-    // ignore reads of /proc/self/cmdline that we have effectively already
-    // recorded through the name of the command itself
-    if (strcmp(abs, "/proc/self/cmdline") == 0) {
-      DEBUG("ignoring open of \"/proc/self/cmdline\"");
+    // ignore reads of some procfs files that we have effectively already
+    // recorded through the command itself
+    if (path_is_ignorable(abs)) {
+      DEBUG("ignoring open of \"%s\"", abs);
       goto done;
     }
 
