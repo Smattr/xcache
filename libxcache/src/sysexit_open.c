@@ -93,26 +93,26 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
     fd_at(thread->fd, (int)ret)->close_on_exec = !!(flags & O_CLOEXEC);
   }
 
-  if (ERROR(!path_is_cacheable(abs))) {
-    rc = ECHILD;
-    goto done;
-  }
-
   // discard the flags that have no relevance to us
   const long flags_relevant =
       flags & ~(O_ASYNC | O_CLOEXEC | O_DIRECT | O_DSYNC | O_LARGEFILE |
                 O_NOCTTY | O_NONBLOCK | O_NDELAY | O_SYNC);
 
+  // ignore reads of some procfs files that we have effectively already
+  // recorded through the command itself
+  if (flags_relevant == O_RDONLY && path_is_ignorable(abs)) {
+    DEBUG("ignoring open of \"%s\"", abs);
+    goto done;
+  }
+
+  if (ERROR(!path_is_cacheable(abs))) {
+    rc = ECHILD;
+    goto done;
+  }
+
   switch (flags_relevant) {
 
   case O_RDONLY:
-    // ignore reads of some procfs files that we have effectively already
-    // recorded through the command itself
-    if (path_is_ignorable(abs)) {
-      DEBUG("ignoring open of \"%s\"", abs);
-      goto done;
-    }
-
     // record it
     if (ERROR((rc = input_new_read(&seen_read, &err, abs))))
       goto done;
