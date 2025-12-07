@@ -1110,6 +1110,130 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         assert not foo.exists(), "output file written"
 
 
+@pytest.mark.parametrize("mode", ("O_RDONLY", "O_WRONLY", "O_RDWR"))
+@pytest.mark.parametrize(
+    "creat", (pytest.param(False, id=""), pytest.param(True, id="O_CREAT"))
+)
+@pytest.mark.parametrize(
+    "excl", (pytest.param(False, id=""), pytest.param(True, id="O_EXCL"))
+)
+@pytest.mark.parametrize(
+    "trunc", (pytest.param(False, id=""), pytest.param(True, id="O_TRUNC"))
+)
+@pytest.mark.parametrize(
+    "exist",
+    (
+        pytest.param(False, id="no existing file"),
+        pytest.param(True, id="existing file"),
+    ),
+)
+@pytest.mark.xfail(strict=False)
+def test_open(
+    mode: str, creat: bool, excl: bool, trunc: bool, exist: bool, tmp_path: Path
+):
+    """
+    can we successfully trace variations of `open`?
+
+    Args:
+        mode: Read/write mode in which to open a file
+        creat: Use `O_CREAT`?
+        excl: Use `O_EXCL`?
+        trunc: Use `O_TRUNC`?
+        exist: Create a pre-existing file of a colliding name?
+        tmp_path: Temporary directory supplied by Pytest
+    """
+
+    # determine command line options
+    args = ["xcache-test-open", mode]
+    if creat:
+        args += ["O_CREAT"]
+    if excl:
+        args += ["O_EXCL"]
+    if trunc:
+        args += ["O_TRUNC"]
+
+    # setup initial state
+    target = tmp_path / "foo"
+    if exist:
+        target.write_text("hello world", encoding="utf-8")
+
+    # run the open without xcache
+    subprocess.run(args, cwd=tmp_path, check=True)
+
+    # what outcome did this produce?
+    after_exists = target.exists()
+    after_content = target.read_text(encoding="utf-8") if after_exists else None
+    after_mode = target.stat().st_mode if after_exists else None
+
+    # re-setup initial conditions
+    target.unlink(missing_ok=True)
+    if exist:
+        target.write_text("hello world", encoding="utf-8")
+
+    # run under xcache
+    xcache = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+    ] + args
+    p = subprocess.run(
+        xcache,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+    )
+
+    # some combinations of flags are invalid
+    is_invalid = False
+    is_invalid |= excl and not creat
+    is_invalid |= mode == "O_RDONLY" and trunc
+
+    # whether we succeeded to record or not depends on the operation validity
+    if is_invalid:
+        assert "record succeeded" not in p.stdout, "record incorrectly succeeded"
+    else:
+        assert "record succeeded" in p.stdout, "record failed"
+
+    # check outcomes were the same
+    after_exists1 = target.exists()
+    after_content1 = target.read_text(encoding="utf-8") if after_exists1 else None
+    after_mode1 = target.stat().st_mode if after_exists1 else None
+    assert after_exists == after_exists1
+    assert after_content == after_content1
+    assert after_mode == after_mode1
+
+    # re-setup initial conditions
+    target.unlink(missing_ok=True)
+    if exist:
+        target.write_text("hello world", encoding="utf-8")
+
+    if is_invalid:
+        return
+
+    # try to replay
+    p = subprocess.run(
+        xcache,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+    )
+    assert "replay succeeded" in p.stdout, "replay failed"
+
+    # check outcomes were the same
+    after_exists1 = target.exists()
+    after_content1 = target.read_text(encoding="utf-8") if after_exists1 else None
+    after_mode1 = target.stat().st_mode if after_exists1 else None
+    assert after_exists == after_exists1
+    assert after_content == after_content1
+    assert after_mode == after_mode1
+
+
 @pytest.mark.parametrize("preload", ("append", "either", "prepend"))
 @pytest.mark.skipif(shutil.which("ldd") is None, reason="ldd not available")
 def test_previous_ld_preload(preload: str, tmp_path: Path):
