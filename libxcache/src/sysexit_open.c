@@ -96,8 +96,8 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
 
   // discard the flags that have no relevance to us
   const long flags_relevant =
-      flags & ~(O_ASYNC | O_CLOEXEC | O_DIRECT | O_DSYNC | O_LARGEFILE |
-                O_NOCTTY | O_NONBLOCK | O_NDELAY | O_SYNC);
+      flags & ~(O_APPEND | O_ASYNC | O_CLOEXEC | O_DIRECT | O_DSYNC |
+                O_LARGEFILE | O_NOCTTY | O_NONBLOCK | O_NDELAY | O_SYNC);
 
   // ignore reads of some procfs files that we have effectively already
   // recorded through the command itself
