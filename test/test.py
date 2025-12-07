@@ -1127,7 +1127,6 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         pytest.param(True, id="existing file"),
     ),
 )
-@pytest.mark.xfail(strict=False)
 def test_open(
     mode: str, creat: bool, excl: bool, trunc: bool, exist: bool, tmp_path: Path
 ):

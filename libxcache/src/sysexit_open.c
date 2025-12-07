@@ -169,7 +169,19 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
   case O_WRONLY | O_CREAT | O_TRUNC:
   case O_WRONLY | O_CREAT | O_EXCL:
   case O_WRONLY | O_CREAT | O_TRUNC | O_EXCL:
-    // for now, do not support failing writes
+
+    // if we failed due to no a non-existent, this is semantically an `access`
+    if (!(flags_relevant & O_CREAT) && err == ENOENT) {
+      if (ERROR((
+              rc = input_new_access(&seen_read, &(int){ENOENT}, abs, F_OK, 0))))
+        goto done;
+      if (ERROR((rc = inferior_input_new(inf, seen_read))))
+        goto done;
+      seen_read = (input_t){0};
+      break;
+    }
+
+    // for now, do not support other categories of failing writes
     if (err < 0) {
       rc = ECHILD;
       goto done;
