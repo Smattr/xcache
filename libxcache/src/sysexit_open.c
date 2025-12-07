@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,13 +114,46 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
   switch (flags_relevant) {
 
   case O_RDONLY:
-    // record it
-    if (ERROR((rc = input_new_read(&seen_read, &err, abs))))
-      goto done;
+  case O_RDONLY | O_CREAT:
+  case O_RDONLY | O_CREAT | O_EXCL:
+    // if this was an implied `creat`, this operation is actually semantically a
+    // _write_
+    if (thread->pending_creat) {
+      assert(
+          (flags_relevant & O_CREAT) &&
+          "thread incurred pending creat from something not involving O_CREAT");
 
-    if (ERROR((rc = inferior_input_new(inf, seen_read))))
-      goto done;
-    seen_read = (input_t){0};
+      // we can ignore failed implied `creat` because its effects were captured
+      // during `sysenter_open`
+      if (err < 0)
+        break;
+
+      // set a placeholder mode which will be updated later
+      const mode_t mode = 0;
+
+      // record it
+      if (ERROR((rc = output_new_write(&seen_write, abs, mode))))
+        goto done;
+
+      if (ERROR((rc = inferior_output_new(inf, seen_write))))
+        goto done;
+      seen_write = (output_t){0};
+
+      // if this was an attempted exclusive open that failed due to the file
+      // pre-existing, the implied `access` in `sysenter_open` will have
+      // captured this
+    } else if ((flags_relevant & O_CREAT) && (flags_relevant & O_EXCL) &&
+               err == EEXIST) {
+      // nothing required
+    } else {
+      // record the read
+      if (ERROR((rc = input_new_read(&seen_read, &err, abs))))
+        goto done;
+
+      if (ERROR((rc = inferior_input_new(inf, seen_read))))
+        goto done;
+      seen_read = (input_t){0};
+    }
 
     break;
 
@@ -165,6 +199,8 @@ done:
   output_free(seen_write);
   free(abs);
   free(path);
+
+  thread->pending_creat = false;
 
   return rc;
 }

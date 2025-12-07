@@ -34,6 +34,7 @@ typedef struct {
   bool seen_spy_hello : 1;   ///< has ../../libxcache-spy/src/init.c::init run?
   bool ignoring : 1;         ///< has the spy told us to ignore syscalls?
   bool ignoring_rng : 1;     ///< has the spy told us to ignore `getrandom`?
+  bool pending_creat : 1;    ///< is this thread trying an implicit `creat`?
   clone_flags_t clone_flags; ///< options observed from last clone() syscall
   int *exit_status;          ///< where to write exit status on completion
 } thread_t;

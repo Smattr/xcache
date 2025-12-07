@@ -190,6 +190,13 @@ int sysenter_openat(inferior_t *inf, thread_t *thread) {
     goto done;
   input = (input_t){0};
 
+  // as a bonus, the bizarre combination of `O_RDONLY|O_CREAT` is legal and we
+  // need to handle it here because, by the time of `sysexit_open`, the
+  // pre-existence of the target file can no longer be determined
+  assert(!thread->pending_creat);
+  if (rw == O_RDONLY && is_creat && access(abs, F_OK) < 0)
+    thread->pending_creat = true;
+
 done:
   input_free(input);
   free(abs);
