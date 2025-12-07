@@ -170,7 +170,7 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
   case O_WRONLY | O_CREAT | O_EXCL:
   case O_WRONLY | O_CREAT | O_TRUNC | O_EXCL:
 
-    // if we failed due to no a non-existent, this is semantically an `access`
+    // if we failed due to a non-existent, this is semantically an `access`
     if (!(flags_relevant & O_CREAT) && err == ENOENT) {
       if (ERROR((
               rc = input_new_access(&seen_read, &(int){ENOENT}, abs, F_OK, 0))))
@@ -180,6 +180,11 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
       seen_read = (input_t){0};
       break;
     }
+
+    // if we failed due to an existent file, this will have been captured as an
+    // `access` in `sysenter_open`
+    if ((flags_relevant & O_EXCL) && err == EEXIST)
+      break;
 
     // for now, do not support other categories of failing writes
     if (err != 0) {
