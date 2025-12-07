@@ -1154,20 +1154,20 @@ def test_open(
     # setup initial state
     target = tmp_path / "foo"
     if exist:
-        target.write_text("hello world", encoding="utf-8")
+        target.write_bytes(b"hello world")
 
     # run the open without xcache
     subprocess.run(args, cwd=tmp_path, check=True)
 
     # what outcome did this produce?
     after_exists = target.exists()
-    after_content = target.read_text(encoding="utf-8") if after_exists else None
+    after_content = target.read_bytes() if after_exists else None
     after_mode = target.stat().st_mode if after_exists else None
 
     # re-setup initial conditions
     target.unlink(missing_ok=True)
     if exist:
-        target.write_text("hello world", encoding="utf-8")
+        target.write_bytes(b"hello world")
 
     # run under xcache
     xcache = [
@@ -1199,7 +1199,7 @@ def test_open(
 
     # check outcomes were the same
     after_exists1 = target.exists()
-    after_content1 = target.read_text(encoding="utf-8") if after_exists1 else None
+    after_content1 = target.read_bytes() if after_exists1 else None
     after_mode1 = target.stat().st_mode if after_exists1 else None
     assert after_exists == after_exists1
     assert after_content == after_content1
@@ -1208,7 +1208,7 @@ def test_open(
     # re-setup initial conditions
     target.unlink(missing_ok=True)
     if exist:
-        target.write_text("hello world", encoding="utf-8")
+        target.write_bytes(b"hello world")
 
     if is_invalid:
         return
@@ -1226,7 +1226,7 @@ def test_open(
 
     # check outcomes were the same
     after_exists1 = target.exists()
-    after_content1 = target.read_text(encoding="utf-8") if after_exists1 else None
+    after_content1 = target.read_bytes() if after_exists1 else None
     after_mode1 = target.stat().st_mode if after_exists1 else None
     assert after_exists == after_exists1
     assert after_content == after_content1
