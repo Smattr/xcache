@@ -125,7 +125,7 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
 
       // we can ignore failed implied `creat` because its effects were captured
       // during `sysenter_open`
-      if (err < 0)
+      if (err != 0)
         break;
 
       // set a placeholder mode which will be updated later
@@ -182,7 +182,7 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
     }
 
     // for now, do not support other categories of failing writes
-    if (err < 0) {
+    if (err != 0) {
       rc = ECHILD;
       goto done;
     }
