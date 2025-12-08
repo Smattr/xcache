@@ -1019,6 +1019,25 @@ def test_clearenv(
     assert "replay succeeded" in p.stdout, "replay failed"
 
 
+@pytest.mark.xfail(strict=True)
+def test_fd_without_path(tmp_path: Path):
+    """can we handle a tracee that creates FDs that do not map to disk paths?"""
+
+    # we do not guarantee we can trace such a thing, but it should at least run
+    # successfully
+    subprocess.run(
+        [
+            "xcache",
+            "--debug",
+            f"--dir={tmp_path}/database",
+            "--read-write",
+            "--",
+            "xcache-test-fd-without-path",
+        ],
+        check=True,
+    )
+
+
 @pytest.mark.parametrize("export1", (False, True))
 @pytest.mark.parametrize("export2", (False, True))
 def test_getenv(export1: bool, export2: bool, tmp_path: Path):

@@ -26,6 +26,7 @@ add_executable(xcache-test-uncacheable uncacheable.c)
 add_executable(xcache-test-write-file write-file.c)
 add_executable(xcache-test-bug-set-size bug-set-size.c)
 add_executable(xcache-test-clearenv clearenv.c)
+add_executable(xcache-test-fd-without-path fd-without-path.c)
 add_executable(xcache-test-getenv getenv.c)
 add_executable(xcache-test-open open.c)
 add_executable(xcache-test-putenv putenv.c)
@@ -84,6 +85,7 @@ add_dependencies(check
   xcache
   xcache-test-bug-set-size
   xcache-test-clearenv
+  xcache-test-fd-without-path
   xcache-test-getenv
   xcache-test-ld-preload
   xcache-test-ld-preload-cos
