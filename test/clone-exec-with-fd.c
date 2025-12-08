@@ -24,7 +24,7 @@
 static int entry(void *arg) {
   const int fd = (int)(intptr_t)arg;
 
-  char arg0[] = "close-fd";
+  char arg0[] = "xcache-test-close-fd";
 
   char arg1[128] = {0};
   snprintf(arg1, sizeof(arg1), "%d", fd);

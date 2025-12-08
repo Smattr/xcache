@@ -53,7 +53,7 @@ def test_fork(debug: bool, record: bool, replay: bool, forker: str, tmp_path: Pa
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace([forker], tmp_path)
+    strace([f"xcache-test-{forker}"], tmp_path)
     (tmp_path / "foo").unlink()
 
     args = ["xcache"]
@@ -70,7 +70,7 @@ def test_fork(debug: bool, record: bool, replay: bool, forker: str, tmp_path: Pa
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", forker]
+    args += ["--", f"xcache-test-{forker}"]
 
     p = subprocess.run(
         args,
@@ -147,7 +147,7 @@ def test_no_dir(debug: bool, tmp_path: Path):
     if debug:
         args += ["--debug"]
     with pytest.raises(subprocess.CalledProcessError):
-        subprocess.run(args + ["--", "my-echo", "foo", "bar"], check=True)
+        subprocess.run(args + ["--", "xcache-test-echo", "foo", "bar"], check=True)
 
 
 @pytest.mark.parametrize("debug", (False, True))
@@ -189,7 +189,7 @@ def test_nop(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["nop"])
+    strace(["xcache-test-nop"])
 
     args = ["xcache"]
     if debug:
@@ -205,7 +205,7 @@ def test_nop(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "nop"]
+    args += ["--", "xcache-test-nop"]
 
     output = subprocess.check_output(
         args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
@@ -258,7 +258,7 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace([f"print-{stream}"])
+    strace([f"xcache-test-print-{stream}"])
 
     args = ["xcache"]
     if debug:
@@ -274,7 +274,7 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "print-stdout"]
+    args += ["--", "xcache-test-print-stdout"]
 
     output = subprocess.check_output(
         args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
@@ -334,7 +334,7 @@ def test_write_file(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["write-file"], tmp_path)
+    strace(["xcache-test-write-file"], tmp_path)
     (tmp_path / "foo").unlink()
 
     args = ["xcache"]
@@ -351,7 +351,7 @@ def test_write_file(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "write-file"]
+    args += ["--", "xcache-test-write-file"]
 
     output = subprocess.check_output(
         args,
@@ -429,7 +429,7 @@ def test_uncacheable(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["uncacheable"])
+    strace(["xcache-test-uncacheable"])
 
     args = ["xcache"]
     if debug:
@@ -445,7 +445,7 @@ def test_uncacheable(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "uncacheable"]
+    args += ["--", "xcache-test-uncacheable"]
 
     p = subprocess.run(
         args,
@@ -519,7 +519,7 @@ def test_exec_dups_fds(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["clone-exec-with-fd"])
+    strace(["xcache-test-clone-exec-with-fd"])
 
     args = ["xcache"]
     if debug:
@@ -535,7 +535,7 @@ def test_exec_dups_fds(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "clone-exec-with-fd"]
+    args += ["--", "xcache-test-clone-exec-with-fd"]
 
     output = subprocess.check_output(
         args,
@@ -602,7 +602,7 @@ def test_close_on_exec(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["close-on-exec"])
+    strace(["xcache-test-close-on-exec"])
 
     args = ["xcache"]
     if debug:
@@ -618,7 +618,7 @@ def test_close_on_exec(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "close-on-exec"]
+    args += ["--", "xcache-test-close-on-exec"]
 
     output = subprocess.check_output(
         args,
@@ -685,7 +685,7 @@ def test_umask(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["umask-open"], tmp_path)
+    strace(["xcache-test-umask-open"], tmp_path)
     foo = tmp_path / "foo"
     foo.unlink()
 
@@ -703,7 +703,7 @@ def test_umask(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "umask-open"]
+    args += ["--", "xcache-test-umask-open"]
 
     subprocess.check_call(
         args,
@@ -750,7 +750,7 @@ def test_umask2(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["umask-open2"], tmp_path)
+    strace(["xcache-test-umask-open2"], tmp_path)
     foo = tmp_path / "foo"
     foo.unlink()
 
@@ -768,7 +768,7 @@ def test_umask2(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "umask-open2"]
+    args += ["--", "xcache-test-umask-open2"]
 
     subprocess.check_call(
         args,
@@ -817,7 +817,7 @@ def test_ld_preload_in_child(
     operations do propagate this correctly.
     """
 
-    tracee = ["ld-preload-in-child"]
+    tracee = ["xcache-test-ld-preload-in-child"]
     if CLONE_FILES:
         tracee += ["CLONE_FILES"]
     if CLONE_FS:
@@ -862,7 +862,7 @@ def test_exec_sysconf(tmp_path: Path):
     observes the new process’ actions.
     """
 
-    tracee = ["my-execvp", "my-sysconf", "_SC_PAGESIZE"]
+    tracee = ["xcache-test-execvp", "xcache-test-sysconf", "_SC_PAGESIZE"]
 
     # First, `strace` the process we are about to test. If the test fails, the
     # `strace` output will show what syscalls it made which may aid debugging.

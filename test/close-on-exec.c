@@ -22,7 +22,7 @@ int main(int __attribute__((unused)) argc, char **argv) {
   }
 
   // exec our child, passing it the information of this descriptor
-  char arg0[] = "close-fd2";
+  char arg0[] = "xcache-test-close-fd2";
   char arg1[128] = {0};
   snprintf(arg1, sizeof(arg1), "%d", fd);
   char *const args[] = {arg0, arg1, NULL};

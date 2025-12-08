@@ -6,24 +6,24 @@ if(HAS_NO_SANITIZE_ALL)
   add_link_options(-fno-sanitize=all)
 endif()
 
-add_executable(clone-exec-with-fd clone-exec-with-fd.c)
-add_executable(close-fd close-fd.c)
-add_executable(close-fd2 close-fd2.c)
-add_executable(close-on-exec close-on-exec.c)
-add_executable(forker forker.c)
-add_executable(forker-fork forker-fork.c)
-add_executable(forker-vfork forker-vfork.c)
-add_executable(ld-preload-in-child ld-preload-in-child.c)
-add_executable(my-echo my-echo.c)
-add_executable(my-execvp my-execvp.c)
-add_executable(my-sysconf my-sysconf.c)
-add_executable(nop nop.c)
-add_executable(print-stderr print-stderr.c)
-add_executable(print-stdout print-stdout.c)
-add_executable(umask-open umask-open.c)
-add_executable(umask-open2 umask-open2.c)
-add_executable(uncacheable uncacheable.c)
-add_executable(write-file write-file.c)
+add_executable(xcache-test-clone-exec-with-fd clone-exec-with-fd.c)
+add_executable(xcache-test-close-fd close-fd.c)
+add_executable(xcache-test-close-fd2 close-fd2.c)
+add_executable(xcache-test-close-on-exec close-on-exec.c)
+add_executable(xcache-test-forker forker.c)
+add_executable(xcache-test-forker-fork forker-fork.c)
+add_executable(xcache-test-forker-vfork forker-vfork.c)
+add_executable(xcache-test-ld-preload-in-child ld-preload-in-child.c)
+add_executable(xcache-test-echo echo.c)
+add_executable(xcache-test-execvp execvp.c)
+add_executable(xcache-test-sysconf sysconf.c)
+add_executable(xcache-test-nop nop.c)
+add_executable(xcache-test-print-stderr print-stderr.c)
+add_executable(xcache-test-print-stdout print-stdout.c)
+add_executable(xcache-test-umask-open umask-open.c)
+add_executable(xcache-test-umask-open2 umask-open2.c)
+add_executable(xcache-test-uncacheable uncacheable.c)
+add_executable(xcache-test-write-file write-file.c)
 add_executable(xcache-test-bug-set-size bug-set-size.c)
 add_executable(xcache-test-clearenv clearenv.c)
 add_executable(xcache-test-getenv getenv.c)
@@ -62,24 +62,24 @@ add_custom_target(check
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 add_dependencies(check
-  clone-exec-with-fd
-  close-fd
-  close-fd2
-  close-on-exec
-  forker
-  forker-fork
-  forker-vfork
-  ld-preload-in-child
-  my-echo
-  my-execvp
-  my-sysconf
-  nop
-  print-stderr
-  print-stdout
-  umask-open
-  umask-open2
-  uncacheable
-  write-file
+  xcache-test-clone-exec-with-fd
+  xcache-test-close-fd
+  xcache-test-close-fd2
+  xcache-test-close-on-exec
+  xcache-test-forker
+  xcache-test-forker-fork
+  xcache-test-forker-vfork
+  xcache-test-ld-preload-in-child
+  xcache-test-echo
+  xcache-test-execvp
+  xcache-test-sysconf
+  xcache-test-nop
+  xcache-test-print-stderr
+  xcache-test-print-stdout
+  xcache-test-umask-open
+  xcache-test-umask-open2
+  xcache-test-uncacheable
+  xcache-test-write-file
   libxcache-spy
   xcache
   xcache-test-bug-set-size
