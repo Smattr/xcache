@@ -274,7 +274,7 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
             args += ["--read-only"]
         else:
             args += ["--disable"]
-    args += ["--", "xcache-test-print-stdout"]
+    args += ["--", f"xcache-test-print-{stream}"]
 
     output = subprocess.check_output(
         args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
