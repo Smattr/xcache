@@ -72,6 +72,7 @@ add_library(libxcache
   src/peek_data.c
   src/peek_str.c
   src/proc.c
+  src/readln.c
   src/set.c
   src/statflags_to_str.c
   src/syscall_to_str.c

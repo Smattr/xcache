@@ -40,3 +40,12 @@ INTERNAL bool path_is_cacheable(const char *abs_path);
 /// @param abs_path Absolute path to file to consider
 /// @return True if reads of this path can be ignored
 INTERNAL bool path_is_ignorable(const char *abs_path);
+
+/// `readlink`-alike that dynamically allocates
+///
+/// The caller is expected to free `out`.
+///
+/// @param path Path to symlink to resolve
+/// @param out [out] Target of symlink on success
+/// @return 0 on success or an errno on failure
+INTERNAL int readln(const char *path, char **out);
