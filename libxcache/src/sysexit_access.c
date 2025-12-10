@@ -126,6 +126,11 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
       rc = (r == EINVAL || r == ENOENT) ? ECHILD : r;
       goto done;
     }
+    // ignore things that aren’t files (e.g. “pipe:…”
+    if (root[0] != '/') {
+      DEBUG("ignoring access of non-file \"%s\"", root);
+      goto done;
+    }
     abs = path_join(root, pathname);
     if (ERROR(abs == NULL)) {
       rc = ENOMEM;

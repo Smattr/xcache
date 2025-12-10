@@ -68,6 +68,11 @@ static int core(inferior_t *inf, thread_t *thread, int dirfd,
       rc = (r == EINVAL || r == ENOENT) ? ECHILD : r;
       goto done;
     }
+    // ignore things that aren’t files (e.g. “pipe:…”
+    if (root[0] != '/') {
+      DEBUG("ignoring access of non-file \"%s\"", root);
+      goto done;
+    }
     if (strcmp(path, "") == 0) {
       abs = root;
       root = NULL;
