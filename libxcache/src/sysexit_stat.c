@@ -1,6 +1,5 @@
 #include "../../common/compiler.h"
 #include "debug.h"
-#include "fd.h"
 #include "fs.h"
 #include "inferior_t.h"
 #include "input_t.h"
@@ -23,6 +22,7 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
   assert(thread != NULL);
 
   char *path = NULL;
+  char *root = NULL;
   char *abs = NULL;
   input_t saw = {0};
   int rc = 0;
@@ -72,19 +72,21 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
       goto done;
     }
   } else {
-    const fd_t *dirfd = fd_at(thread->fd, fd);
-    if (ERROR(dirfd == NULL)) {
-      rc = ECHILD;
+    const int r = thread_fd(thread, fd, &root);
+    if (ERROR(r != 0)) {
+      // consider the child passing an invalid file descriptor unsupported
+      rc = (r == EINVAL || r == ENOENT) ? ECHILD : r;
       goto done;
     }
     if (strcmp(path, "") == 0 && (flags & AT_EMPTY_PATH)) {
-      abs = strdup(dirfd->path);
+      abs = root;
+      root = NULL;
     } else {
-      abs = path_join(dirfd->path, path);
-    }
-    if (ERROR(abs == NULL)) {
-      rc = ENOMEM;
-      goto done;
+      abs = path_join(root, path);
+      if (ERROR(abs == NULL)) {
+        rc = ENOMEM;
+        goto done;
+      }
     }
   }
 
@@ -102,6 +104,7 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
 done:
   input_free(saw);
   free(abs);
+  free(root);
   free(path);
 
   return rc;

@@ -48,9 +48,6 @@ int sysexit(inferior_t *inf, thread_t *thread) {
     }                                                                          \
   } while (0)
 
-#ifdef __NR_close
-  DO(close);
-#endif
 #ifdef __NR_access
   DO(access);
 #endif
@@ -77,9 +74,6 @@ int sysexit(inferior_t *inf, thread_t *thread) {
 #endif
 #ifdef __NR_clone3
   DO(clone3);
-#endif
-#ifdef __NR_fcntl
-  DO(fcntl);
 #endif
 #ifdef __NR_readlink
   DO(readlink);

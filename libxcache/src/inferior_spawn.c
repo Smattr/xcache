@@ -1,5 +1,4 @@
 #include "debug.h"
-#include "fd.h"
 #include "fs.h"
 #include "inferior_t.h"
 #include "list.h"
@@ -61,17 +60,6 @@ int inferior_spawn(inferior_t *inf, thread_t *parent, pid_t child) {
   } else {
     new->fs = fs_dup(parent->fs);
     if (ERROR(new->fs == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-  }
-
-  // will the child have the same file descriptor table as the parent?
-  if (parent->clone_flags.clone_files) {
-    new->fd = fds_acquire(parent->fd);
-  } else {
-    new->fd = fds_dup(parent->fd);
-    if (ERROR(new->fd == NULL)) {
       rc = ENOMEM;
       goto done;
     }

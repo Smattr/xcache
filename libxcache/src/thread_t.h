@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../common/compiler.h"
-#include "fd.h"
 #include "fs.h"
 #include "proc.h"
 #include <stdbool.h>
@@ -18,7 +17,6 @@ typedef struct {
   /// when the value of this struct is “unset”.
   bool set : 1;
 
-  bool clone_files : 1;  ///< was `CLONE_FILES` set?
   bool clone_fs : 1;     ///< was `CLONE_FS` set?
   bool clone_thread : 1; ///< was `CLONE_THREAD` set?
 } clone_flags_t;
@@ -28,7 +26,6 @@ typedef struct {
   pid_t id;                  ///< thread identifier
   proc_t *proc;              ///< containing process
   fs_t *fs;                  ///< filesystem
-  fds_t *fd;                 ///< file descriptor table
   bool pending_sigstop : 1;  ///< do we need to acknowledge a future `SIGSTOP`?
   bool pending_sysexit : 1;  ///< is this thread mid-syscall?
   bool seen_spy_hello : 1;   ///< has ../../libxcache-spy/src/init.c::init run?
@@ -38,6 +35,14 @@ typedef struct {
   clone_flags_t clone_flags; ///< options observed from last clone() syscall
   int *exit_status;          ///< where to write exit status on completion
 } thread_t;
+
+/// get the path an open file descriptor points to
+///
+/// @param thread Owner of the file descriptor
+/// @param fd File descriptor to check
+/// @param path [out] Absolute path of the pointed to file on success
+/// @return 0 on success or an errno on failure
+INTERNAL int thread_fd(thread_t *thread, int fd, char **path);
 
 /// resume a thread, detaching from tracing it
 ///

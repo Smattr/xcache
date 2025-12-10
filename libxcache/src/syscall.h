@@ -102,26 +102,12 @@ INTERNAL int sysexit_clone(inferior_t *inf, thread_t *thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int sysexit_clone3(inferior_t *inf, thread_t *thread);
 
-/// handle end of `close`
-///
-/// @param inf Tracee to which the target belongs
-/// @param thread Caller thread
-/// @return 0 on success or an errno on failure
-INTERNAL int sysexit_close(inferior_t *inf, thread_t *thread);
-
 /// handle end of `faccessat2`
 ///
 /// @param inf Tracee to which the target belongs
 /// @param thread Caller thread
 /// @return 0 on success or an errno on failure
 INTERNAL int sysexit_faccessat2(inferior_t *inf, thread_t *thread);
-
-/// handle end of `fcntl`
-///
-/// @param inf Tracee to which the target belongs
-/// @param thread Caller thread
-/// @return 0 on success or an errno on failure
-INTERNAL int sysexit_fcntl(inferior_t *inf, thread_t *thread);
 
 /// handle end of `fork`
 ///

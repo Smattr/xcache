@@ -22,7 +22,7 @@ IGNORE(read)
 IGNORE(write)
 #endif
 #ifdef __NR_close
-SYSENTER_IGNORE(close)
+IGNORE(close)
 #endif
 #ifdef __NR_fstat
 IGNORE(fstat)
@@ -82,7 +82,7 @@ IGNORE(exit)
 IGNORE(wait4)
 #endif
 #ifdef __NR_fcntl
-SYSENTER_IGNORE(fcntl)
+IGNORE(fcntl)
 #endif
 #ifdef __NR_getcwd
 IGNORE(getcwd)

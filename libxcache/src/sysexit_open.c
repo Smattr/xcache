@@ -11,7 +11,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -74,24 +73,6 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
     // TODO
     rc = ENOTSUP;
     goto done;
-  }
-
-  // if it succeeded, update the file descriptor table
-  if (err == 0) {
-    const long ret = peek_ret(thread);
-    assert(ret >= 0 && "logic error");
-    assert(ret <= INT_MAX && "unexpected kernel return from openat");
-    DEBUG("TID %ld PID %ld, updating FD %ld → \"%s\"", (long)thread->id,
-          (long)thread->proc->id, ret, abs);
-
-    assert(fd_at(thread->fd, (int)ret) == NULL &&
-           "child successfully opened something we believed they already had "
-           "open");
-
-    if (ERROR((rc = fd_open(thread->fd, (int)ret, abs))))
-      goto done;
-
-    fd_at(thread->fd, (int)ret)->close_on_exec = !!(flags & O_CLOEXEC);
   }
 
   // discard the flags that have no relevance to us

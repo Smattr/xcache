@@ -1019,7 +1019,6 @@ def test_clearenv(
     assert "replay succeeded" in p.stdout, "replay failed"
 
 
-@pytest.mark.xfail(strict=True)
 def test_fd_without_path(tmp_path: Path):
     """can we handle a tracee that creates FDs that do not map to disk paths?"""
 

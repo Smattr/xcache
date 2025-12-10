@@ -164,13 +164,6 @@ static void *monitor(void *state) {
 
     if (is_exec(status)) {
       DEBUG("TID %ld, PTRACE_EVENT_EXEC", (long)tid);
-      // if the thread has a shared file descriptor table, we need to now
-      // duplicate it
-      {
-        const int r = fds_unshare(&thread->fd);
-        if (ERROR(r != 0))
-          FAIL_TRACE(r);
-      }
 
       // the spy will be re-initialised in an exec-ed child
       thread->seen_spy_hello = false;

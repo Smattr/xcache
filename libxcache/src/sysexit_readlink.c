@@ -1,6 +1,5 @@
 #include "../../common/compiler.h"
 #include "debug.h"
-#include "fd.h"
 #include "fs.h"
 #include "input_t.h"
 #include "path.h"
@@ -27,6 +26,7 @@ static int core(inferior_t *inf, thread_t *thread, int dirfd,
   assert(thread != NULL);
   assert(path != NULL);
 
+  char *root = NULL;
   char *abs = NULL;
   input_t saw = {0};
   int rc = 0;
@@ -62,19 +62,21 @@ static int core(inferior_t *inf, thread_t *thread, int dirfd,
       goto done;
     }
   } else {
-    const fd_t *fd = fd_at(thread->fd, dirfd);
-    if (ERROR(fd == NULL)) {
-      rc = ECHILD;
+    const int r = thread_fd(thread, dirfd, &root);
+    if (ERROR(r != 0)) {
+      // consider the child passing an invalid file descriptor unsupported
+      rc = (r == EINVAL || r == ENOENT) ? ECHILD : r;
       goto done;
     }
     if (strcmp(path, "") == 0) {
-      abs = strdup(fd->path);
+      abs = root;
+      root = NULL;
     } else {
-      abs = path_join(fd->path, path);
-    }
-    if (ERROR(abs == NULL)) {
-      rc = ENOMEM;
-      goto done;
+      abs = path_join(root, path);
+      if (ERROR(abs == NULL)) {
+        rc = ENOMEM;
+        goto done;
+      }
     }
   }
 
@@ -97,6 +99,7 @@ static int core(inferior_t *inf, thread_t *thread, int dirfd,
 done:
   input_free(saw);
   free(abs);
+  free(root);
 
   return rc;
 }

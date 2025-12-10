@@ -1,5 +1,4 @@
 #include "debug.h"
-#include "fd.h"
 #include "fs.h"
 #include "inferior_t.h"
 #include "input_t.h"
@@ -82,6 +81,7 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
   assert(thread != NULL);
   assert(pathname != NULL);
 
+  char *root = NULL;
   char *abs = NULL;
   input_t saw = {0};
   int rc = 0;
@@ -120,12 +120,13 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
       goto done;
     }
   } else {
-    const fd_t *const root = fd_at(thread->fd, dirfd);
-    if (ERROR(root == NULL)) {
-      rc = ECHILD;
+    const int r = thread_fd(thread, dirfd, &root);
+    if (ERROR(r != 0)) {
+      // consider the child passing an invalid file descriptor unsupported
+      rc = (r == EINVAL || r == ENOENT) ? ECHILD : r;
       goto done;
     }
-    abs = path_join(root->path, pathname);
+    abs = path_join(root, pathname);
     if (ERROR(abs == NULL)) {
       rc = ENOMEM;
       goto done;
@@ -160,6 +161,7 @@ static int handle_access(inferior_t *inf, thread_t *thread, int dirfd,
 done:
   input_free(saw);
   free(abs);
+  free(root);
 
   return rc;
 }

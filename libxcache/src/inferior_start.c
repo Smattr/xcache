@@ -1,5 +1,4 @@
 #include "debug.h"
-#include "fd.h"
 #include "find_me.h"
 #include "fs.h"
 #include "inferior_t.h"
@@ -70,20 +69,6 @@ int inferior_start(inferior_t *inf, const xc_cmd_t cmd, bool preload_prepend) {
     rc = ENOMEM;
     goto done;
   }
-
-  thread->fd = fds_new();
-  if (ERROR(thread->fd == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-
-  // we dup /dev/null over the child’s stdin
-  if (ERROR((rc = fd_open(thread->fd, STDIN_FILENO, "/dev/null"))))
-    goto done;
-  if (ERROR((rc = fd_open(thread->fd, STDOUT_FILENO, "/dev/stdout"))))
-    goto done;
-  if (ERROR((rc = fd_open(thread->fd, STDERR_FILENO, "/dev/stderr"))))
-    goto done;
 
   // make the first thread export its eventual exit status as the process’ exit
   // status

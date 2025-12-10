@@ -17,7 +17,6 @@ add_library(libxcache
   src/find_exe.c
   src/find_lib.c
   src/find_spy.c
-  src/fd.c
   src/fs.c
   src/hash_cmd.c
   src/hash_data.c
@@ -86,8 +85,6 @@ add_library(libxcache
   src/sysexit_chdir.c
   src/sysexit_chmod.c
   src/sysexit_clone.c
-  src/sysexit_close.c
-  src/sysexit_fcntl.c
   src/sysexit_getrandom.c
   src/sysexit_open.c
   src/sysexit_readlink.c
@@ -96,6 +93,7 @@ add_library(libxcache
   src/tee_join.c
   src/tee_new.c
   src/thread_exit.c
+  src/thread_fd.c
   src/trace_load.c
   src/trace_save.c
   src/xc_cmd_eq.c

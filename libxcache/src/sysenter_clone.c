@@ -105,7 +105,6 @@ static void core(inferior_t *inf, thread_t *thread, uint64_t flags) {
   // all VM reads via PID and (2) `CLONE_THREAD` implies `CLONE_VM`.
   assert(!thread->clone_flags.set);
   thread->clone_flags = (clone_flags_t){.set = true,
-                                        .clone_files = flags & CLONE_FILES,
                                         .clone_fs = flags & CLONE_FS,
                                         .clone_thread = flags & CLONE_THREAD};
 }
