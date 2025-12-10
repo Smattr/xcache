@@ -49,7 +49,6 @@ static void *monitor(void *state) {
 
   while (true) {
     int status;
-    DEBUG("waiting on child…");
     pid_t tid = waitpid(-1, &status, __WALL | __WNOTHREAD);
     if (ERROR(tid < 0)) {
       if (errno == ECHILD) {
