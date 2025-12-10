@@ -1128,6 +1128,38 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         assert not foo.exists(), "output file written"
 
 
+@pytest.mark.xfail(strict=True)
+def test_non_path_fds(tmp_path: Path):
+    """can we trace processes that create in-memory file descriptors?"""
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(["xcache-test-non-path-fds"])
+
+    # run it under xcache
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+        "xcache-test-non-path-fds",
+    ]
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        timeout=120,
+        check=True,
+    )
+
+    # we should have been able to cache it
+    assert "record succeeded" in p.stdout, "record failed"
+
+
 @pytest.mark.parametrize("mode", ("O_RDONLY", "O_WRONLY", "O_RDWR"))
 @pytest.mark.parametrize(
     "creat", (pytest.param(False, id=""), pytest.param(True, id="O_CREAT"))
