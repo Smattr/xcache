@@ -169,6 +169,9 @@ IGNORE(prlimit64)
 #ifdef __NR_getrandom
 SYSENTER_IGNORE(getrandom)
 #endif
+#ifdef __NR_memfd_create
+IGNORE(memfd_create)
+#endif
 #ifdef __NR_rseq
 IGNORE(rseq)
 #endif
