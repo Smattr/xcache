@@ -130,6 +130,9 @@ IGNORE(set_tid_address)
 #ifdef __NR_exit_group
 IGNORE(exit_group)
 #endif
+#ifdef __NR_epoll_create
+IGNORE(epoll_create)
+#endif
 #ifdef __NR_newfstatat
 SYSENTER_IGNORE(newfstatat)
 #endif
