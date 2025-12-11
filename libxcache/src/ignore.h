@@ -66,6 +66,12 @@ IGNORE(pipe)
 #ifdef __NR_madvise
 IGNORE(madvise)
 #endif
+#ifdef __NR_dup
+IGNORE(dup)
+#endif
+#ifdef __NR_dup2
+IGNORE(dup2)
+#endif
 #ifdef __NR_getrusage
 IGNORE(getrusage)
 #endif
