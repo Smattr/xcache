@@ -139,6 +139,9 @@ SYSENTER_IGNORE(newfstatat)
 #ifdef __NR_readlinkat
 SYSENTER_IGNORE(readlinkat)
 #endif
+#ifdef __NR_signalfd
+IGNORE(signalfd)
+#endif
 #ifdef __NR_prlimit64
 IGNORE(prlimit64)
 #endif
