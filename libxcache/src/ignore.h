@@ -154,6 +154,9 @@ IGNORE(eventfd2)
 #ifdef __NR_epoll_create1
 IGNORE(epoll_create1)
 #endif
+#ifdef __NR_dup3
+IGNORE(dup3)
+#endif
 #ifdef __NR_prlimit64
 IGNORE(prlimit64)
 #endif
