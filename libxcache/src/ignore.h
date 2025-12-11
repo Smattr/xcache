@@ -139,6 +139,9 @@ SYSENTER_IGNORE(newfstatat)
 #ifdef __NR_readlinkat
 SYSENTER_IGNORE(readlinkat)
 #endif
+#ifdef __NR_set_robust_list
+IGNORE(set_robust_list)
+#endif
 #ifdef __NR_signalfd
 IGNORE(signalfd)
 #endif
@@ -162,9 +165,6 @@ IGNORE(pipe2)
 #endif
 #ifdef __NR_prlimit64
 IGNORE(prlimit64)
-#endif
-#ifdef __NR_set_robust_list
-IGNORE(set_robust_list)
 #endif
 #ifdef __NR_getrandom
 SYSENTER_IGNORE(getrandom)
