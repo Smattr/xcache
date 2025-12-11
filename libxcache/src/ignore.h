@@ -172,6 +172,9 @@ SYSENTER_IGNORE(getrandom)
 #ifdef __NR_memfd_create
 IGNORE(memfd_create)
 #endif
+#ifdef __NR_pidfd_open
+SYSENTER_IGNORE(pidfd_open)
+#endif
 #ifdef __NR_rseq
 IGNORE(rseq)
 #endif

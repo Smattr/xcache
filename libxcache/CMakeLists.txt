@@ -87,6 +87,7 @@ add_library(libxcache
   src/sysexit_clone.c
   src/sysexit_getrandom.c
   src/sysexit_open.c
+  src/sysexit_pidfd_open.c
   src/sysexit_readlink.c
   src/sysexit_stat.c
   src/tee_cancel.c

@@ -84,6 +84,9 @@ int sysexit(inferior_t *inf, thread_t *thread) {
 #ifdef __NR_getrandom
   DO(getrandom);
 #endif
+#ifdef __NR_pidfd_open
+  DO(pidfd_open);
+#endif
 #ifdef __NR_faccessat2
   DO(faccessat2);
 #endif
