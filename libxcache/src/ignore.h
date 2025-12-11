@@ -151,6 +151,9 @@ IGNORE(signalfd4)
 #ifdef __NR_eventfd2
 IGNORE(eventfd2)
 #endif
+#ifdef __NR_epoll_create1
+IGNORE(epoll_create1)
+#endif
 #ifdef __NR_prlimit64
 IGNORE(prlimit64)
 #endif
