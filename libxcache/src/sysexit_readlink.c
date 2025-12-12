@@ -68,11 +68,6 @@ static int core(inferior_t *inf, thread_t *thread, int dirfd,
       rc = (r == EINVAL || r == ENOENT) ? ECHILD : r;
       goto done;
     }
-    // ignore things that aren’t files (e.g. “pipe:…”
-    if (root[0] != '/') {
-      DEBUG("ignoring access of non-file \"%s\"", root);
-      goto done;
-    }
     if (strcmp(path, "") == 0) {
       abs = root;
       root = NULL;
@@ -85,11 +80,9 @@ static int core(inferior_t *inf, thread_t *thread, int dirfd,
     }
   }
 
-  // ignore reads of /proc/self/exe because we know this points somewhere
-  // reliably reproducible, but will generate false negatives if we naïvely try
-  // to replay it
-  if (strcmp(abs, "/proc/self/exe") == 0) {
-    DEBUG("ignoring readlink of \"/proc/self/exe\"");
+  // ignore irrelevant things
+  if (path_is_ignorable(abs)) {
+    DEBUG("ignoring readlink of \"%s\"", abs);
     goto done;
   }
 
