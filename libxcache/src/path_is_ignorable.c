@@ -12,6 +12,18 @@ bool path_is_ignorable(const char *abs_path) {
   if (abs_path[0] != '/')
     return true;
 
+  // memfds show up as deleted for some reason
+  const char MEMFD_PREFIX[] = "/memfd:";
+  if (strncmp(abs_path, MEMFD_PREFIX, strlen(MEMFD_PREFIX)) == 0) {
+    const char MEMFD_SUFFIX[] = " (deleted)";
+    const size_t suffix_len = strlen(MEMFD_SUFFIX);
+    const size_t len = strlen(abs_path);
+    if (len >= suffix_len) {
+      if (strcmp(&abs_path[len - suffix_len], MEMFD_SUFFIX) == 0)
+        return true;
+    }
+  }
+
   // we have already recorded /proc/self/exe on startup
   if (strcmp(abs_path, "/proc/self/exe") == 0)
     return true;

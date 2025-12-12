@@ -1128,7 +1128,6 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         assert not foo.exists(), "output file written"
 
 
-@pytest.mark.xfail(strict=True)
 def test_non_path_fds(tmp_path: Path):
     """can we trace processes that create in-memory file descriptors?"""
 
