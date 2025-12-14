@@ -8,13 +8,15 @@
 #include <sys/types.h>
 #include <xcache/trace.h>
 
+/// type of an external output
 typedef enum {
-  OUT_CHMOD, ///< chmod()
-  OUT_CHOWN, ///< chown()
-  OUT_MKDIR, ///< mkdir()
-  OUT_WRITE, ///< open() with O_WRONLY or O_RDWR
+  OUT_CHMOD, ///< `chmod()`
+  OUT_CHOWN, ///< `chown()`
+  OUT_MKDIR, ///< `mkdir()`
+  OUT_WRITE, ///< `open()` with `O_WRONLY` or `O_RDWR`
 } output_type_t;
 
+/// an external output
 typedef struct {
   output_type_t tag; ///< discriminator of the union
   char *path;        ///< absolute path to target
@@ -36,7 +38,7 @@ typedef struct {
   };
 } output_t;
 
-/// create a new chmod output
+/// create a new `chmod()` output
 ///
 /// @param output [out] Created output on success
 /// @param path Path being chmod-ed
@@ -44,7 +46,7 @@ typedef struct {
 /// @return 0 on success or an errno on failure
 INTERNAL int output_new_chmod(output_t *output, const char *path, mode_t mode);
 
-/// create a new write output
+/// create a new `write()` output
 ///
 /// This does not populate the `cached_copy` member, assuming it will be
 /// populated later.

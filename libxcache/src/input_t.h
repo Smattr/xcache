@@ -8,24 +8,24 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-/// type of a recorded file system read
+/// type of an external input
 typedef enum {
-  INP_ACCESS,   ///< access()
-  INP_READ,     ///< open() with O_RDONLY or O_RDWR
-  INP_READLINK, ///< readlink()
-  INP_STAT,     ///< stat()
-  INP_SYSCONF,  ///< sysconf()
-  INP_GETENV,   ///< getenv()
+  INP_ACCESS,   ///< `access()`
+  INP_READ,     ///< `open()` with `O_RDONLY` or `O_RDWR`
+  INP_READLINK, ///< `readlink()`
+  INP_STAT,     ///< `stat()`
+  INP_SYSCONF,  ///< `sysconf()`
+  INP_GETENV,   ///< `getenv()`
 } input_type_t;
 
-/// a file/directory that was read
+/// an external input
 typedef struct {
   input_type_t tag; ///< discriminator of the union
   char *path;       ///< absolute path to the target of this action
   int err;          ///< any errno that resulted
   union {
     struct {
-      int mode;  ///< mask of F_OK, R_OK, W_OK, X_OK
+      int mode;  ///< mask of `F_OK`, `R_OK`, `W_OK`, `X_OK`
       int flags; ///< mask of `AT_EACCESS`, `AT_SYMLINK_NOFOLLOW`
     } access;
     struct {
@@ -53,18 +53,18 @@ typedef struct {
   };
 } input_t;
 
-/// create an input for an access() call
+/// create an input for an `access()` call
 ///
 /// @param input [out] Created input on success
 /// @param expected_err Optional expected error result
 /// @param path Absolute path to the target file/directory
-/// @param mode Mode to access()
-/// @param flags Flags to `faccessat2()
+/// @param mode Mode to `access()`
+/// @param flags Flags to `faccessat2()`
 /// @return 0 on success or an errno on failure
 INTERNAL int input_new_access(input_t *input, const int *expected_err,
                               const char *path, int mode, int flags);
 
-/// create an input for a read open() call
+/// create an input for a read `open()` call
 ///
 /// @param input [out] Created input on success
 /// @param expected_err Optional expected error result
@@ -73,7 +73,7 @@ INTERNAL int input_new_access(input_t *input, const int *expected_err,
 INTERNAL int input_new_read(input_t *input, const int *expected_err,
                             const char *path);
 
-/// create an input for a readlink() call
+/// create an input for a `readlink()` call
 ///
 /// @param input [out] Created input on success
 /// @param expected_err Expected error result
@@ -82,7 +82,7 @@ INTERNAL int input_new_read(input_t *input, const int *expected_err,
 INTERNAL int input_new_readlink(input_t *input, int expected_err,
                                 const char *path);
 
-/// create an input for a stat() call
+/// create an input for a `stat()` call
 ///
 /// @param input [out] Created input on success
 /// @param expected_err Expected error result
@@ -92,14 +92,14 @@ INTERNAL int input_new_readlink(input_t *input, int expected_err,
 INTERNAL int input_new_stat(input_t *input, int expected_err, const char *path,
                             bool is_lstat);
 
-/// create an input for a sysconf() call
+/// create an input for a `sysconf()` call
 ///
 /// @param input [out] Created input on success
 /// @param name Name of the configuration looked up
 /// @return 0 on success or an errno on failure
 INTERNAL int input_new_sysconf(input_t *input, int name);
 
-/// create an input for a getenv() call
+/// create an input for a `getenv()` call
 ///
 /// @param input [out] Created input on success
 /// @param name Environment key looked up
