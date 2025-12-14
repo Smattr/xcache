@@ -1,4 +1,4 @@
-#include "output_t.h"
+#include "output.h"
 #include <stdlib.h>
 
 void output_free(output_t output) {

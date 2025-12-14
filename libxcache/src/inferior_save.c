@@ -2,7 +2,7 @@
 #include "debug.h"
 #include "inferior_t.h"
 #include "list.h"
-#include "output_t.h"
+#include "output.h"
 #include "path.h"
 #include "tee_t.h"
 #include "trace_t.h"

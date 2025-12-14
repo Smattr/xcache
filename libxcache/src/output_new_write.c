@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "output_t.h"
+#include "output.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>

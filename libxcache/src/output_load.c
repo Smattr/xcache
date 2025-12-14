@@ -1,6 +1,6 @@
 #include "cbor.h"
 #include "debug.h"
-#include "output_t.h"
+#include "output.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>

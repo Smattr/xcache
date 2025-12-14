@@ -1,7 +1,7 @@
 #include "inferior_t.h"
 #include "input.h"
 #include "list.h"
-#include "output_t.h"
+#include "output.h"
 #include "tee_t.h"
 #include "thread_t.h"
 #include <assert.h>

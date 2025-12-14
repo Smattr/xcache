@@ -1,6 +1,6 @@
 #include "debug.h"
 #include "inferior_t.h"
-#include "output_t.h"
+#include "output.h"
 #include "path.h"
 #include "peek.h"
 #include "syscall.h"

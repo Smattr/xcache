@@ -2,6 +2,7 @@
 #include "inferior_t.h"
 #include "input.h"
 #include "list.h"
+#include "output.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>

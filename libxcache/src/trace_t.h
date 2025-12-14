@@ -2,7 +2,7 @@
 
 #include "../../common/compiler.h"
 #include "input.h"
-#include "output_t.h"
+#include "output.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <xcache/cmd.h>

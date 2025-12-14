@@ -3,7 +3,7 @@
 #include "debug.h"
 #include "input.h"
 #include "list.h"
-#include "output_t.h"
+#include "output.h"
 #include "trace_t.h"
 #include <assert.h>
 #include <errno.h>
