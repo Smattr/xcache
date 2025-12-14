@@ -1,5 +1,5 @@
 #include "hash_t.h"
-#include "input_t.h"
+#include "input.h"
 #include <stdbool.h>
 #include <string.h>
 

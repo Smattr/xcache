@@ -1,7 +1,7 @@
 #include "../../common/proccall.h"
 #include "debug.h"
 #include "inferior_t.h"
-#include "input_t.h"
+#include "input.h"
 #include "peek.h"
 #include "set.h"
 #include "syscall.h"

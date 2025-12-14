@@ -1,4 +1,4 @@
-#include "input_t.h"
+#include "input.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>

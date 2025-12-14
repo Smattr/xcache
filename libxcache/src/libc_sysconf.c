@@ -1,6 +1,6 @@
 #include "debug.h"
 #include "inferior_t.h"
-#include "input_t.h"
+#include "input.h"
 #include "peek.h"
 #include "syscall.h"
 #include "thread_t.h"

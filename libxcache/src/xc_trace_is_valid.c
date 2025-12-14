@@ -1,6 +1,6 @@
 #include "../../common/compiler.h"
 #include "debug.h"
-#include "input_t.h"
+#include "input.h"
 #include "list.h"
 #include "trace_t.h"
 #include <stdbool.h>

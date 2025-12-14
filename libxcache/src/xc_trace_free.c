@@ -1,4 +1,4 @@
-#include "input_t.h"
+#include "input.h"
 #include "list.h"
 #include "output_t.h"
 #include "trace_t.h"

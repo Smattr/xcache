@@ -1,4 +1,4 @@
-#include "input_t.h"
+#include "input.h"
 #include <assert.h>
 #include <unistd.h>
 

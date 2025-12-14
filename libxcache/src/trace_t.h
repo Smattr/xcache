@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
-#include "input_t.h"
+#include "input.h"
 #include "output_t.h"
 #include <stddef.h>
 #include <stdio.h>

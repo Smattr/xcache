@@ -1,6 +1,6 @@
 #include "debug.h"
 #include "hash_t.h"
-#include "input_t.h"
+#include "input.h"
 #include <assert.h>
 #include <errno.h>
 #include <stddef.h>

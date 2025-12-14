@@ -1,7 +1,7 @@
 #include "../../common/compiler.h"
 #include "debug.h"
 #include "fs.h"
-#include "input_t.h"
+#include "input.h"
 #include "path.h"
 #include "peek.h"
 #include "syscall.h"
