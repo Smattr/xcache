@@ -1,6 +1,7 @@
 #include "cp.h"
 #include "debug.h"
 #include "inferior_t.h"
+#include "io.h"
 #include "list.h"
 #include "output.h"
 #include "path.h"
@@ -75,8 +76,19 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
 
   int fd = 0;
   FILE *f = NULL;
+  inputs_t inputs = {0};
   outputs_t outputs = {0};
   int rc = 0;
+
+  // shallow copy the inputs
+  (void)LIST_RESERVE(&inputs, LIST_SIZE(&inf->io));
+  for (size_t i = 0; i < LIST_SIZE(&inf->io); ++i) {
+    const io_t src = *LIST_AT(&inf->io, i);
+    if (src.tag != IO_INPUT)
+      continue;
+    if (ERROR((rc = LIST_PUSH_BACK(&inputs, src.input))))
+      goto done;
+  }
 
   // drain stdout and stderr
   if (ERROR((rc = tee_join(inf->t_out))))
@@ -84,9 +96,8 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
   if (ERROR((rc = tee_join(inf->t_err))))
     goto done;
 
-  // account for the outputs we saw + stdout and stderr
-  if (ERROR((rc = LIST_RESERVE(&outputs, LIST_SIZE(&inf->outputs) + 2))))
-    goto done;
+  // account for the outputs we saw (overestimates) + stdout and stderr
+  (void)LIST_RESERVE(&inputs, LIST_SIZE(&inf->io) + 2);
 
   // determine whether stdout and stderr need to be saved
   if (ERROR((rc = append_stream(&outputs, "/dev/stdout", inf->t_out->copy_path,
@@ -97,11 +108,14 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
     goto done;
 
   // finalise our other outputs
-  for (size_t i = 0; i < LIST_SIZE(&inf->outputs); ++i) {
+  for (size_t i = 0; i < LIST_SIZE(&inf->io); ++i) {
+    const io_t it = *LIST_AT(&inf->io, i);
+    if (it.tag != IO_OUTPUT)
+      continue;
     if (ERROR((rc = LIST_PUSH_BACK(&outputs, (output_t){0}))))
       goto done;
     output_t *const back = LIST_AT(&outputs, LIST_SIZE(&outputs) - 1);
-    if (ERROR((rc = output_dup(back, *LIST_AT(&inf->outputs, i)))))
+    if (ERROR((rc = output_dup(back, it.output))))
       goto done;
 
     // if this was a file write, finalise it now
@@ -168,8 +182,7 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
   fd = 0;
 
   // construct a trace object to write out
-  const xc_trace_t trace = {
-      .cmd = cmd, .inputs = inf->inputs, .outputs = outputs};
+  const xc_trace_t trace = {.cmd = cmd, .inputs = inputs, .outputs = outputs};
 
   if (ERROR((rc = trace_save(trace, f))))
     goto done;
@@ -180,6 +193,7 @@ done:
   if (fd > 0)
     (void)close(fd);
   LIST_FREE(&outputs, output_free);
+  LIST_FREE(&inputs, NULL); // shallow free
 
   return rc;
 }

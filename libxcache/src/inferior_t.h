@@ -2,6 +2,7 @@
 
 #include "../../common/compiler.h"
 #include "input.h"
+#include "io.h"
 #include "list.h"
 #include "output.h"
 #include "tee_t.h"
@@ -25,13 +26,13 @@ typedef struct {
 
   LIST(thread_t *) threads; ///< threads belonging to this target
 
-  inputs_t inputs; ///< input actions observed
-
-  /// list of output actions observed
-  ///
-  /// For `OUT_WRITE` items, the `cached_copy` member is not populated. That
-  /// will be done during finalisation, when the trace record is being written.
   LIST(output_t) outputs;
+
+  /// actions observed
+  ///
+  /// For `OUT_WRITE` outputs, the `cached_copy` member is not populated. That
+  /// will be done during finalisation, when the trace record is being written.
+  LIST(io_t) io;
 } inferior_t;
 
 /// create a new inferior to be traced
