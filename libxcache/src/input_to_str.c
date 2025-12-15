@@ -109,7 +109,7 @@ char *input_to_str(const input_t input) {
       if (fputs(", .getenv.value = NULL", stream) < 0)
         goto done;
     } else {
-      if (fprintf(stderr, ", .getenv.value = \"%s\"", input.getenv.value) < 0)
+      if (fprintf(stream, ", .getenv.value = \"%s\"", input.getenv.value) < 0)
         goto done;
     }
   }
