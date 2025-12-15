@@ -48,6 +48,7 @@ typedef struct {
       long ret; ///< returned value
     } sysconf;
     struct {
+      char *key;   ///< `name` passed into `getenv` call
       char *value; ///< return from `getenv`
     } getenv;
   };

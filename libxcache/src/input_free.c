@@ -4,6 +4,8 @@
 void input_free(input_t i) {
   free(i.path);
 
-  if (i.tag == INP_GETENV)
+  if (i.tag == INP_GETENV) {
+    free(i.getenv.key);
     free(i.getenv.value);
+  }
 }

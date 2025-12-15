@@ -53,6 +53,8 @@ bool input_eq(const input_t a, const input_t b) {
     break;
 
   case INP_GETENV:
+    if (strcmp(a.getenv.key, b.getenv.key) != 0)
+      return false;
     if (a.getenv.value == NULL) {
       if (b.getenv.value != NULL)
         return false;

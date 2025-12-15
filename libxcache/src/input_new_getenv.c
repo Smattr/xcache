@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 int input_new_getenv(input_t *input, const char *name, const char *value) {
@@ -15,8 +16,14 @@ int input_new_getenv(input_t *input, const char *name, const char *value) {
 
   i.tag = INP_GETENV;
 
-  i.path = strdup(name);
-  if (ERROR(i.path == NULL)) {
+  // use an implementation-defined synthetic path
+  if (ERROR(asprintf(&i.path, "//getenv/%s", name) < 0)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
+  i.getenv.key = strdup(name);
+  if (ERROR(i.getenv.key == NULL)) {
     rc = ENOMEM;
     goto done;
   }

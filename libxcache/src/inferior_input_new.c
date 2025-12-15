@@ -62,10 +62,10 @@ static bool is_dominated_by(const input_t sub, const io_t dom) {
   // `getenv;getenv` can be de-duped into just `getenv`
   if (dom.tag == IO_INPUT) {
     if (sub.tag == INP_GETENV && dom.input.tag == INP_GETENV) {
-      if (strcmp(sub.path, dom.input.path) == 0) {
+      if (strcmp(sub.getenv.key, dom.input.getenv.key) == 0) {
         DEBUG("skipping getenv(\"%s\") as input because a getenv(\"%s\") of it "
               "is already an input",
-              sub.path, sub.path);
+              sub.getenv.key, sub.getenv.key);
         return true;
       }
     }

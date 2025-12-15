@@ -73,6 +73,8 @@ int input_save(const input_t input, FILE *stream) {
     break;
 
   case INP_GETENV:
+    if (ERROR((rc = cbor_write_str(stream, input.getenv.key))))
+      goto done;
     if (ERROR((rc = cbor_write_opt_str(stream, input.getenv.value))))
       goto done;
     break;

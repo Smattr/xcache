@@ -46,8 +46,8 @@ bool input_is_valid(const input_t input) {
   }
 
   case INP_GETENV: {
-    const char *const value = getenv(input.path);
-    const int r = input_new_getenv(&attempt, input.path, value);
+    const char *const value = getenv(input.getenv.key);
+    const int r = input_new_getenv(&attempt, input.getenv.key, value);
     if (r != 0)
       return false;
     break;

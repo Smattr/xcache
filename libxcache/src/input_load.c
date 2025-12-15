@@ -131,6 +131,8 @@ int input_load(input_t *input, FILE *stream) {
     break;
 
   case INP_GETENV:
+    if (ERROR((rc = cbor_read_str(stream, &i.getenv.key))))
+      goto done;
     if (ERROR((rc = cbor_read_opt_str(stream, &i.getenv.value))))
       goto done;
     break;

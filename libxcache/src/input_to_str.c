@@ -103,6 +103,8 @@ char *input_to_str(const input_t input) {
     break;
 
   case INP_GETENV:
+    if (fprintf(stream, ", .getenv.key = \"%s\"", input.getenv.key) < 0)
+      goto done;
     if (input.getenv.value == NULL) {
       if (fputs(", .getenv.value = NULL", stream) < 0)
         goto done;
