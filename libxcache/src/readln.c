@@ -2,6 +2,7 @@
 #include "path.h"
 #include <errno.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -14,6 +15,10 @@ int readln(const char *path, char **out) {
   while (true) {
 
     // expand target buffer
+    if (ERROR(SIZE_MAX / 2 < size)) {
+      rc = EOVERFLOW;
+      break;
+    }
     size *= 2;
     {
       char *r = realloc(resolved, size);
