@@ -1,5 +1,8 @@
+#include "debug.h"
 #include "input.h"
 #include <assert.h>
+#include <errno.h>
+#include <stdio.h>
 #include <unistd.h>
 
 int input_new_sysconf(input_t *input, int name) {
@@ -11,12 +14,19 @@ int input_new_sysconf(input_t *input, int name) {
 
   i.tag = INP_SYSCONF;
 
+  // use an implementation-defined synthetic path
+  if (ERROR(asprintf(&i.path, "//sysconf/%d", name) < 0)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
   i.sysconf.name = name;
   i.sysconf.ret = sysconf(name);
 
   *input = i;
   i = (input_t){0};
 
+done:
   input_free(i);
 
   return rc;

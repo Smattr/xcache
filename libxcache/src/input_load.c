@@ -25,16 +25,14 @@ int input_load(input_t *input, FILE *stream) {
     i.tag = tag;
   }
 
-  if (i.tag != INP_SYSCONF) {
-    if (ERROR((rc = cbor_read_str(stream, &i.path))))
-      goto done;
+  if (ERROR((rc = cbor_read_str(stream, &i.path))))
+    goto done;
 
-    {
-      uint64_t err = 0;
-      if (ERROR((rc = cbor_read_u64(stream, &err))))
-        goto done;
-      i.err = (int)err;
-    }
+  {
+    uint64_t err = 0;
+    if (ERROR((rc = cbor_read_u64(stream, &err))))
+      goto done;
+    i.err = (int)err;
   }
 
   switch (i.tag) {

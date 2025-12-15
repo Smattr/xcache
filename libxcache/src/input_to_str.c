@@ -55,12 +55,10 @@ char *input_to_str(const input_t input) {
     break;
   }
 
-  if (input.tag != INP_SYSCONF) {
-    if (fprintf(stream, ", .path = \"%s\"", input.path) < 0)
-      goto done;
-    if (fprintf(stream, ", .err = %d", input.err) < 0)
-      goto done;
-  }
+  if (fprintf(stream, ", .path = \"%s\"", input.path) < 0)
+    goto done;
+  if (fprintf(stream, ", .err = %d", input.err) < 0)
+    goto done;
 
   switch (input.tag) {
 

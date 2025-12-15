@@ -16,13 +16,11 @@ int input_save(const input_t input, FILE *stream) {
   if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.tag))))
     goto done;
 
-  if (input.tag != INP_SYSCONF) {
-    if (ERROR((rc = cbor_write_str(stream, input.path))))
-      goto done;
+  if (ERROR((rc = cbor_write_str(stream, input.path))))
+    goto done;
 
-    if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.err))))
-      goto done;
-  }
+  if (ERROR((rc = cbor_write_u64(stream, (uint64_t)input.err))))
+    goto done;
 
   switch (input.tag) {
 

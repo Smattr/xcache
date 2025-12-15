@@ -7,13 +7,8 @@ bool input_eq(const input_t a, const input_t b) {
 
   if (a.tag != b.tag)
     return false;
-  if (a.tag == INP_SYSCONF) {
-    if (a.path != b.path)
-      return false;
-  } else {
-    if (strcmp(a.path, b.path) != 0)
-      return false;
-  }
+  if (strcmp(a.path, b.path) != 0)
+    return false;
   if (a.err != b.err)
     return false;
 
