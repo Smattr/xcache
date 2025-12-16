@@ -8,6 +8,11 @@
 #error "define SYSEXIT_IGNORE before including this file"
 #endif
 
+/// define UNIMPLEMENTED as behaviour for syscalls that should never occur
+#ifndef UNIMPLEMENTED
+#error "define UNIMPLEMENTED before including this file"
+#endif
+
 /// shorthand for ignoring both
 #define IGNORE(call) SYSENTER_IGNORE(call) SYSEXIT_IGNORE(call)
 
@@ -121,17 +126,39 @@ IGNORE(sigaltstack)
 #ifdef __NR_arch_prctl
 IGNORE(arch_prctl)
 #endif
+#ifdef __NR_getpmsg
+UNIMPLEMENTED(getpmsg)
+#endif
+#ifdef __NR_putpmsg
+UNIMPLEMENTED(putpmsg)
+#endif
+#ifdef __NR_afs_syscall
+UNIMPLEMENTED(afs_syscall)
+#endif
+#ifdef __NR_tuxcall
+UNIMPLEMENTED(tuxcall)
+#endif
+#ifdef __NR_security
+UNIMPLEMENTED(security)
+#endif
 #ifdef __NR_futex
 IGNORE(futex)
 #endif
 #ifdef __NR_set_tid_address
 IGNORE(set_tid_address)
 #endif
+// `restart_syscall` is not unimplemented, but we should never see it
+#ifdef __NR_restart_syscall
+UNIMPLEMENTED(restart_syscall)
+#endif
 #ifdef __NR_exit_group
 IGNORE(exit_group)
 #endif
 #ifdef __NR_epoll_create
 IGNORE(epoll_create)
+#endif
+#ifdef __NR_vserver
+UNIMPLEMENTED(vserver)
 #endif
 #ifdef __NR_newfstatat
 SYSENTER_IGNORE(newfstatat)

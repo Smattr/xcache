@@ -53,6 +53,8 @@ int sysenter(inferior_t *inf, thread_t *thread) {
     }                                                                          \
   } while (0);
 #define SYSEXIT_IGNORE(call) // nothing
+#define UNIMPLEMENTED(call)                                                    \
+  assert(syscall_no != __NR_##call && "unanticipated syscall " #call);
 #include "ignore.h"
 
 #ifdef __NR_clone

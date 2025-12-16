@@ -35,6 +35,8 @@ int sysexit(inferior_t *inf, thread_t *thread) {
       goto done;                                                               \
     }                                                                          \
   } while (0);
+#define UNIMPLEMENTED(call)                                                    \
+  assert(syscall_no != __NR_##call && "unanticipated syscall " #call);
 #include "ignore.h"
 
 #define DO(call)                                                               \
