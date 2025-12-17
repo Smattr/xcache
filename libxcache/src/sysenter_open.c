@@ -30,16 +30,17 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs_path,
 
   // In contrast to other syscalls that are intercepted in both sysenter and
   // sysexit, the behaviour of this function is _heavily_ coupled with the
-  // behaviour of its other half, `sysexit_openat`. In particular it, (1)
-  // returns 0 for some failure cases where it knows `sysexit_openat` will catch
-  // the failure, (2) omits handling some things that `sysexit_openat` can
-  // handle, and (3) omits handling anything that it knows will result in a
-  // `ECHILD` or `ENOTSUP` from `sysexit_openat`.
+  // behaviour of its other half, sysexit_open.c:`handle_open`. In particular
+  // it, (1) returns 0 for some failure cases where it knows
+  // sysexit_open.c:`handle_open` will catch the failure, (2) omits handling
+  // some things that sysexit_open.c:`handle_open` can handle, and (3) omits
+  // handling anything that it knows will result in a `ECHILD` or `ENOTSUP` from
+  // sysexit_open.c:`handle_open`.
   //
-  // The relationship between `sysenter_openat` and `sysexit_openat` is
-  // asymmetric. `sysenter_openat` is allowed to handle scenarios that
-  // `sysexit_openat` rejects. But `sysenter_openat` is not allowed to skip
-  // scenarios that `sysexit_openat` handles.
+  // The relationship between sysenter_open.c and sysexit_open.c is asymmetric.
+  // sysenter_open.c is allowed to handle scenarios that sysexit_open.c rejects.
+  // But sysenter_open.c is not allowed to skip scenarios that sysexit_open.c
+  // handles.
 
   input_t input = {0};
   int rc = 0;

@@ -17,63 +17,23 @@
 #include <string.h>
 #include <xcache/record.h>
 
-int sysexit_openat(inferior_t *inf, thread_t *thread) {
-
+/// handle a sysexit of `open` or friends
+///
+/// @param inf Tracee
+/// @param thread Tracee thread that made this call
+/// @param abs Absolute path to target file being opened
+/// @param flags `open` flags
+/// @param err Any errno value set by the `open` call
+/// @return 0 on success or an errno on failure
+static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
+                       int flags, int err) {
   assert(inf != NULL);
   assert(thread != NULL);
+  assert(abs != NULL);
 
-  char *path = NULL;
-  char *abs = NULL;
   input_t seen_read = {0};
   output_t seen_write = {0};
   int rc = 0;
-
-  // extract the file descriptor
-  const int fd = (int)peek_syscall_arg(thread, 1);
-
-  // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 2);
-  if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
-    // if the read faulted, assume our side was correct and the tracee used a
-    // bad pointer, something we do not support recording
-    if (rc == EFAULT)
-      rc = ECHILD;
-    goto done;
-  }
-
-  // extract the flags
-  const long flags = peek_syscall_arg(thread, 3);
-
-  // extract the result
-  const int err = peek_errno(thread);
-
-  if (UNLIKELY(xc_debug != NULL)) {
-    char *fd_str = atfd_to_str(fd);
-    char *flags_str = openflags_to_str(flags);
-    DEBUG("TID %ld, openat(%s, \"%s\", %s, …) = %ld, errno == %d",
-          (long)thread->id, fd_str == NULL ? "<oom>" : fd_str, path,
-          flags_str == NULL ? "<oom>" : flags_str,
-          err == 0 ? peek_ret(thread) : -1, err);
-    free(flags_str);
-    free(fd_str);
-  }
-
-  // make the path absolute
-  if (path[0] == '/') {
-    // fd is ignored
-    abs = path;
-    path = NULL;
-  } else if (fd == AT_FDCWD) {
-    abs = path_absolute(thread->fs->cwd, path);
-    if (ERROR(abs == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-  } else {
-    // TODO
-    rc = ENOTSUP;
-    goto done;
-  }
 
   // discard the flags that have no relevance to us
   const long flags_relevant =
@@ -195,10 +155,73 @@ int sysexit_openat(inferior_t *inf, thread_t *thread) {
 done:
   input_free(seen_read);
   output_free(seen_write);
-  free(abs);
-  free(path);
 
   thread->pending_creat = false;
+
+  return rc;
+}
+
+int sysexit_openat(inferior_t *inf, thread_t *thread) {
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  char *pathname = NULL;
+  char *abs_path = NULL;
+  int rc = 0;
+
+  // extract the file descriptor
+  const int fd = (int)peek_syscall_arg(thread, 1);
+
+  // extract the path
+  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 2);
+  if (ERROR((rc = peek_str(&pathname, thread->proc, path_ptr)))) {
+    // if the read faulted, assume our side was correct and the tracee used a
+    // bad pointer, something we do not support recording
+    if (rc == EFAULT)
+      rc = ECHILD;
+    goto done;
+  }
+
+  // extract the flags
+  const long flags = peek_syscall_arg(thread, 3);
+
+  // extract the result
+  const int err = peek_errno(thread);
+
+  if (UNLIKELY(xc_debug != NULL)) {
+    char *fd_str = atfd_to_str(fd);
+    char *flags_str = openflags_to_str(flags);
+    DEBUG("TID %ld, openat(%s, \"%s\", %s, …) = %ld, errno == %d",
+          (long)thread->id, fd_str == NULL ? "<oom>" : fd_str, pathname,
+          flags_str == NULL ? "<oom>" : flags_str,
+          err == 0 ? peek_ret(thread) : -1, err);
+    free(flags_str);
+    free(fd_str);
+  }
+
+  // make the path absolute
+  if (pathname[0] == '/') {
+    // fd is ignored
+    abs_path = pathname;
+    pathname = NULL;
+  } else if (fd == AT_FDCWD) {
+    abs_path = path_absolute(thread->fs->cwd, pathname);
+    if (ERROR(abs_path == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+  } else {
+    // TODO
+    rc = ENOTSUP;
+    goto done;
+  }
+
+  if (ERROR((rc = handle_open(inf, thread, abs_path, flags, err))))
+    goto done;
+
+done:
+  free(abs_path);
+  free(pathname);
 
   return rc;
 }
