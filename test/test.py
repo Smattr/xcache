@@ -1282,6 +1282,54 @@ def test_open(
     assert after_mode == after_mode1
 
 
+@pytest.mark.xfail(strict=True)
+def test_open2(tmp_path: Path):
+    """can we handle the `open` syscall?"""
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(["xcache-test-open2"], tmp_path)
+    foo = tmp_path / "foo"
+    foo.unlink()
+
+    # now try tracing it
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+        "xcache-test-open2",
+    ]
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        timeout=120,
+    )
+    assert "record succeeded" in p.stdout, "record failed"
+    assert foo.read_text(encoding="utf-8") == "bar", "incorrect content written"
+    foo.unlink()
+
+    # now try replaying it
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        timeout=120,
+    )
+    assert "replay succeeded" in p.stdout, "replay failed"
+    assert foo.read_text(encoding="utf-8") == "bar", "incorrect content written"
+
+
 @pytest.mark.parametrize("preload", ("append", "either", "prepend"))
 @pytest.mark.skipif(shutil.which("ldd") is None, reason="ldd not available")
 def test_previous_ld_preload(preload: str, tmp_path: Path):

@@ -30,6 +30,7 @@ add_executable(xcache-test-fd-without-path fd-without-path.c)
 add_executable(xcache-test-getenv getenv.c)
 add_executable(xcache-test-non-path-fds non-path-fds.c)
 add_executable(xcache-test-open open.c)
+add_executable(xcache-test-open2 open2.c)
 add_executable(xcache-test-putenv putenv.c)
 add_executable(xcache-test-setenv setenv.c)
 add_executable(xcache-test-unsetenv unsetenv.c)
@@ -92,6 +93,7 @@ add_dependencies(check
   xcache-test-ld-preload-cos
   xcache-test-non-path-fds
   xcache-test-open
+  xcache-test-open2
   xcache-test-putenv
   xcache-test-setenv
   xcache-test-unsetenv
