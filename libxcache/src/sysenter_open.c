@@ -181,6 +181,8 @@ done:
 }
 
 int sysenter_openat(inferior_t *inf, thread_t *thread) {
+  assert(inf != NULL);
+  assert(thread != NULL);
 
   char *pathname = NULL;
   char *abs_path = NULL;
