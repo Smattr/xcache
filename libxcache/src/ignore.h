@@ -62,8 +62,17 @@ IGNORE(rt_sigreturn)
 #ifdef __NR_ioctl
 SYSEXIT_IGNORE(ioctl) // handled or gave up in sysenter
 #endif
+#ifdef __NR_pread // pread64 in Linux < 2.6
+IGNORE(pread)
+#endif
 #ifdef __NR_pread64
 IGNORE(pread64)
+#endif
+#ifdef __NR_pwrite // pwrite64 in Linux < 2.6
+IGNORE(pwrite)
+#endif
+#ifdef __NR_pwrite64
+IGNORE(pwrite64)
 #endif
 #ifdef __NR_access
 SYSENTER_IGNORE(access)
