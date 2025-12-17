@@ -59,6 +59,9 @@ int sysexit(inferior_t *inf, thread_t *thread) {
 #ifdef __NR_chdir
   DO(chdir);
 #endif
+#ifdef __NR_creat
+  DO(creat);
+#endif
 #ifdef __NR_openat
   DO(openat);
 #endif

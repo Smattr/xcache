@@ -162,6 +162,55 @@ done:
   return rc;
 }
 
+int sysexit_creat(inferior_t *inf, thread_t *thread) {
+  assert(inf != NULL);
+  assert(thread != NULL);
+
+  char *pathname = NULL;
+  char *abs_path = NULL;
+  int rc = 0;
+
+  // extract the path
+  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 1);
+  if (ERROR((rc = peek_str(&pathname, thread->proc, path_ptr)))) {
+    // if the read faulted, assume our side was correct and the tracee used a
+    // bad pointer, something we do not support recording
+    if (rc == EFAULT)
+      rc = ECHILD;
+    goto done;
+  }
+
+  // infer flags
+  const long flags = O_CREAT | O_WRONLY | O_TRUNC;
+
+  // extract the result
+  const int err = peek_errno(thread);
+
+  DEBUG("TID %ld, creat(\"%s\", …) = %ld, errno == %d", (long)thread->id,
+        pathname, err == 0 ? peek_ret(thread) : -1, err);
+
+  // make the path absolute
+  if (pathname[0] == '/') {
+    abs_path = pathname;
+    pathname = NULL;
+  } else {
+    abs_path = path_absolute(thread->fs->cwd, pathname);
+    if (ERROR(abs_path == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+  }
+
+  if (ERROR((rc = handle_open(inf, thread, abs_path, flags, err))))
+    goto done;
+
+done:
+  free(abs_path);
+  free(pathname);
+
+  return rc;
+}
+
 int sysexit_open(inferior_t *inf, thread_t *thread) {
   assert(inf != NULL);
   assert(thread != NULL);
