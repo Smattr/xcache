@@ -98,6 +98,9 @@ IGNORE(mremap)
 #ifdef __NR_msync
 IGNORE(msync)
 #endif
+#ifdef __NR_mincore
+IGNORE(mincore)
+#endif
 #ifdef __NR_madvise
 IGNORE(madvise)
 #endif
