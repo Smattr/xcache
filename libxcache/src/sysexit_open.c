@@ -21,15 +21,16 @@
 ///
 /// @param inf Tracee
 /// @param thread Tracee thread that made this call
-/// @param abs Absolute path to target file being opened
+/// @param abs_path Absolute path to target file being opened
 /// @param flags `open` flags
 /// @param err Any errno value set by the `open` call
 /// @return 0 on success or an errno on failure
-static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
+static int handle_open(inferior_t *inf, thread_t *thread, const char *abs_path,
                        int flags, int err) {
   assert(inf != NULL);
   assert(thread != NULL);
-  assert(abs != NULL);
+  assert(abs_path != NULL);
+  assert(abs_path[0] == '/');
 
   input_t seen_read = {0};
   output_t seen_write = {0};
@@ -42,12 +43,12 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
 
   // ignore reads of some procfs files that we have effectively already
   // recorded through the command itself
-  if (flags_relevant == O_RDONLY && path_is_ignorable(abs)) {
-    DEBUG("ignoring open of \"%s\"", abs);
+  if (flags_relevant == O_RDONLY && path_is_ignorable(abs_path)) {
+    DEBUG("ignoring open of \"%s\"", abs_path);
     goto done;
   }
 
-  if (ERROR(!path_is_cacheable(abs))) {
+  if (ERROR(!path_is_cacheable(abs_path))) {
     rc = ECHILD;
     goto done;
   }
@@ -73,7 +74,7 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
       const mode_t mode = 0;
 
       // record it
-      if (ERROR((rc = output_new_write(&seen_write, abs, mode))))
+      if (ERROR((rc = output_new_write(&seen_write, abs_path, mode))))
         goto done;
 
       if (ERROR((rc = inferior_output_new(inf, seen_write))))
@@ -88,7 +89,7 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
       // nothing required
     } else {
       // record the read
-      if (ERROR((rc = input_new_read(&seen_read, &err, abs))))
+      if (ERROR((rc = input_new_read(&seen_read, &err, abs_path))))
         goto done;
 
       if (ERROR((rc = inferior_input_new(inf, seen_read))))
@@ -113,8 +114,8 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
 
     // if we failed due to a non-existent, this is semantically an `access`
     if (!(flags_relevant & O_CREAT) && err == ENOENT) {
-      if (ERROR((
-              rc = input_new_access(&seen_read, &(int){ENOENT}, abs, F_OK, 0))))
+      if (ERROR((rc = input_new_access(&seen_read, &(int){ENOENT}, abs_path,
+                                       F_OK, 0))))
         goto done;
       if (ERROR((rc = inferior_input_new(inf, seen_read))))
         goto done;
@@ -137,7 +138,7 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
     const mode_t mode = 0;
 
     // record it
-    if (ERROR((rc = output_new_write(&seen_write, abs, mode))))
+    if (ERROR((rc = output_new_write(&seen_write, abs_path, mode))))
       goto done;
 
     if (ERROR((rc = inferior_output_new(inf, seen_write))))
