@@ -32,6 +32,9 @@ IGNORE(close)
 #ifdef __NR_fstat
 IGNORE(fstat)
 #endif
+#ifdef __NR_poll
+IGNORE(poll)
+#endif
 #ifdef __NR_lseek
 IGNORE(lseek)
 #endif
