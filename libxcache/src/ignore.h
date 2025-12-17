@@ -89,6 +89,9 @@ IGNORE(pipe)
 #ifdef __NR_select
 IGNORE(select)
 #endif
+#ifdef __NR_sched_yield
+IGNORE(sched_yield)
+#endif
 #ifdef __NR_madvise
 IGNORE(madvise)
 #endif
