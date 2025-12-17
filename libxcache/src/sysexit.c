@@ -50,6 +50,9 @@ int sysexit(inferior_t *inf, thread_t *thread) {
     }                                                                          \
   } while (0)
 
+#ifdef __NR_open
+  DO(open);
+#endif
 #ifdef __NR_access
   DO(access);
 #endif

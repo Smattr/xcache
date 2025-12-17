@@ -130,6 +130,13 @@ INTERNAL int sysexit_getrandom(inferior_t *inf, thread_t *thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int sysexit_newfstatat(inferior_t *inf, thread_t *thread);
 
+/// handle end of `open`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysexit_open(inferior_t *inf, thread_t *thread);
+
 /// handle end of `openat`
 ///
 /// @param inf Tracee to which the target belongs
