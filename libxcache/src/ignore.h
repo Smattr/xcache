@@ -92,6 +92,9 @@ IGNORE(select)
 #ifdef __NR_sched_yield
 IGNORE(sched_yield)
 #endif
+#ifdef __NR_mremap
+IGNORE(mremap)
+#endif
 #ifdef __NR_madvise
 IGNORE(madvise)
 #endif
