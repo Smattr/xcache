@@ -1019,6 +1019,54 @@ def test_clearenv(
     assert "replay succeeded" in p.stdout, "replay failed"
 
 
+@pytest.mark.xfail(strict=True)
+def test_creat(tmp_path: Path):
+    """can we handle the `creat` syscall?"""
+
+    # First, `strace` the process we are about to test. If the test fails, the
+    # `strace` output will show what syscalls it made which may aid debugging.
+    # This is useful when, e.g., running on a new kernel where the dynamic
+    # loader or libc makes unanticipated syscalls.
+    strace(["xcache-test-creat"], tmp_path)
+    foo = tmp_path / "foo"
+    foo.unlink()
+
+    # now try tracing it
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+        "xcache-test-creat",
+    ]
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        timeout=120,
+    )
+    assert "record succeeded" in p.stdout, "record failed"
+    assert foo.read_text(encoding="utf-8") == "bar", "incorrect content written"
+    foo.unlink()
+
+    # now try replaying it
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=True,
+        text=True,
+        timeout=120,
+    )
+    assert "replay succeeded" in p.stdout, "replay failed"
+    assert foo.read_text(encoding="utf-8") == "bar", "incorrect content written"
+
+
 def test_fd_without_path(tmp_path: Path):
     """can we handle a tracee that creates FDs that do not map to disk paths?"""
 
