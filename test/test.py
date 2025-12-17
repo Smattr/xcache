@@ -1282,7 +1282,6 @@ def test_open(
     assert after_mode == after_mode1
 
 
-@pytest.mark.xfail(strict=True)
 def test_open2(tmp_path: Path):
     """can we handle the `open` syscall?"""
 

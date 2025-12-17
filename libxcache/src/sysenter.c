@@ -57,6 +57,9 @@ int sysenter(inferior_t *inf, thread_t *thread) {
   assert(syscall_no != __NR_##call && "unanticipated syscall " #call);
 #include "ignore.h"
 
+#ifdef __NR_open
+  DO(open);
+#endif
 #ifdef __NR_clone
   DO(clone);
 #endif
