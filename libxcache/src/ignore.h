@@ -86,6 +86,9 @@ SYSENTER_IGNORE(access)
 #ifdef __NR_pipe
 IGNORE(pipe)
 #endif
+#ifdef __NR_select
+IGNORE(select)
+#endif
 #ifdef __NR_madvise
 IGNORE(madvise)
 #endif
@@ -183,6 +186,9 @@ SYSENTER_IGNORE(newfstatat)
 #endif
 #ifdef __NR_readlinkat
 SYSENTER_IGNORE(readlinkat)
+#endif
+#ifdef __NR_pselect6
+IGNORE(pselect6)
 #endif
 #ifdef __NR_set_robust_list
 IGNORE(set_robust_list)
