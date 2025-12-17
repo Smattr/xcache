@@ -1020,7 +1020,6 @@ def test_clearenv(
 
 
 @pytest.mark.parametrize("direct", (False, True))
-@pytest.mark.xfail(strict=True)
 def test_creat(direct: bool, tmp_path: Path):
     """
     can we handle the `creat` syscall?

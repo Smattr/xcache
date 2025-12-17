@@ -11,6 +11,13 @@
 /// @return 0 on success or an errno on failure
 INTERNAL int sysenter(inferior_t *inf, thread_t *thread);
 
+/// handle start of `creat`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysenter_creat(inferior_t *inf, thread_t *thread);
+
 /// handle start of `execve`
 ///
 /// @param inf Tracee to which the target belongs
