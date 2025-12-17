@@ -95,6 +95,9 @@ IGNORE(sched_yield)
 #ifdef __NR_mremap
 IGNORE(mremap)
 #endif
+#ifdef __NR_msync
+IGNORE(msync)
+#endif
 #ifdef __NR_madvise
 IGNORE(madvise)
 #endif
