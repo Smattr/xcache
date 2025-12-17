@@ -1019,15 +1019,24 @@ def test_clearenv(
     assert "replay succeeded" in p.stdout, "replay failed"
 
 
+@pytest.mark.parametrize("direct", (False, True))
 @pytest.mark.xfail(strict=True)
-def test_creat(tmp_path: Path):
-    """can we handle the `creat` syscall?"""
+def test_creat(direct: bool, tmp_path: Path):
+    """
+    can we handle the `creat` syscall?
+
+    Args:
+        direct: invoke `creat` directly instead of via its libc wrapper?
+        tmp_path: Temporary directory supplied by Pytest
+    """
+
+    exe = f"xcache-test-creat{'2' if direct else ''}"
 
     # First, `strace` the process we are about to test. If the test fails, the
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["xcache-test-creat"], tmp_path)
+    strace([exe], tmp_path)
     foo = tmp_path / "foo"
     foo.unlink()
 
@@ -1038,7 +1047,7 @@ def test_creat(tmp_path: Path):
         f"--dir={tmp_path}/database",
         "--read-write",
         "--",
-        "xcache-test-creat",
+        exe,
     ]
     p = subprocess.run(
         args,
