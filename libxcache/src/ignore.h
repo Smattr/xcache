@@ -74,6 +74,12 @@ IGNORE(pwrite)
 #ifdef __NR_pwrite64
 IGNORE(pwrite64)
 #endif
+#ifdef __NR_readv
+IGNORE(readv)
+#endif
+#ifdef __NR_writev
+IGNORE(writev)
+#endif
 #ifdef __NR_access
 SYSENTER_IGNORE(access)
 #endif
@@ -202,6 +208,12 @@ IGNORE(dup3)
 #ifdef __NR_pipe2
 IGNORE(pipe2)
 #endif
+#ifdef __NR_preadv
+IGNORE(preadv)
+#endif
+#ifdef __NR_pwritev
+IGNORE(pwritev)
+#endif
 #ifdef __NR_prlimit64
 IGNORE(prlimit64)
 #endif
@@ -210,6 +222,12 @@ SYSENTER_IGNORE(getrandom)
 #endif
 #ifdef __NR_memfd_create
 IGNORE(memfd_create)
+#endif
+#ifdef __NR_preadv2
+IGNORE(preadv2)
+#endif
+#ifdef __NR_pwritev2
+IGNORE(pwritev2)
 #endif
 #ifdef __NR_pidfd_open
 SYSENTER_IGNORE(pidfd_open)
