@@ -14,7 +14,15 @@
 #include <string.h>
 #include <unistd.h>
 
-int sysenter_openat(inferior_t *inf, thread_t *thread) {
+/// handle a sysenter of `open` or friends
+///
+/// @param inf Tracee
+/// @param thread Tracee thread that made this call
+/// @param abs Absolute path to target file being opened
+/// @param flags `open` flags
+/// @return 0 on success or an errno on failure
+static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
+                       int flags) {
   assert(inf != NULL);
   assert(thread != NULL);
 
@@ -31,14 +39,8 @@ int sysenter_openat(inferior_t *inf, thread_t *thread) {
   // `sysexit_openat` rejects. But `sysenter_openat` is not allowed to skip
   // scenarios that `sysexit_openat` handles.
 
-  char *path = NULL;
-  char *abs = NULL;
   input_t input = {0};
   int rc = 0;
-
-  // extract the flags first because this will allow us to skip the remaining
-  // logic in the common cases
-  const long flags = peek_syscall_arg(thread, 3);
 
   const long rw = flags & (O_RDONLY | O_WRONLY | O_RDWR);
   const bool is_wr = rw == O_WRONLY || rw == O_RDWR;
@@ -137,34 +139,6 @@ int sysenter_openat(inferior_t *inf, thread_t *thread) {
   // we should now have covered everything
   assert(implies_access || implies_read);
 
-  // extract the file descriptor
-  const int fd = (int)peek_syscall_arg(thread, 1);
-
-  // extract the path
-  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 2);
-  if (ERROR((rc = peek_str(&path, thread->proc, path_ptr)))) {
-    // If the read faulted, assume our side was correct and the tracee used a
-    // bad pointer. Leave this for `sysexit_open` to decide what to do.
-    goto done;
-  }
-
-  // make the path absolute
-  if (path[0] == '/') {
-    // fd is ignored
-    abs = path;
-    path = NULL;
-  } else if (fd == AT_FDCWD) {
-    abs = path_absolute(thread->fs->cwd, path);
-    if (ERROR(abs == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-  } else {
-    // TODO
-    rc = ENOTSUP;
-    goto done;
-  }
-
   // ignore reads of some procfs files that we have effectively already recorded
   // through the command itself
   if (path_is_ignorable(abs)) {
@@ -199,8 +173,53 @@ int sysenter_openat(inferior_t *inf, thread_t *thread) {
 
 done:
   input_free(input);
-  free(abs);
-  free(path);
+
+  return rc;
+}
+
+int sysenter_openat(inferior_t *inf, thread_t *thread) {
+
+  char *pathname = NULL;
+  char *abs_path = NULL;
+  int rc = 0;
+
+  // extract the file descriptor
+  const int fd = (int)peek_syscall_arg(thread, 1);
+
+  // extract the path
+  const uintptr_t path_ptr = (uintptr_t)peek_syscall_arg(thread, 2);
+  if (ERROR((rc = peek_str(&pathname, thread->proc, path_ptr)))) {
+    // If the read faulted, assume our side was correct and the tracee used a
+    // bad pointer. Leave this for `sysexit_open` to decide what to do.
+    goto done;
+  }
+
+  // make the path absolute
+  if (pathname[0] == '/') {
+    // fd is ignored
+    abs_path = pathname;
+    pathname = NULL;
+  } else if (fd == AT_FDCWD) {
+    abs_path = path_absolute(thread->fs->cwd, pathname);
+    if (ERROR(abs_path == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+  } else {
+    // TODO
+    rc = ENOTSUP;
+    goto done;
+  }
+
+  // extract the flags
+  const long flags = peek_syscall_arg(thread, 3);
+
+  if (ERROR((rc = handle_open(inf, thread, abs_path, flags))))
+    goto done;
+
+done:
+  free(abs_path);
+  free(pathname);
 
   return rc;
 }
