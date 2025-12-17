@@ -18,13 +18,15 @@
 ///
 /// @param inf Tracee
 /// @param thread Tracee thread that made this call
-/// @param abs Absolute path to target file being opened
+/// @param abs_path Absolute path to target file being opened
 /// @param flags `open` flags
 /// @return 0 on success or an errno on failure
-static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
+static int handle_open(inferior_t *inf, thread_t *thread, const char *abs_path,
                        int flags) {
   assert(inf != NULL);
   assert(thread != NULL);
+  assert(abs_path != NULL);
+  assert(abs_path[0] == '/');
 
   // In contrast to other syscalls that are intercepted in both sysenter and
   // sysexit, the behaviour of this function is _heavily_ coupled with the
@@ -141,23 +143,23 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
 
   // ignore reads of some procfs files that we have effectively already recorded
   // through the command itself
-  if (path_is_ignorable(abs)) {
-    DEBUG("ignoring open of \"%s\"", abs);
+  if (path_is_ignorable(abs_path)) {
+    DEBUG("ignoring open of \"%s\"", abs_path);
     goto done;
   }
 
-  if (ERROR(!path_is_cacheable(abs))) {
+  if (ERROR(!path_is_cacheable(abs_path))) {
     rc = ECHILD;
     goto done;
   }
 
   // accrue the inferred check
   if (implies_access) {
-    if (ERROR((rc = input_new_access(&input, NULL, abs, F_OK, 0))))
+    if (ERROR((rc = input_new_access(&input, NULL, abs_path, F_OK, 0))))
       goto done;
   } else {
     assert(implies_read);
-    if (ERROR((rc = input_new_read(&input, NULL, abs))))
+    if (ERROR((rc = input_new_read(&input, NULL, abs_path))))
       goto done;
   }
   if (ERROR((rc = inferior_input_new(inf, input))))
@@ -168,7 +170,7 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs,
   // need to handle it here because, by the time of `sysexit_open`, the
   // pre-existence of the target file can no longer be determined
   assert(!thread->pending_creat);
-  if (rw == O_RDONLY && is_creat && access(abs, F_OK) < 0)
+  if (rw == O_RDONLY && is_creat && access(abs_path, F_OK) < 0)
     thread->pending_creat = true;
 
 done:
