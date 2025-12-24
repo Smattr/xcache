@@ -1385,6 +1385,78 @@ def test_open2(tmp_path: Path):
     assert foo.read_text(encoding="utf-8") == "bar", "incorrect content written"
 
 
+def test_open_rdonly_creat_exists(tmp_path: Path):
+    """
+    can we handle `open(…, O_RDONLY|O_CREAT)` when the file already exists?
+
+    Somewhat surprisingly, the `open` flags combination of `O_RDONLY|O_CREAT` is legal.
+    If the file already exists, it is opened read-only. If the file does not already
+    exist, an empty file is created and then opened read-only. This leads to an odd
+    situation wherein this variant of an `O_RDONLY` `open` call is conditionally an
+    “output” to xcache.
+
+    Handling this form of `open` correctly is a little tricky and one mental plan I had
+    for xcache implementation would have run into a subtle bug with this case. Namely,
+    if the file already exists but is also zero-sized and the `open` call is recorded as
+    creation, replay can incorrectly fail when trying to recreate the file (`EEXIST`).
+    This test confirms we do not have that bug.
+    """
+
+    # confirm `open(…, O_RDONLY|O_CREAT)` really does have the behaviour we claim above
+    wd = tmp_path / "baseline1"
+    wd.mkdir()
+    foo = wd / "foo"
+    assert not foo.exists(), "logic error in test setup"
+    args = ["xcache-test-open", "O_RDONLY", "O_CREAT"]
+    subprocess.run(args, cwd=wd, check=True)
+    assert foo.exists(), "`open(…, O_RDONLY|O_CREAT)` does not create files"
+
+    # confirm `open(…, O_RDONLY|O_CREAT)` works when the file exists, even if it is
+    # read-only
+    wd = tmp_path / "baseline2"
+    wd.mkdir()
+    foo = wd / "foo"
+    assert not foo.exists(), "logic error in test setup"
+    foo.touch(0o400, exist_ok=False)
+    p = subprocess.run(args, stderr=subprocess.PIPE, cwd=wd, check=True, text=True)
+    assert (
+        "open failed" not in p.stderr
+    ), "`open(…, O_RDONLY|O_CREAT)` cannot open read-only files"
+
+    # confirm we can record baseline2’s situation
+    wd = tmp_path / "testcase"
+    wd.mkdir()
+    foo = wd / "foo"
+    assert not foo.exists(), "logic error in test setup"
+    foo.touch(0o400, exist_ok=False)
+    xcache = ["xcache", "--debug", f"--dir={tmp_path}/database", "--read-write", "--"]
+    p = subprocess.run(
+        xcache + args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=wd,
+        check=True,
+        text=True,
+    )
+    assert "record succeeded" in p.stdout, "record failed"
+
+    assert foo.exists(), "`xcache … xcache-test-open O_RDONLY O_CREATE` deleted a file"
+    assert (
+        stat.S_IMODE(foo.stat().st_mode) == 0o400
+    ), "`xcache … xcache-test-open O_RDONLY O_CREATE` changed the mode of target file"
+
+    # confirm we can replay this
+    p = subprocess.run(
+        xcache + args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=wd,
+        check=True,
+        text=True,
+    )
+    assert "replay succeeded" in p.stdout, "replay failed"
+
+
 @pytest.mark.parametrize("preload", ("append", "either", "prepend"))
 @pytest.mark.skipif(shutil.which("ldd") is None, reason="ldd not available")
 def test_previous_ld_preload(preload: str, tmp_path: Path):
