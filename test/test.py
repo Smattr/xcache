@@ -1651,6 +1651,45 @@ def test_setenv(tmp_path: Path):
     assert "replay succeeded" in p.stdout, "replay failed"
 
 
+@pytest.mark.xfail(strict=True)
+def test_temp_usage(tmp_path: Path):
+    """can we trace something compiler-like?"""
+
+    # constrain temporary files to a test-local path
+    env = os.environ.copy()
+    env["TMPDIR"] = str(tmp_path)
+
+    # confirm we can record the tracee
+    args = [
+        "xcache",
+        "--debug",
+        f"--dir={tmp_path}/database",
+        "--read-write",
+        "--",
+        "xcache-test-temp-usage",
+    ]
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=True,
+        text=True,
+        env=env,
+    )
+    assert "record succeeded" in p.stdout, "record failed"
+
+    # confirm we can replay it
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=True,
+        text=True,
+        env=env,
+    )
+    assert "replay succeeded" in p.stdout, "replay failed"
+
+
 def test_unsetenv(tmp_path: Path):
     """
     does xcache understand `unsetenv`?
