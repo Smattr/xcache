@@ -6,12 +6,113 @@ import errno
 import math
 import os
 import re
+import shlex
 import shutil
 import stat
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
+
+PathLike = Path | str
+"""a file system path"""
+
+
+def run(args: list[PathLike], *, cwd: None | PathLike = None) -> tuple[int, str, str]:
+    """
+    run a command, echoing its output like Bash’s `set +x`
+
+    Args:
+        args: Command line arguments
+        cwd: Current working directory
+
+    Returns
+        (Exit status, Stdout, Stderr)
+    """
+
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    prefix = "" if cwd is None else f"cd {shlex.quote(str(cwd))} && "
+    print(f"+ {prefix}{shlex.join(str(a) for a in args)}", flush=True)
+    p = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=cwd,
+        check=False,
+        text=True,
+    )
+
+    sys.stdout.write(p.stdout)
+    sys.stdout.flush()
+    sys.stderr.write(p.stderr)
+    sys.stderr.flush()
+
+    return p.returncode, p.stdout, p.stderr
+
+
+def sandbox(args: list[PathLike], *, box: PathLike) -> tuple[int, str, str]:
+    """
+    run a command within a sandbox
+
+    Strictly speaking, the current working directory and the sandbox boundary do not
+    need to be tied together. However, I have found with `bwrap` that the current
+    directory seems available read/write even if it is not within any read/write bind
+    mount. So fewer surprises occur if we constrain these to be the same.
+
+    Args:
+        args: Command line arguments
+        box: Sandbox boundary and current working directory
+
+    Returns
+        (Exit status, Stdout, Stderr)
+    """
+
+    # find sandboxer
+    wrapper = shutil.which("bwrap")
+    assert wrapper is not None, "Bubblewrap not found"
+
+    # construct a sandbox invocation, bind mounting anything we might need
+    wrap = [wrapper]
+    for d in ("/bin", "/lib", "/lib64", "/usr"):
+        if not Path(d).exists():
+            continue
+        wrap += ["--ro-bind", d, d]
+    wrap += ["--bind", box, box, "--unshare-all", "--"]
+
+    argv = wrap + args
+    return run(argv, cwd=box)
+
+
+@pytest.mark.parametrize("absolutify", (False, True))
+@pytest.mark.parametrize("box", ("a", "b"))
+@pytest.mark.parametrize("arg1", ("foo", "../a/foo", "../b/foo"))
+def test_sandbox(absolutify: bool, box: str, arg1: str, tmp_path: Path):
+    """
+    does the sandbox functionality behave like we expect?
+
+    Args:
+        absolutify: Use an absolute version of the path in `arg1` when trying to modify
+            it?
+        box: Directory relative to `tmp_path` to sandbox ourselves in
+        arg1: A path relative to `tmp_path` to try to `touch`
+        tmp_path: Temporary directory supplied by Pytest
+    """
+
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+
+    abs_target = (tmp_path / box / arg1).resolve()
+    args = ["touch", abs_target if absolutify else arg1]
+    ret, _, _ = sandbox(args, box=tmp_path / box)
+
+    if not abs_target.is_relative_to(tmp_path / box):
+        assert ret != 0, "can write outside sandbox"
+        return
+
+    assert ret == 0, "cannot write inside sandbox"
 
 
 def strace(args: list[Path | str], cwd: Path | None = None):
