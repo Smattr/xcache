@@ -1117,17 +1117,10 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
         "--",
         "xcache-test-getenv",
     ]
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-        env=env,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
+    assert ret == 0
 
-    assert "record succeeded" in p.stdout, "record failed"
+    assert "record succeeded" in stderr, "record failed"
 
     # if `FOO` was set, we should have written the output file
     foo = tmp_path / "foo"
@@ -1149,21 +1142,14 @@ def test_getenv(export1: bool, export2: bool, tmp_path: Path):
             del env["FOO"]
 
     # run the command a second time
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-        env=env,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
+    assert ret == 0
 
     # replay should be dependent on the environment variable matching
     if export1 == export2:
-        assert "replay succeeded" in p.stdout, "replay failed"
+        assert "replay succeeded" in stderr, "replay failed"
     else:
-        assert "replay succeeded" not in p.stdout, "replay incorrectly succeeded"
+        assert "replay succeeded" not in stderr, "replay incorrectly succeeded"
 
     # if `FOO` was set, we should have written the output file
     if export2:
