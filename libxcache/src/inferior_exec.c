@@ -96,13 +96,6 @@ _Noreturn void inferior_exec(inferior_t *inf, const xc_cmd_t cmd,
 fail:
   assert(rc != 0 && "reached child failure without failing status");
 
-  // replicate some common Linux behaviour
-  if (rc == ENOENT || rc == ENOTDIR) {
-    rc = 127;
-  } else if (rc == EACCES || rc == ENOEXEC || rc == EPERM) {
-    rc = 126;
-  }
-
   // Reaching here with LeakSanitizer enabled results in failures reported when
   // we exit. It is not clear to me why some allocations are reported as leaked
   // and others not. To avoid all of this confusion, use `_Exit` to avoid
