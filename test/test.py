@@ -1070,7 +1070,7 @@ def test_fd_without_path(tmp_path: Path):
 
     # we do not guarantee we can trace such a thing, but it should at least run
     # successfully
-    subprocess.run(
+    ret, _, _ = sandbox(
         [
             "xcache",
             "--debug",
@@ -1079,8 +1079,9 @@ def test_fd_without_path(tmp_path: Path):
             "--",
             "xcache-test-fd-without-path",
         ],
-        check=True,
+        box=tmp_path,
     )
+    assert ret == 0
 
 
 @pytest.mark.parametrize("export1", (False, True))
