@@ -132,7 +132,7 @@ def test_sandbox(absolutify: bool, box: str, arg1: str, tmp_path: Path):
     assert abs_target.exists(), "write failed outside sandbox"
 
 
-def strace(args: list[Path | str], cwd: Path | None = None):
+def strace(args: list[Path | str], cwd: Path):
     """
     `strace` a process, expecting it to succeed
     """
@@ -141,11 +141,8 @@ def strace(args: list[Path | str], cwd: Path | None = None):
     env = os.environ.copy()
     env["ASAN_OPTIONS"] = "detect_leaks=0"
 
-    kwargs = {}
-    if cwd is not None:
-        kwargs["cwd"] = cwd
-
-    subprocess.run(["strace", "-f", "--"] + args, env=env, check=True, **kwargs)
+    ret, _, _ = sandbox(["strace", "-f", "--"] + args, box=cwd, env=env)
+    assert ret == 0
 
 
 @pytest.mark.parametrize(
@@ -286,7 +283,7 @@ def test_nop(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["xcache-test-nop"])
+    strace(["xcache-test-nop"], tmp_path)
 
     args = ["xcache"]
     if debug:
@@ -353,7 +350,7 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace([f"xcache-test-print-{stream}"])
+    strace([f"xcache-test-print-{stream}"], tmp_path)
 
     args = ["xcache"]
     if debug:
@@ -515,7 +512,7 @@ def test_uncacheable(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["xcache-test-uncacheable"])
+    strace(["xcache-test-uncacheable"], tmp_path)
 
     args = ["xcache"]
     if debug:
@@ -589,7 +586,7 @@ def test_exec_dups_fds(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["xcache-test-clone-exec-with-fd"])
+    strace(["xcache-test-clone-exec-with-fd"], tmp_path)
 
     args = ["xcache"]
     if debug:
@@ -664,7 +661,7 @@ def test_close_on_exec(debug: bool, record: bool, replay: bool, tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["xcache-test-close-on-exec"])
+    strace(["xcache-test-close-on-exec"], tmp_path)
 
     args = ["xcache"]
     if debug:
@@ -871,7 +868,7 @@ def test_ld_preload_in_child(
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(tracee)
+    strace(tracee, tmp_path)
 
     args = [
         "xcache",
@@ -906,7 +903,7 @@ def test_exec_sysconf(tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(tracee)
+    strace(tracee, tmp_path)
 
     args = [
         "xcache",
@@ -1171,7 +1168,7 @@ def test_non_path_fds(tmp_path: Path):
     # `strace` output will show what syscalls it made which may aid debugging.
     # This is useful when, e.g., running on a new kernel where the dynamic
     # loader or libc makes unanticipated syscalls.
-    strace(["xcache-test-non-path-fds"])
+    strace(["xcache-test-non-path-fds"], tmp_path)
 
     # run it under xcache
     args = [
