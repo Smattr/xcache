@@ -176,65 +176,45 @@ def test_fork(debug: bool, record: bool, replay: bool, forker: str, tmp_path: Pa
             args += ["--disable"]
     args += ["--", f"xcache-test-{forker}"]
 
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        text=True,
-        timeout=120,
-        check=False,
-    )
-    print(f"output:\n{p.stdout}\n")
-    p.check_returncode()
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     if debug:
         if replay:
-            assert "replay failed" in p.stdout, "replay succeeded with no trace"
+            assert "replay failed" in stderr, "replay succeeded with no trace"
         else:
-            assert "replay failed" not in p.stdout, "replay incorrectly enabled"
-            assert "replay succeeded" not in p.stdout, "replay incorrectly enabled"
+            assert "replay failed" not in stderr, "replay incorrectly enabled"
+            assert "replay succeeded" not in stderr, "replay incorrectly enabled"
         if record:
-            assert "record succeeded" in p.stdout, "record of file write failed"
+            assert "record succeeded" in stderr, "record of file write failed"
         else:
-            assert "record failed" not in p.stdout, "record incorrectly enabled"
-            assert "record succeeded" not in p.stdout, "record incorrectly enabled"
+            assert "record failed" not in stderr, "record incorrectly enabled"
+            assert "record succeeded" not in stderr, "record incorrectly enabled"
 
     assert (tmp_path / "foo").exists(), "file not written"
     assert (tmp_path / "foo").read_text() == "hello world", "file contents not written"
 
     # try it again to see if we can replay
     (tmp_path / "foo").unlink()
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        text=True,
-        timeout=120,
-        check=False,
-    )
-    print(f"output:\n{p.stdout}\n")
-    p.check_returncode()
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     if debug:
         if record and replay:
-            assert "replay succeeded" in p.stdout, "replay of file write failed"
+            assert "replay succeeded" in stderr, "replay of file write failed"
         elif replay:
-            assert "replay failed" in p.stdout, "replay succeeded with no trace"
+            assert "replay failed" in stderr, "replay succeeded with no trace"
         else:
-            assert "replay failed" not in p.stdout, "replay incorrectly enabled"
-            assert "replay succeeded" not in p.stdout, "replay incorrectly enabled"
+            assert "replay failed" not in stderr, "replay incorrectly enabled"
+            assert "replay succeeded" not in stderr, "replay incorrectly enabled"
         if record and replay:
-            assert (
-                "record failed" not in p.stdout
-            ), "record still attempted after replay"
-            assert "record succeeded" not in p.stdout, "record after successful replay"
+            assert "record failed" not in stderr, "record still attempted after replay"
+            assert "record succeeded" not in stderr, "record after successful replay"
         elif record:
-            assert "record succeeded" in p.stdout, "record of file write failed"
+            assert "record succeeded" in stderr, "record of file write failed"
         else:
-            assert "record failed" not in p.stdout, "record incorrectly enabled"
-            assert "record succeeded" not in p.stdout, "record incorrectly enabled"
+            assert "record failed" not in stderr, "record incorrectly enabled"
+            assert "record succeeded" not in stderr, "record incorrectly enabled"
 
     assert (tmp_path / "foo").exists(), "file not written"
     assert (tmp_path / "foo").read_text() == "hello world", "file contents not written"
