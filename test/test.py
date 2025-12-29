@@ -933,16 +933,10 @@ def test_bug_set_size(tmp_path: Path):
         "--",
         "xcache-test-bug-set-size",
     ]
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
-    assert "record succeeded" in p.stdout, "record failed"
+    assert "record succeeded" in stderr, "record failed"
 
 
 @pytest.mark.parametrize("export1", (None, "foo", "bar"))
