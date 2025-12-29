@@ -1236,7 +1236,8 @@ def test_open(
         target.write_bytes(b"hello world")
 
     # run the open without xcache
-    subprocess.run(args, cwd=tmp_path, check=True)
+    ret, _, _ = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     # what outcome did this produce?
     after_exists = target.exists()
@@ -1256,14 +1257,8 @@ def test_open(
         "--read-write",
         "--",
     ] + args
-    p = subprocess.run(
-        xcache,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-    )
+    ret, _, stderr = sandbox(xcache, box=tmp_path)
+    assert ret == 0
 
     # some combinations of flags are invalid
     is_invalid = False
@@ -1272,9 +1267,9 @@ def test_open(
 
     # whether we succeeded to record or not depends on the operation validity
     if is_invalid:
-        assert "record succeeded" not in p.stdout, "record incorrectly succeeded"
+        assert "record succeeded" not in stderr, "record incorrectly succeeded"
     else:
-        assert "record succeeded" in p.stdout, "record failed"
+        assert "record succeeded" in stderr, "record failed"
 
     # check outcomes were the same
     after_exists1 = target.exists()
@@ -1293,15 +1288,9 @@ def test_open(
         return
 
     # try to replay
-    p = subprocess.run(
-        xcache,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-    )
-    assert "replay succeeded" in p.stdout, "replay failed"
+    ret, _, stderr = sandbox(xcache, box=tmp_path)
+    assert ret == 0
+    assert "replay succeeded" in stderr, "replay failed"
 
     # check outcomes were the same
     after_exists1 = target.exists()
