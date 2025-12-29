@@ -519,56 +519,40 @@ def test_uncacheable(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--disable"]
     args += ["--", "xcache-test-uncacheable"]
 
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        timeout=120,
-        check=False,
-    )
-    print(f"output:\n{p.stdout}\n")
-    p.check_returncode()
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     if debug:
         if replay:
-            assert "replay failed" in p.stdout, "replay succeeded with no trace"
+            assert "replay failed" in stderr, "replay succeeded with no trace"
         else:
-            assert "replay failed" not in p.stdout, "replay incorrectly enabled"
-            assert "replay succeeded" not in p.stdout, "replay incorrectly enabled"
+            assert "replay failed" not in stderr, "replay incorrectly enabled"
+            assert "replay succeeded" not in stderr, "replay incorrectly enabled"
         if record:
-            assert "record failed" in p.stdout, "record of uncacheable succeeded"
+            assert "record failed" in stderr, "record of uncacheable succeeded"
         else:
-            assert "record failed" not in p.stdout, "record incorrectly enabled"
-            assert "record succeeded" not in p.stdout, "record incorrectly enabled"
+            assert "record failed" not in stderr, "record incorrectly enabled"
+            assert "record succeeded" not in stderr, "record incorrectly enabled"
 
     # try it again to see if we can replay
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        timeout=120,
-        check=False,
-    )
-    print(f"output:\n{p.stdout}\n")
-    p.check_returncode()
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     if debug:
         if record and replay:
-            assert "replay failed" in p.stdout, "replay of uncacheable succeeded"
+            assert "replay failed" in stderr, "replay of uncacheable succeeded"
         elif replay:
-            assert "replay failed" in p.stdout, "replay succeeded with no trace"
+            assert "replay failed" in stderr, "replay succeeded with no trace"
         else:
-            assert "replay failed" not in p.stdout, "replay incorrectly enabled"
-            assert "replay succeeded" not in p.stdout, "replay incorrectly enabled"
+            assert "replay failed" not in stderr, "replay incorrectly enabled"
+            assert "replay succeeded" not in stderr, "replay incorrectly enabled"
         if record and replay:
-            assert "record failed" in p.stdout, "record of uncacheable succeeded"
+            assert "record failed" in stderr, "record of uncacheable succeeded"
         elif record:
-            assert "record failed" in p.stdout, "record of uncacheable succeeded"
+            assert "record failed" in stderr, "record of uncacheable succeeded"
         else:
-            assert "record failed" not in p.stdout, "record incorrectly enabled"
-            assert "record succeeded" not in p.stdout, "record incorrectly enabled"
+            assert "record failed" not in stderr, "record incorrectly enabled"
+            assert "record succeeded" not in stderr, "record incorrectly enabled"
 
 
 @pytest.mark.parametrize(
