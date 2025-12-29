@@ -1182,17 +1182,11 @@ def test_non_path_fds(tmp_path: Path):
         "--",
         "xcache-test-non-path-fds",
     ]
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        timeout=120,
-        check=True,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     # we should have been able to cache it
-    assert "record succeeded" in p.stdout, "record failed"
+    assert "record succeeded" in stderr, "record failed"
 
 
 @pytest.mark.parametrize("mode", ("O_RDONLY", "O_WRONLY", "O_RDWR"))
