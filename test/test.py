@@ -902,18 +902,14 @@ def test_exec_sysconf(tmp_path: Path):
         "--",
     ] + tracee
 
-    output = subprocess.check_output(
-        args,
-        stderr=subprocess.STDOUT,
-        text=True,
-        timeout=120,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
-    assert "record succeeded" in output, "record failed"
+    assert "record succeeded" in stderr, "record failed"
 
     # if tracing successfully propagated libxcache-spy to the child, we should
     # perceive the child’s `sysconf`
-    assert "called sysconf(30 /* _SC_PAGESIZE */)" in output, "sysconf in child unseen"
+    assert "called sysconf(30 /* _SC_PAGESIZE */)" in stderr, "sysconf in child unseen"
 
 
 def test_bug_set_size(tmp_path: Path):
