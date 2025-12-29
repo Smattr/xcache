@@ -745,11 +745,8 @@ def test_umask(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--disable"]
     args += ["--", "xcache-test-umask-open"]
 
-    subprocess.check_call(
-        args,
-        cwd=tmp_path,
-        timeout=120,
-    )
+    ret, _, _ = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     assert foo.exists(), "expected output was not created"
     assert (
@@ -758,11 +755,8 @@ def test_umask(debug: bool, record: bool, replay: bool, tmp_path: Path):
 
     # try it again to see if we can replay
     foo.unlink()
-    subprocess.check_call(
-        args,
-        cwd=tmp_path,
-        timeout=120,
-    )
+    ret, _, _ = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     assert foo.exists(), "expected output was not created"
     assert (
