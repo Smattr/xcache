@@ -357,51 +357,51 @@ def test_stdout(debug: bool, record: bool, replay: bool, stream: str, tmp_path: 
             args += ["--disable"]
     args += ["--", f"xcache-test-print-{stream}"]
 
-    output = subprocess.check_output(
-        args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
-    )
-
-    print(f"output:\n{output}\n")
+    ret, stdout, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     if debug:
         if replay:
-            assert "replay failed" in output, "replay succeeded with no trace"
+            assert "replay failed" in stderr, "replay succeeded with no trace"
         else:
-            assert "replay failed" not in output, "replay incorrectly enabled"
-            assert "replay succeeded" not in output, "replay incorrectly enabled"
+            assert "replay failed" not in stderr, "replay incorrectly enabled"
+            assert "replay succeeded" not in stderr, "replay incorrectly enabled"
         if record:
-            assert "record succeeded" in output, f"record of {stream} user failed"
+            assert "record succeeded" in stderr, f"record of {stream} user failed"
         else:
-            assert "record failed" not in output, "record incorrectly enabled"
-            assert "record succeeded" not in output, "record incorrectly enabled"
+            assert "record failed" not in stderr, "record incorrectly enabled"
+            assert "record succeeded" not in stderr, "record incorrectly enabled"
 
-    assert re.search("hello\nworld", output), f"missing {stream}"
+    if stream == "stdout":
+        assert re.search("hello\nworld", stdout), f"missing {stream}"
+    else:
+        assert re.search("hello\nworld", stderr), f"missing {stream}"
 
     # try it again to see if we can replay
-    output = subprocess.check_output(
-        args, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120
-    )
-
-    print(f"output:\n{output}\n")
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     if debug:
         if record and replay:
-            assert "replay succeeded" in output, f"replay of {stream} user failed"
+            assert "replay succeeded" in stderr, f"replay of {stream} user failed"
         elif replay:
-            assert "replay failed" in output, "replay succeeded with no trace"
+            assert "replay failed" in stderr, "replay succeeded with no trace"
         else:
-            assert "replay failed" not in output, "replay incorrectly enabled"
-            assert "replay succeeded" not in output, "replay incorrectly enabled"
+            assert "replay failed" not in stderr, "replay incorrectly enabled"
+            assert "replay succeeded" not in stderr, "replay incorrectly enabled"
         if record and replay:
-            assert "record failed" not in output, "record still attempted after replay"
-            assert "record succeeded" not in output, "record after successful replay"
+            assert "record failed" not in stderr, "record still attempted after replay"
+            assert "record succeeded" not in stderr, "record after successful replay"
         elif record:
-            assert "record succeeded" in output, f"record of {stream} user failed"
+            assert "record succeeded" in stderr, f"record of {stream} user failed"
         else:
-            assert "record failed" not in output, "record incorrectly enabled"
-            assert "record succeeded" not in output, "record incorrectly enabled"
+            assert "record failed" not in stderr, "record incorrectly enabled"
+            assert "record succeeded" not in stderr, "record incorrectly enabled"
 
-    assert re.search("hello\nworld", output), f"missing {stream}"
+    if stream == "stdout":
+        assert re.search("hello\nworld", stdout), f"missing {stream}"
+    else:
+        assert re.search("hello\nworld", stderr), f"missing {stream}"
 
 
 @pytest.mark.parametrize("debug", (False, True))
