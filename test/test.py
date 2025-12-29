@@ -76,7 +76,7 @@ def sandbox(args: list[PathLike], *, box: PathLike) -> tuple[int, str, str]:
 
     # construct a sandbox invocation, bind mounting anything we might need
     wrap = [wrapper]
-    for d in ("/bin", "/lib", "/lib64", "/usr"):
+    for d in ("/bin", "/lib", "/lib64", "/proc", "/usr"):
         if not Path(d).exists():
             continue
         wrap += ["--ro-bind", d, d]
