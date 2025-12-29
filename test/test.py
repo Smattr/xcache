@@ -1321,30 +1321,16 @@ def test_open2(tmp_path: Path):
         "--",
         "xcache-test-open2",
     ]
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-        timeout=120,
-    )
-    assert "record succeeded" in p.stdout, "record failed"
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
+    assert "record succeeded" in stderr, "record failed"
     assert foo.read_text(encoding="utf-8") == "bar", "incorrect content written"
     foo.unlink()
 
     # now try replaying it
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-        timeout=120,
-    )
-    assert "replay succeeded" in p.stdout, "replay failed"
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
+    assert "replay succeeded" in stderr, "replay failed"
     assert foo.read_text(encoding="utf-8") == "bar", "incorrect content written"
 
 
