@@ -27,8 +27,10 @@ int thread_fd(thread_t *thread, int fd, char **path) {
     goto done;
   }
 
+  DEBUG("readlink \"%s\"…", proc);
   if (ERROR((rc = readln(proc, &target))))
     goto done;
+  DEBUG("readlink \"%s\" = \"%s\"", proc, target);
 
   *path = target;
   target = NULL;
