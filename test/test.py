@@ -74,18 +74,8 @@ def sandbox(args: list[PathLike], *, box: PathLike) -> tuple[int, str, str]:
     wrapper = shutil.which("bwrap")
     assert wrapper is not None, "Bubblewrap not found"
 
-    # construct a sandbox invocation, bind mounting anything we might need
-    wrap = [wrapper]
-    for d in ("/bin", "/lib", "/lib64", "/proc", "/usr"):
-        if not Path(d).exists():
-            continue
-        wrap += ["--ro-bind", d, d]
-
-    # also include xcache and its dependencies
-    xcache = shutil.which("xcache")
-    assert xcache is not None, "xcache not found"
-    root = Path(xcache).resolve().parents[1]
-    wrap += ["--ro-bind", root, root]
+    # construct a sandbox invocation, read-only mounting everything
+    wrap = [wrapper, "--ro-bind", "/", "/"]
 
     # allow writing to the sandbox itself
     wrap += ["--bind", box, box, "--unshare-all", "--"]
