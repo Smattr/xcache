@@ -274,11 +274,9 @@ def test_nonexistent(debug: bool, tmp_path: Path):
 def test_nonexistent2(tmp_path: Path):
     """running something that non-existent should report a readable error"""
     args = ["xcache", f"--dir={tmp_path}/database", "--", tmp_path / "nonexistent"]
-    p = subprocess.run(
-        args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False, text=True
-    )
+    _, _, stderr = sandbox(args, box=tmp_path)
     assert (
-        os.strerror(errno.ENOENT).lower() in p.stdout.lower()
+        os.strerror(errno.ENOENT).lower() in stderr.lower()
     ), "incorrect/missing error message for missing program"
 
 
