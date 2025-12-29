@@ -244,11 +244,11 @@ def test_nonexistent(debug: bool, tmp_path: Path):
     if debug:
         args += ["--debug"]
     args += [f"--dir={tmp_path}/database", "--", tmp_path / "nonexistent"]
-    ret = subprocess.call(args)
+    ret, _, _ = sandbox(args, box=tmp_path)
     assert ret == 127, "unexpected return from non-existent exec"
 
     # even if we cached it, replay should return failure
-    ret = subprocess.call(args)
+    ret, _, _ = sandbox(args, box=tmp_path)
     assert ret == 127, "unexpected return from non-existent exec"
 
 
