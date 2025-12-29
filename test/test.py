@@ -77,6 +77,9 @@ def sandbox(args: list[PathLike], *, box: PathLike) -> tuple[int, str, str]:
     # construct a sandbox invocation, read-only mounting everything
     wrap = [wrapper, "--ro-bind", "/", "/"]
 
+    # include a usable stub /dev
+    wrap += ["--dev", "/dev"]
+
     # allow writing to the sandbox itself
     wrap += ["--bind", box, box, "--unshare-all", "--"]
 
