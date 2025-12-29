@@ -99,7 +99,7 @@ int sysexit_newfstatat(inferior_t *inf, thread_t *thread) {
   // record it
   {
     const bool is_lstat = !!(flags & AT_SYMLINK_NOFOLLOW);
-    if (ERROR((rc = input_new_stat(&saw, err, abs, is_lstat))))
+    if (ERROR((rc = input_new_stat(&saw, &err, abs, is_lstat))))
       goto done;
   }
 

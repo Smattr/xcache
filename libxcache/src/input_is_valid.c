@@ -32,7 +32,7 @@ bool input_is_valid(const input_t input) {
 
   case INP_STAT: {
     const int r =
-        input_new_stat(&attempt, input.err, input.path, input.stat.is_lstat);
+        input_new_stat(&attempt, NULL, input.path, input.stat.is_lstat);
     if (r != 0)
       return false;
     break;

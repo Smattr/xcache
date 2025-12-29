@@ -7,7 +7,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-int input_new_stat(input_t *input, int expected_err, const char *path,
+int input_new_stat(input_t *input, const int *expected_err, const char *path,
                    bool is_lstat) {
 
   assert(input != NULL);
@@ -26,18 +26,20 @@ int input_new_stat(input_t *input, int expected_err, const char *path,
   }
 
   i.stat.is_lstat = is_lstat;
-  {
+  if (expected_err != NULL && *expected_err != 0) {
+    i.err = *expected_err;
+  } else {
     struct stat st;
     const int r = is_lstat ? lstat(path, &st) : stat(path, &st);
-    if (ERROR(r < 0 && errno != expected_err)) {
+    if (ERROR(expected_err != NULL && r < 0 && errno != *expected_err)) {
       rc = ECHILD;
       goto done;
     }
-    if (ERROR(r == 0 && expected_err != 0)) {
+    if (ERROR(expected_err != NULL && r == 0 && *expected_err != 0)) {
       rc = ECHILD;
       goto done;
     }
-    i.err = expected_err;
+    i.err = r == 0 ? 0 : errno;
 
     if (r == 0) {
       i.stat.mode = st.st_mode;

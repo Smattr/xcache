@@ -86,12 +86,12 @@ INTERNAL int input_new_readlink(input_t *input, const int *expected_err,
 /// create an input for a `stat()` call
 ///
 /// @param input [out] Created input on success
-/// @param expected_err Expected error result
+/// @param expected_err Optional expected error result
 /// @param path Absolute path to the target file/directory
 /// @param is_lstat Whether to use `stat` or `lstat`
 /// @return 0 on success or an errno on failure
-INTERNAL int input_new_stat(input_t *input, int expected_err, const char *path,
-                            bool is_lstat);
+INTERNAL int input_new_stat(input_t *input, const int *expected_err,
+                            const char *path, bool is_lstat);
 
 /// create an input for a `sysconf()` call
 ///
