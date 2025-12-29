@@ -91,6 +91,9 @@ def sandbox(
     # include a usable stub /dev
     wrap += ["--dev", "/dev"]
 
+    # make /proc usable
+    wrap += ["--proc", "/proc"]
+
     # allow writing to the sandbox itself
     wrap += ["--bind", box, box, "--unshare-all", "--"]
 
