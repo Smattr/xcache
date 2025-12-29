@@ -110,9 +110,11 @@ def test_sandbox(absolutify: bool, box: str, arg1: str, tmp_path: Path):
 
     if not abs_target.is_relative_to(tmp_path / box):
         assert ret != 0, "can write outside sandbox"
+        assert not abs_target.exists(), "write occurred outside sandbox"
         return
 
     assert ret == 0, "cannot write inside sandbox"
+    assert abs_target.exists(), "write failed outside sandbox"
 
 
 def strace(args: list[Path | str], cwd: Path | None = None):
