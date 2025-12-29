@@ -1446,7 +1446,7 @@ def test_previous_ld_preload(preload: str, tmp_path: Path):
         assert ret == 42, "$LD_PRELOAD was not preserved under tracing"
 
 
-def test_previous_ld_preload_smoke():
+def test_previous_ld_preload_smoke(tmp_path: Path):
     """
     test that the `xcache-test-ld-preload` binary behaves as expected
 
@@ -1461,14 +1461,14 @@ def test_previous_ld_preload_smoke():
     assert so.exists(), "missing library to preload"
 
     # without the preload active, the binary should return `floor(cos(1) * 10)`
-    assert subprocess.call([exe]) == math.floor(
-        math.cos(1) * 10
-    ), "misbehaviour without preload"
+    ret, _, _ = sandbox([exe], box=tmp_path)
+    assert ret == math.floor(math.cos(1) * 10), "misbehaviour without preload"
 
     # with the preload active, the binary should return 42
     env = os.environ.copy()
     env["LD_PRELOAD"] = str(so)
-    assert subprocess.call([exe], env=env) == 42, "misbehaviour with preload"
+    ret, _, _ = sandbox([exe], box=tmp_path, env=env)
+    assert ret == 42, "misbehaviour with preload"
 
 
 def test_putenv(tmp_path: Path):
