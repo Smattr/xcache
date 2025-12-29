@@ -1433,24 +1433,17 @@ def test_previous_ld_preload(preload: str, tmp_path: Path):
         "--",
         "xcache-test-ld-preload",
     ]
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        text=True,
-        env=env,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
 
     # if libasan.so was loaded some unreplayable things like `clock_gettime()` will have
     # happened, but otherwise we expect a successful record
     if libasan is None:
-        assert "record succeeded" in p.stdout, "record failed"
+        assert "record succeeded" in stderr, "record failed"
 
     # the preload should have worked as long as either (1) libasan.so was not required
     # or (2) the spy was added to `$LD_PRELOAD` after libasan.so
     if libasan is None or preload == "append":
-        assert p.returncode == 42, "$LD_PRELOAD was not preserved under tracing"
+        assert ret == 42, "$LD_PRELOAD was not preserved under tracing"
 
 
 def test_previous_ld_preload_smoke():
