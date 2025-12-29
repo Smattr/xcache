@@ -23,14 +23,18 @@ int input_new_read(input_t *input, const int *expected_err, const char *path) {
     goto done;
   }
 
-  // TODO: handle EISDIR, mmap failure
-  i.err = hash_file(path, &i.read.hash);
+  if (expected_err != NULL && *expected_err != 0) {
+    i.err = *expected_err;
+  } else {
+    // TODO: handle EISDIR, mmap failure
+    i.err = hash_file(path, &i.read.hash);
 
-  // if we saw a different error to the child, assume it did something
-  // unsupported
-  if (ERROR(expected_err != NULL && i.err != *expected_err)) {
-    rc = ECHILD;
-    goto done;
+    // if we saw a different error to the child, assume it did something
+    // unsupported
+    if (ERROR(expected_err != NULL && i.err != *expected_err)) {
+      rc = ECHILD;
+      goto done;
+    }
   }
 
   *input = i;
