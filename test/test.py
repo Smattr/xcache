@@ -230,8 +230,9 @@ def test_no_dir(debug: bool, tmp_path: Path):
     args = ["xcache", f"--dir={nested}"]
     if debug:
         args += ["--debug"]
-    with pytest.raises(subprocess.CalledProcessError):
-        subprocess.run(args + ["--", "xcache-test-echo", "foo", "bar"], check=True)
+    ret, _, _ = sandbox(args + ["--", "xcache-test-echo", "foo", "bar"], box=tmp_path)
+    assert ret != 0, "caching in an invalid directory did not fail"
+    assert not nested.exists(), "nested cache directories created"
 
 
 @pytest.mark.parametrize("debug", (False, True))
