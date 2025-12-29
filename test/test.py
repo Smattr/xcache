@@ -19,13 +19,19 @@ PathLike = Path | str
 """a file system path"""
 
 
-def run(args: list[PathLike], *, cwd: None | PathLike = None) -> tuple[int, str, str]:
+def run(
+    args: list[PathLike],
+    *,
+    cwd: None | PathLike = None,
+    env: None | dict[str, str] = None,
+) -> tuple[int, str, str]:
     """
     run a command, echoing its output like Bash’s `set +x`
 
     Args:
         args: Command line arguments
         cwd: Current working directory
+        env: Environment for new process
 
     Returns
         (Exit status, Stdout, Stderr)
@@ -34,8 +40,9 @@ def run(args: list[PathLike], *, cwd: None | PathLike = None) -> tuple[int, str,
     sys.stdout.flush()
     sys.stderr.flush()
 
-    prefix = "" if cwd is None else f"cd {shlex.quote(str(cwd))} && "
-    print(f"+ {prefix}{shlex.join(str(a) for a in args)}", flush=True)
+    prefix1 = "" if cwd is None else f"cd {shlex.quote(str(cwd))} && "
+    prefix2 = "" if env is None else "env … "
+    print(f"+ {prefix1}{prefix2}{shlex.join(str(a) for a in args)}", flush=True)
     p = subprocess.run(
         args,
         stdout=subprocess.PIPE,
@@ -43,6 +50,7 @@ def run(args: list[PathLike], *, cwd: None | PathLike = None) -> tuple[int, str,
         cwd=cwd,
         check=False,
         text=True,
+        env=env,
     )
 
     sys.stdout.write(p.stdout)
@@ -53,7 +61,9 @@ def run(args: list[PathLike], *, cwd: None | PathLike = None) -> tuple[int, str,
     return p.returncode, p.stdout, p.stderr
 
 
-def sandbox(args: list[PathLike], *, box: PathLike) -> tuple[int, str, str]:
+def sandbox(
+    args: list[PathLike], *, box: PathLike, env: None | dict[str, str] = None
+) -> tuple[int, str, str]:
     """
     run a command within a sandbox
 
@@ -65,6 +75,7 @@ def sandbox(args: list[PathLike], *, box: PathLike) -> tuple[int, str, str]:
     Args:
         args: Command line arguments
         box: Sandbox boundary and current working directory
+        env: Environment for the sandboxed process
 
     Returns
         (Exit status, Stdout, Stderr)
@@ -84,7 +95,7 @@ def sandbox(args: list[PathLike], *, box: PathLike) -> tuple[int, str, str]:
     wrap += ["--bind", box, box, "--unshare-all", "--"]
 
     argv = wrap + args
-    return run(argv, cwd=box)
+    return run(argv, cwd=box, env=env)
 
 
 @pytest.mark.parametrize("absolutify", (False, True))
@@ -976,17 +987,10 @@ def test_clearenv(
         "--",
         "xcache-test-clearenv",
     ]
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-        env=env,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
+    assert ret == 0
 
-    assert "record succeeded" in p.stdout, "record failed"
+    assert "record succeeded" in stderr, "record failed"
 
     # set the environment variable for a second run
     env = os.environ.copy()
@@ -997,18 +1001,11 @@ def test_clearenv(
         env["FOO"] = export2
 
     # run the command a second time
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-        env=env,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
+    assert ret == 0
 
     # replay should be independent of the environment variable
-    assert "replay succeeded" in p.stdout, "replay failed"
+    assert "replay succeeded" in stderr, "replay failed"
 
     # set the environment variable for a third run
     env = os.environ.copy()
@@ -1019,18 +1016,11 @@ def test_clearenv(
         env["FOO"] = export3
 
     # run the command a second time
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-        env=env,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
+    assert ret == 0
 
     # replay should be independent of the environment variable
-    assert "replay succeeded" in p.stdout, "replay failed"
+    assert "replay succeeded" in stderr, "replay failed"
 
 
 @pytest.mark.parametrize("direct", (False, True))
