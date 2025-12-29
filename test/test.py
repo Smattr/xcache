@@ -80,6 +80,14 @@ def sandbox(args: list[PathLike], *, box: PathLike) -> tuple[int, str, str]:
         if not Path(d).exists():
             continue
         wrap += ["--ro-bind", d, d]
+
+    # also include xcache and its dependencies
+    xcache = shutil.which("xcache")
+    assert xcache is not None, "xcache not found"
+    root = Path(xcache).resolve().parents[1]
+    wrap += ["--ro-bind", root, root]
+
+    # allow writing to the sandbox itself
     wrap += ["--bind", box, box, "--unshare-all", "--"]
 
     argv = wrap + args
