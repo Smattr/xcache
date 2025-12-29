@@ -1607,32 +1607,18 @@ def test_unsetenv(tmp_path: Path):
         "--",
         "xcache-test-unsetenv",
     ]
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-        env=env,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
+    assert ret == 0
 
-    assert "record succeeded" in p.stdout, "record failed"
+    assert "record succeeded" in stderr, "record failed"
 
     # set the environment variable differently for a second run
     env = os.environ.copy()
     env["FOO"] = "qux"
 
     # run the command a second time
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=tmp_path,
-        check=True,
-        text=True,
-        env=env,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
+    assert ret == 0
 
     # replay should be independent of the environment variable
-    assert "replay succeeded" in p.stdout, "replay failed"
+    assert "replay succeeded" in stderr, "replay failed"
