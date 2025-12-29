@@ -1572,26 +1572,14 @@ def test_temp_usage(tmp_path: Path):
         "--",
         "xcache-test-temp-usage",
     ]
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        check=True,
-        text=True,
-        env=env,
-    )
-    assert "record succeeded" in p.stdout, "record failed"
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
+    assert ret == 0
+    assert "record succeeded" in stderr, "record failed"
 
     # confirm we can replay it
-    p = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        check=True,
-        text=True,
-        env=env,
-    )
-    assert "replay succeeded" in p.stdout, "replay failed"
+    ret, _, stderr = sandbox(args, box=tmp_path, env=env)
+    assert ret == 0
+    assert "replay succeeded" in stderr, "replay failed"
 
 
 def test_unsetenv(tmp_path: Path):
