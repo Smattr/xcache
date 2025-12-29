@@ -38,7 +38,8 @@ int input_new_readlink(input_t *input, const int *expected_err,
       goto done;
     }
 
-    i.readlink.hash = hash_data(target, strlen(target));
+    if (i.err == 0)
+      i.readlink.hash = hash_data(target, strlen(target));
   }
 
   *input = i;
