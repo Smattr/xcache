@@ -593,49 +593,41 @@ def test_exec_dups_fds(debug: bool, record: bool, replay: bool, tmp_path: Path):
             args += ["--disable"]
     args += ["--", "xcache-test-clone-exec-with-fd"]
 
-    output = subprocess.check_output(
-        args,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True,
-        timeout=120,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     if debug:
         if replay:
-            assert "replay failed" in output, "replay succeeded with no trace"
+            assert "replay failed" in stderr, "replay succeeded with no trace"
         else:
-            assert "replay failed" not in output, "replay incorrectly enabled"
-            assert "replay succeeded" not in output, "replay incorrectly enabled"
+            assert "replay failed" not in stderr, "replay incorrectly enabled"
+            assert "replay succeeded" not in stderr, "replay incorrectly enabled"
         if record:
-            assert "record succeeded" in output, "record failed"
+            assert "record succeeded" in stderr, "record failed"
         else:
-            assert "record failed" not in output, "record incorrectly enabled"
-            assert "record succeeded" not in output, "record incorrectly enabled"
+            assert "record failed" not in stderr, "record incorrectly enabled"
+            assert "record succeeded" not in stderr, "record incorrectly enabled"
 
     # try it again to see if we can replay
-    output = subprocess.check_output(
-        args,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True,
-        timeout=120,
-    )
+    ret, _, stderr = sandbox(args, box=tmp_path)
+    assert ret == 0
 
     if debug:
         if record and replay:
-            assert "replay succeeded" in output, "replay failed"
+            assert "replay succeeded" in stderr, "replay failed"
         elif replay:
-            assert "replay failed" in output, "replay succeeded with no trace"
+            assert "replay failed" in stderr, "replay succeeded with no trace"
         else:
-            assert "replay failed" not in output, "replay incorrectly enabled"
-            assert "replay succeeded" not in output, "replay incorrectly enabled"
+            assert "replay failed" not in stderr, "replay incorrectly enabled"
+            assert "replay succeeded" not in stderr, "replay incorrectly enabled"
         if record and replay:
-            assert "record failed" not in output, "record still attempted after replay"
-            assert "record succeeded" not in output, "record after successful replay"
+            assert "record failed" not in stderr, "record still attempted after replay"
+            assert "record succeeded" not in stderr, "record after successful replay"
         elif record:
-            assert "record succeeded" in output, "record failed"
+            assert "record succeeded" in stderr, "record failed"
         else:
-            assert "record failed" not in output, "record incorrectly enabled"
-            assert "record succeeded" not in output, "record incorrectly enabled"
+            assert "record failed" not in stderr, "record incorrectly enabled"
+            assert "record succeeded" not in stderr, "record incorrectly enabled"
 
 
 @pytest.mark.parametrize(
