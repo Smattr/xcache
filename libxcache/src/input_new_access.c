@@ -25,18 +25,12 @@ int input_new_access(input_t *input, const int *expected_err, const char *path,
     goto done;
   }
 
-  {
+  if (expected_err == NULL) {
     const int r = flags == 0 ? access(path, mode)
                              : faccessat(AT_FDCWD, path, mode, flags);
-    if (ERROR(r < 0 && expected_err != NULL && errno != *expected_err)) {
-      rc = ECHILD;
-      goto done;
-    }
-    if (ERROR(r == 0 && expected_err != NULL && *expected_err != 0)) {
-      rc = ECHILD;
-      goto done;
-    }
     i.err = r == 0 ? 0 : errno;
+  } else {
+    i.err = *expected_err;
   }
 
   i.access.mode = mode;

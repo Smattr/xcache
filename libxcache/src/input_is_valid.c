@@ -9,7 +9,7 @@ bool input_is_valid(const input_t input) {
   switch (input.tag) {
 
   case INP_ACCESS: {
-    const int r = input_new_access(&attempt, &input.err, input.path,
+    const int r = input_new_access(&attempt, NULL, input.path,
                                    input.access.mode, input.access.flags);
     if (r != 0)
       return false;
