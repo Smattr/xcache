@@ -479,15 +479,16 @@ def test_write_file(debug: bool, record: bool, replay: bool, tmp_path: Path):
 
 
 @pytest.mark.parametrize("debug", (False, True))
-def test_version(debug: bool):
+def test_version(debug: bool, tmp_path: Path):
     """
     check --version does something reasonable
     """
     args = ["xcache", "--version"]
     if debug:
         args += ["--debug"]
-    output = subprocess.check_output(args, stderr=subprocess.STDOUT)
-    assert output.strip() != "", "--version output nothing"
+    ret, stdout, _ = sandbox(args, box=tmp_path)
+    assert ret == 0
+    assert stdout.strip() != "", "--version output nothing"
 
 
 @pytest.mark.parametrize("debug", (False, True))
