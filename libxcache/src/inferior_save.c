@@ -97,7 +97,7 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
     goto done;
 
   // account for the outputs we saw (overestimates) + stdout and stderr
-  (void)LIST_RESERVE(&inputs, LIST_SIZE(&inf->io) + 2);
+  (void)LIST_RESERVE(&outputs, LIST_SIZE(&inf->io) + 2);
 
   // determine whether stdout and stderr need to be saved
   if (ERROR((rc = append_stream(&outputs, "/dev/stdout", inf->t_out->copy_path,
