@@ -24,7 +24,7 @@ bool input_is_valid(const input_t input) {
   }
 
   case INP_READLINK: {
-    const int r = input_new_readlink(&attempt, input.err, input.path);
+    const int r = input_new_readlink(&attempt, NULL, input.path);
     if (r != 0)
       return false;
     break;

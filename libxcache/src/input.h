@@ -77,10 +77,10 @@ INTERNAL int input_new_read(input_t *input, const int *expected_err,
 /// create an input for a `readlink()` call
 ///
 /// @param input [out] Created input on success
-/// @param expected_err Expected error result
+/// @param expected_err Optional expected error result
 /// @param path Absolute path to the link
 /// @return 0 on success or an errno on failure
-INTERNAL int input_new_readlink(input_t *input, int expected_err,
+INTERNAL int input_new_readlink(input_t *input, const int *expected_err,
                                 const char *path);
 
 /// create an input for a `stat()` call

@@ -87,7 +87,7 @@ static int core(inferior_t *inf, thread_t *thread, int dirfd,
   }
 
   // record it
-  if (ERROR((rc = input_new_readlink(&saw, err, abs))))
+  if (ERROR((rc = input_new_readlink(&saw, &err, abs))))
     goto done;
 
   if (ERROR((rc = inferior_input_new(inf, saw))))

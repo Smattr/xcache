@@ -7,7 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int input_new_readlink(input_t *input, int expected_err, const char *path) {
+int input_new_readlink(input_t *input, const int *expected_err,
+                       const char *path) {
 
   assert(input != NULL);
   assert(path != NULL);
@@ -25,16 +26,20 @@ int input_new_readlink(input_t *input, int expected_err, const char *path) {
     goto done;
   }
 
-  i.err = readln(path, &target);
+  if (expected_err != NULL && *expected_err != 0) {
+    i.err = *expected_err;
+  } else {
+    i.err = readln(path, &target);
 
-  // if we saw a different error to the child, assume it did something
-  // unsupported
-  if (ERROR(i.err != expected_err)) {
-    rc = ECHILD;
-    goto done;
+    // if we saw a different error to the child, assume it did something
+    // unsupported
+    if (ERROR(expected_err != NULL && i.err != *expected_err)) {
+      rc = ECHILD;
+      goto done;
+    }
+
+    i.readlink.hash = hash_data(target, strlen(target));
   }
-
-  i.readlink.hash = hash_data(target, strlen(target));
 
   *input = i;
   i = (input_t){0};
