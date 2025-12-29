@@ -1357,7 +1357,8 @@ def test_open_rdonly_creat_exists(tmp_path: Path):
     foo = wd / "foo"
     assert not foo.exists(), "logic error in test setup"
     args = ["xcache-test-open", "O_RDONLY", "O_CREAT"]
-    subprocess.run(args, cwd=wd, check=True)
+    ret, _, _ = sandbox(args, box=wd)
+    assert ret == 0
     assert foo.exists(), "`open(…, O_RDONLY|O_CREAT)` does not create files"
 
     # confirm `open(…, O_RDONLY|O_CREAT)` works when the file exists, even if it is
@@ -1367,9 +1368,10 @@ def test_open_rdonly_creat_exists(tmp_path: Path):
     foo = wd / "foo"
     assert not foo.exists(), "logic error in test setup"
     foo.touch(0o400, exist_ok=False)
-    p = subprocess.run(args, stderr=subprocess.PIPE, cwd=wd, check=True, text=True)
+    ret, _, stderr = sandbox(args, box=wd)
+    assert ret == 0
     assert (
-        "open failed" not in p.stderr
+        "open failed" not in stderr
     ), "`open(…, O_RDONLY|O_CREAT)` cannot open read-only files"
 
     # confirm we can record baseline2’s situation
@@ -1378,16 +1380,10 @@ def test_open_rdonly_creat_exists(tmp_path: Path):
     foo = wd / "foo"
     assert not foo.exists(), "logic error in test setup"
     foo.touch(0o400, exist_ok=False)
-    xcache = ["xcache", "--debug", f"--dir={tmp_path}/database", "--read-write", "--"]
-    p = subprocess.run(
-        xcache + args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=wd,
-        check=True,
-        text=True,
-    )
-    assert "record succeeded" in p.stdout, "record failed"
+    xcache = ["xcache", "--debug", f"--dir={wd}/database", "--read-write", "--"]
+    ret, _, stderr = sandbox(xcache + args, box=wd)
+    assert ret == 0
+    assert "record succeeded" in stderr, "record failed"
 
     assert foo.exists(), "`xcache … xcache-test-open O_RDONLY O_CREATE` deleted a file"
     assert (
@@ -1395,15 +1391,9 @@ def test_open_rdonly_creat_exists(tmp_path: Path):
     ), "`xcache … xcache-test-open O_RDONLY O_CREATE` changed the mode of target file"
 
     # confirm we can replay this
-    p = subprocess.run(
-        xcache + args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=wd,
-        check=True,
-        text=True,
-    )
-    assert "replay succeeded" in p.stdout, "replay failed"
+    ret, _, stderr = sandbox(xcache + args, box=wd)
+    assert ret == 0
+    assert "replay succeeded" in stderr, "replay failed"
 
 
 @pytest.mark.parametrize("preload", ("append", "either", "prepend"))
