@@ -111,8 +111,14 @@ static dep_t out_cmp_out(const output_t a, const output_t b) {
   if (output_eq(a, b))
     return DEP_WAW;
 
-  if (strcmp(a.path, b.path) == 0)
+  if (strcmp(a.path, b.path) == 0) {
+    // if something was written then deleted, the delete dominates
+    if (a.tag == OUT_WRITE && b.tag == OUT_UNLINK)
+      return DEP_WAW;
+
+    // conservatively do not analyse anything else for now
     return DEP_CTRL;
+  }
 
   // if either is modifying any prefix of the other, consider them dependent
   do {

@@ -186,6 +186,13 @@ INTERNAL int sysexit_readlink(inferior_t *inf, thread_t *thread);
 /// @return 0 on success or an errno on failure
 INTERNAL int sysexit_readlinkat(inferior_t *inf, thread_t *thread);
 
+/// handle end of `unlink`
+///
+/// @param inf Tracee to which the target belongs
+/// @param thread Caller thread
+/// @return 0 on success or an errno on failure
+INTERNAL int sysexit_unlink(inferior_t *inf, thread_t *thread);
+
 /// handle end of `vfork`
 ///
 /// @param inf Tracee to which the target belongs

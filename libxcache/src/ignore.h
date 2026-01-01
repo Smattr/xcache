@@ -137,6 +137,9 @@ IGNORE(getcwd)
 #ifdef __NR_chdir
 SYSENTER_IGNORE(chdir)
 #endif
+#ifdef __NR_unlink
+SYSENTER_IGNORE(unlink)
+#endif
 #ifdef __NR_readlink
 SYSENTER_IGNORE(readlink)
 #endif

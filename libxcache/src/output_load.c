@@ -56,6 +56,10 @@ int output_load(output_t *output, FILE *stream) {
     o.mkdir.mode = (mode_t)mode;
   } break;
 
+  case OUT_UNLINK:
+    // nothing more required
+    break;
+
   case OUT_WRITE: {
     uint64_t mode = 0;
     if (ERROR((rc = cbor_read_u64(stream, &mode))))

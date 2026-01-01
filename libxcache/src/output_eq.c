@@ -29,6 +29,10 @@ bool output_eq(const output_t a, const output_t b) {
       return false;
     break;
 
+  case OUT_UNLINK:
+    // nothing more required
+    break;
+
   case OUT_WRITE:
     // ignore cached copy
     break;

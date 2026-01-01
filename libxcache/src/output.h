@@ -10,10 +10,11 @@
 
 /// type of an external output
 typedef enum {
-  OUT_CHMOD, ///< `chmod()`
-  OUT_CHOWN, ///< `chown()`
-  OUT_MKDIR, ///< `mkdir()`
-  OUT_WRITE, ///< `open()` with `O_WRONLY` or `O_RDWR`
+  OUT_CHMOD,  ///< `chmod()`
+  OUT_CHOWN,  ///< `chown()`
+  OUT_MKDIR,  ///< `mkdir()`
+  OUT_UNLINK, ///< `unlink()`
+  OUT_WRITE,  ///< `open()` with `O_WRONLY` or `O_RDWR`
 } output_type_t;
 
 /// an external output
@@ -45,6 +46,14 @@ typedef struct {
 /// @param mode Mode being set
 /// @return 0 on success or an errno on failure
 INTERNAL int output_new_chmod(output_t *output, const char *path, mode_t mode);
+
+/// create a new `unlink()` output
+///
+/// @param output [out] Created output on success
+/// @param path Path being deleted
+/// @param mode Mode being set
+/// @return 0 on success or an errno on failure
+INTERNAL int output_new_unlink(output_t *output, const char *path);
 
 /// create a new `write()` output
 ///

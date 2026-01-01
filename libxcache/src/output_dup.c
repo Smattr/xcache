@@ -36,6 +36,10 @@ int output_dup(output_t *dst, const output_t src) {
     o.mkdir.mode = src.mkdir.mode;
     break;
 
+  case OUT_UNLINK:
+    // nothing more required
+    break;
+
   case OUT_WRITE:
     o.write.mode = src.write.mode;
     // allow NULL to cope with an unfinalised output

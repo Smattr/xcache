@@ -61,6 +61,7 @@ add_library(libxcache
   src/output_free.c
   src/output_load.c
   src/output_new_chmod.c
+  src/output_new_unlink.c
   src/output_new_write.c
   src/output_replay.c
   src/output_save.c
@@ -70,6 +71,7 @@ add_library(libxcache
   src/path_is_ignorable.c
   src/path_join.c
   src/path_make.c
+  src/path_parent.c
   src/peek_data.c
   src/peek_str.c
   src/proc.c
@@ -92,6 +94,7 @@ add_library(libxcache
   src/sysexit_pidfd_open.c
   src/sysexit_readlink.c
   src/sysexit_stat.c
+  src/sysexit_unlink.c
   src/tee_cancel.c
   src/tee_join.c
   src/tee_new.c

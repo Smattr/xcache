@@ -37,6 +37,10 @@ int output_save(const output_t output, FILE *stream) {
       goto done;
     break;
 
+  case OUT_UNLINK:
+    // nothing more required
+    break;
+
   case OUT_WRITE:
     if (ERROR((rc = cbor_write_u64(stream, (uint64_t)output.write.mode))))
       goto done;

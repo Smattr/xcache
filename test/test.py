@@ -1552,7 +1552,6 @@ def test_setenv(tmp_path: Path):
     assert "replay succeeded" in stderr, "replay failed"
 
 
-@pytest.mark.xfail(strict=True)
 def test_temp_usage(tmp_path: Path):
     """can we trace something compiler-like?"""
 
