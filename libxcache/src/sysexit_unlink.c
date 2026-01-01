@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int sysexit_unlink(inferior_t *inf, thread_t *thread) {
   assert(inf != NULL);
@@ -16,6 +17,7 @@ int sysexit_unlink(inferior_t *inf, thread_t *thread) {
 
   char *path = NULL;
   char *abs_path = NULL;
+  input_t i = {0};
   output_t o = {0};
   int rc = 0;
 
@@ -48,6 +50,14 @@ int sysexit_unlink(inferior_t *inf, thread_t *thread) {
     goto done;
   }
 
+  // note a dependency on the file pre-existing
+  if (ERROR((rc = input_new_access(&i, &(int){0}, abs_path, F_OK, 0))))
+    goto done;
+  if (ERROR((rc = inferior_input_new(inf, i))))
+    goto done;
+  i = (input_t){0};
+  // TODO: also record a R_OK|W_OK|X_OK on the parent dir
+
   // record this as an output
   if (ERROR((rc = output_new_unlink(&o, abs_path))))
     goto done;
@@ -57,6 +67,7 @@ int sysexit_unlink(inferior_t *inf, thread_t *thread) {
 
 done:
   output_free(o);
+  input_free(i);
   free(abs_path);
   free(path);
 
