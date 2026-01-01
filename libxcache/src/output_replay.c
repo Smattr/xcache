@@ -6,8 +6,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <xcache/trace.h>
@@ -78,24 +77,6 @@ static int replay_unlink(const output_t output) {
   DEBUG("replaying unlink(\"%s\")", output.path);
   if (ERROR(unlink(output.path) < 0)) {
     rc = errno;
-
-    // allow the file to not exist
-    if (rc == ENOENT) {
-      const size_t parent_len = path_parent(output.path, strlen(output.path));
-      char *const parent = strndup(output.path, parent_len);
-      if (ERROR(parent == NULL)) {
-        rc = ENOMEM;
-        goto done;
-      }
-      const bool parent_exists = access(parent, F_OK) == 0;
-      free(parent);
-      if (parent_exists) {
-        DEBUG("allowing missing file because parent directory exists");
-        rc = 0;
-        goto done;
-      }
-    }
-
     goto done;
   }
 

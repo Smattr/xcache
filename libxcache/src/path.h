@@ -2,7 +2,6 @@
 
 #include "../../common/compiler.h"
 #include <stdbool.h>
-#include <stddef.h>
 
 /// make a path absolute
 ///
@@ -41,13 +40,6 @@ INTERNAL bool path_is_cacheable(const char *abs_path);
 /// @param abs_path Absolute path to file to consider
 /// @return True if reads of this path can be ignored
 INTERNAL bool path_is_ignorable(const char *abs_path);
-
-/// find the prefix length of a path constituting its parent
-///
-/// @param abs_path Absolute path to file/directory
-/// @param len Number of bytes in path
-/// @return Number of bytes in parent path
-INTERNAL size_t path_parent(const char *abs_path, size_t len);
 
 /// `readlink`-alike that dynamically allocates
 ///

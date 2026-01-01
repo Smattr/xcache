@@ -71,7 +71,6 @@ add_library(libxcache
   src/path_is_ignorable.c
   src/path_join.c
   src/path_make.c
-  src/path_parent.c
   src/peek_data.c
   src/peek_str.c
   src/proc.c
