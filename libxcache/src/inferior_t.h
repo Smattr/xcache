@@ -80,7 +80,7 @@ INTERNAL int inferior_input_new(inferior_t *inf, input_t input);
 /// @param inf Inferior to append output to
 /// @param output Output to append
 /// @return 0 on success or an errno on failure
-INTERNAL int inferior_output_new(inferior_t *inf, const output_t output);
+INTERNAL int inferior_output_new(inferior_t *inf, output_t output);
 
 /// learn the existence of a new thread
 ///

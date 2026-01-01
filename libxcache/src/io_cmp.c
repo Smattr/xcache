@@ -113,8 +113,13 @@ static dep_t out_cmp_out(const output_t a, const output_t b) {
 
   if (strcmp(a.path, b.path) == 0) {
     // if something was written then deleted, the delete dominates
-    if (a.tag == OUT_WRITE && b.tag == OUT_UNLINK)
+    if (a.tag == OUT_WRITE && b.tag == OUT_UNLINK) {
+      // if the write itself was a creation, we can drop the deletion too
+      if (a.write.is_creat_excl)
+        return DEP_UNDO;
+
       return DEP_WAW;
+    }
 
     // conservatively do not analyse anything else for now
     return DEP_CTRL;

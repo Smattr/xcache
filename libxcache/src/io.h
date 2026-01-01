@@ -30,6 +30,7 @@ typedef enum {
   DEP_WAR,  ///< write-after-read, “anti-dependence”
   DEP_WAW,  ///< write-after-write, “output dependence”
   DEP_CTRL, ///< control flow dependence
+  DEP_UNDO, ///< second action reverses the first
 } dep_t;
 
 /// derive the dependency between two actions
@@ -46,6 +47,7 @@ typedef enum {
 ///   • `DEP_WAR` – You must retain a and b, and can stop your analysis.
 ///   • `DEP_WAW` – You can discard a.
 ///   • `DEP_CTRL` – You must retain a and b, and can stop your analysis.
+///   • `DEP_UNDO` – You can discard both a and b, and must stop your analysis.
 /// `DEP_CTRL` is basically the catch-all “a and b have a complex dependency”.
 ///
 /// @param a First action to consider

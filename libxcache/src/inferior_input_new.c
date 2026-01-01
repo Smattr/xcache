@@ -20,6 +20,7 @@ int inferior_input_new(inferior_t *inf, input_t input) {
     const dep_t dep = io_cmp(prior, io);
     assert(dep != DEP_WAR);
     assert(dep != DEP_WAW);
+    assert(dep != DEP_UNDO);
     if (dep == DEP_RAR || dep == DEP_RAW) {
       input_free(input);
       goto done;

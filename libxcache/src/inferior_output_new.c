@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-int inferior_output_new(inferior_t *inf, const output_t output) {
+int inferior_output_new(inferior_t *inf, output_t output) {
 
   assert(inf != NULL);
 
@@ -25,6 +25,11 @@ int inferior_output_new(inferior_t *inf, const output_t output) {
       io_free(prior);
     } else if (dep == DEP_WAR || dep == DEP_CTRL) {
       break;
+    } else if (dep == DEP_UNDO) {
+      (void)LIST_POP(&inf->io, i);
+      io_free(prior);
+      output_free(output);
+      goto done;
     }
   }
 
