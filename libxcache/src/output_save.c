@@ -44,6 +44,9 @@ int output_save(const output_t output, FILE *stream) {
   case OUT_WRITE:
     if (ERROR((rc = cbor_write_u64(stream, (uint64_t)output.write.mode))))
       goto done;
+    if (ERROR((
+            rc = cbor_write_u64(stream, (uint64_t)output.write.is_creat_excl))))
+      goto done;
     if (ERROR((rc = cbor_write_opt_str(stream, output.write.cached_copy))))
       goto done;
     break;

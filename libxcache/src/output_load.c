@@ -65,10 +65,16 @@ int output_load(output_t *output, FILE *stream) {
     if (ERROR((rc = cbor_read_u64(stream, &mode))))
       goto done;
     o.write.mode = mode;
+  }
+    {
+      uint64_t is_creat_excl;
+      if (ERROR((rc = cbor_read_u64(stream, &is_creat_excl))))
+        goto done;
+      o.write.is_creat_excl = is_creat_excl != 0;
+    }
     if (ERROR((rc = cbor_read_opt_str(stream, &o.write.cached_copy))))
       goto done;
     break;
-  }
 
   default:
     DEBUG("invalid output tag %d\n", (int)o.tag);

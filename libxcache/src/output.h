@@ -33,8 +33,9 @@ typedef struct {
       mode_t mode; ///< mkdir mode to set
     } mkdir;
     struct {
-      mode_t mode;       ///< mode passed to `open`
-      char *cached_copy; ///< relative path to cached content
+      mode_t mode;            ///< mode passed to `open`
+      bool is_creat_excl : 1; ///< did `flags` include `O_CREAT|O_EXCL`?
+      char *cached_copy;      ///< relative path to cached content
     } write;
   };
 } output_t;
@@ -63,8 +64,10 @@ INTERNAL int output_new_unlink(output_t *output, const char *path);
 /// @param output [out] Created output on success
 /// @param path Path being written
 /// @param mode Mode being set
+/// @param is_creat_excl Did flags include `O_CREAT|O_EXCL`?
 /// @return 0 on success or an errno on failure
-INTERNAL int output_new_write(output_t *output, const char *path, mode_t mode);
+INTERNAL int output_new_write(output_t *output, const char *path, mode_t mode,
+                              bool is_creat_excl);
 
 /// deserialise an output from a file
 ///

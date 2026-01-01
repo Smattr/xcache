@@ -42,6 +42,7 @@ int output_dup(output_t *dst, const output_t src) {
 
   case OUT_WRITE:
     o.write.mode = src.write.mode;
+    o.write.is_creat_excl = src.write.is_creat_excl;
     // allow NULL to cope with an unfinalised output
     if (src.write.cached_copy != NULL) {
       o.write.cached_copy = strdup(src.write.cached_copy);

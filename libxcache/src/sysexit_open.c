@@ -74,7 +74,8 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs_path,
       const mode_t mode = 0;
 
       // record it
-      if (ERROR((rc = output_new_write(&seen_write, abs_path, mode))))
+      if (ERROR((rc = output_new_write(&seen_write, abs_path, mode,
+                                       !!(flags & O_EXCL)))))
         goto done;
 
       if (ERROR((rc = inferior_output_new(inf, seen_write))))
@@ -138,7 +139,8 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs_path,
     const mode_t mode = 0;
 
     // record it
-    if (ERROR((rc = output_new_write(&seen_write, abs_path, mode))))
+    if (ERROR((rc = output_new_write(&seen_write, abs_path, mode,
+                                     !!(flags & O_EXCL)))))
       goto done;
 
     if (ERROR((rc = inferior_output_new(inf, seen_write))))

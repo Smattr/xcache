@@ -3,10 +3,12 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
-int output_new_write(output_t *output, const char *path, mode_t mode) {
+int output_new_write(output_t *output, const char *path, mode_t mode,
+                     bool is_creat_excl) {
 
   assert(output != NULL);
   assert(path != NULL);
@@ -24,6 +26,7 @@ int output_new_write(output_t *output, const char *path, mode_t mode) {
   }
 
   o.write.mode = mode;
+  o.write.is_creat_excl = is_creat_excl;
 
   *output = o;
   o = (output_t){0};

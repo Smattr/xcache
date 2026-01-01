@@ -36,6 +36,8 @@ bool output_eq(const output_t a, const output_t b) {
   case OUT_WRITE:
     if (a.write.mode != b.write.mode)
       return false;
+    if (a.write.is_creat_excl != b.write.is_creat_excl)
+      return false;
     // ignore cached copy
     break;
   }
