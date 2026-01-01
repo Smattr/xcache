@@ -112,7 +112,7 @@ static int handle_open(inferior_t *inf, thread_t *thread, const char *abs_path,
   case O_WRONLY | O_CREAT | O_EXCL:
   case O_WRONLY | O_CREAT | O_TRUNC | O_EXCL:
 
-    // if we failed due to a non-existent, this is semantically an `access`
+    // if we failed due to a non-existent file, this is semantically an `access`
     if (!(flags_relevant & O_CREAT) && err == ENOENT) {
       if (ERROR((rc = input_new_access(&seen_read, &(int){ENOENT}, abs_path,
                                        F_OK, 0))))
