@@ -34,6 +34,8 @@ bool output_eq(const output_t a, const output_t b) {
     break;
 
   case OUT_WRITE:
+    if (a.write.mode != b.write.mode)
+      return false;
     // ignore cached copy
     break;
   }
