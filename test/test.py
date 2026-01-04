@@ -1682,6 +1682,42 @@ def test_unlink(
     assert "replay succeeded" in stderr, "replay of unlink failed"
 
 
+@pytest.mark.xfail(strict=True)
+def test_unreadable_output(tmp_path: Path):
+    """
+    can we record (or reasonably fail to record) a process that creates an unreadable
+    file?
+    """
+
+    # run the creator uninstrumented to confirm its actions work
+    ret, _, _ = sandbox(["xcache-test-unreadable-output"], box=tmp_path)
+    assert ret == 0
+
+    # it should have created an unreadable file
+    foo = tmp_path / "foo"
+    assert stat.S_IMODE(foo.stat().st_mode) == 0o000, "unexpected file mode"
+
+    # clean up and reset
+    foo.unlink()
+
+    # now run the creator under xcache
+    ret, _, _ = sandbox(
+        [
+            "xcache",
+            "--debug",
+            f"--dir={tmp_path}/database",
+            "--read-write",
+            "--",
+            "xcache-test-unreadable-output",
+        ],
+        box=tmp_path,
+    )
+    assert ret == 0
+
+    # it should have created the same thing
+    assert stat.S_IMODE(foo.stat().st_mode) == 0o000, "unexpected file mode"
+
+
 def test_unsetenv(tmp_path: Path):
     """
     does xcache understand `unsetenv`?
