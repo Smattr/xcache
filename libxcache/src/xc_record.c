@@ -288,8 +288,17 @@ int xc_record(xc_db_t *db, const xc_cmd_t cmd, unsigned mode,
 
   if (status->trace_status == 0) {
     // save the result
-    if (ERROR((rc = inferior_save(inf, cmd, trace_root))))
-      goto done;
+    {
+      const int r = inferior_save(inf, cmd, trace_root);
+      if (ERROR(r != 0)) {
+        if (r == ECHILD) {
+          status->trace_status = ECHILD;
+        } else {
+          rc = r;
+        }
+        goto done;
+      }
+    }
 
     // blank the stdout and stderr saved paths so they are retained
     free(inf->t_out->copy_path);

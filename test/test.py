@@ -1682,7 +1682,6 @@ def test_unlink(
     assert "replay succeeded" in stderr, "replay of unlink failed"
 
 
-@pytest.mark.xfail(strict=True)
 def test_unreadable_output(tmp_path: Path):
     """
     can we record (or reasonably fail to record) a process that creates an unreadable

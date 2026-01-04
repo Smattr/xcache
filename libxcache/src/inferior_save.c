@@ -125,7 +125,8 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
 
       int src = open(back->path, O_RDONLY | O_CLOEXEC);
       if (ERROR(src < 0)) {
-        rc = errno;
+        // if we cannot read the file, treat this as unsupported for now
+        rc = ECHILD;
         goto done;
       }
 
@@ -159,7 +160,8 @@ int inferior_save(inferior_t *inf, const xc_cmd_t cmd, const char *trace_root) {
 
       struct stat st;
       if (ERROR(stat(back->path, &st) < 0)) {
-        rc = errno;
+        // if we cannot stat the file, treat this as unsupported for now
+        rc = ECHILD;
         goto done;
       }
 
