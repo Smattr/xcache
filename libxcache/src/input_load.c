@@ -37,6 +37,10 @@ int input_load(input_t *input, FILE *stream) {
 
   switch (i.tag) {
 
+    // use `goto ok` in this switch instead of `break` so we can retain the
+    // compiler warning benefits of -Wswitch while also catching malformed tags
+#define break break not allowed in this switch
+
   case INP_ACCESS: {
     uint64_t mode = 0;
     if (ERROR((rc = cbor_read_u64(stream, &mode))))
@@ -49,12 +53,12 @@ int input_load(input_t *input, FILE *stream) {
         goto done;
       i.access.flags = (int)flags;
     }
-    break;
+    goto ok;
 
   case INP_READ:
     if (ERROR((rc = cbor_read_u64(stream, &i.read.hash.data))))
       goto done;
-    break;
+    goto ok;
 
   case INP_STAT: {
     uint64_t is_lstat = 0;
@@ -114,7 +118,7 @@ int input_load(input_t *input, FILE *stream) {
         goto done;
       i.stat.ctim.tv_nsec = (long)tv_nsec;
     }
-    break;
+    goto ok;
 
   case INP_SYSCONF: {
     uint64_t name = 0;
@@ -128,25 +132,27 @@ int input_load(input_t *input, FILE *stream) {
         goto done;
       i.sysconf.ret = (long)ret;
     }
-    break;
+    goto ok;
 
   case INP_GETENV:
     if (ERROR((rc = cbor_read_str(stream, &i.getenv.key))))
       goto done;
     if (ERROR((rc = cbor_read_opt_str(stream, &i.getenv.value))))
       goto done;
-    break;
+    goto ok;
 
   case INP_UNLINK_PRE:
     // nothing to be done
-    break;
+    goto ok;
 
-  default:
-    DEBUG("invalid input tag %d", (int)i.tag);
-    rc = EPROTO;
-    goto done;
+#undef break
   }
 
+  DEBUG("invalid input tag %d", (int)i.tag);
+  rc = EPROTO;
+  goto done;
+
+ok:
   *input = i;
   i = (input_t){0};
 
