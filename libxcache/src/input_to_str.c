@@ -49,6 +49,11 @@ char *input_to_str(const input_t input) {
       goto done;
     break;
 
+  case INP_UNLINK_PRE:
+    if (fputs(".tag = INP_UNLINK_PRE", stream) < 0)
+      goto done;
+    break;
+
   default:
     if (fprintf(stream, ".tag = %d (unknown)", (int)input.tag) < 0)
       goto done;
@@ -112,6 +117,10 @@ char *input_to_str(const input_t input) {
       if (fprintf(stream, ", .getenv.value = \"%s\"", input.getenv.value) < 0)
         goto done;
     }
+
+  case INP_UNLINK_PRE:
+    // nothing to be done
+    break;
   }
 
   if (fputs("}", stream) < 0)

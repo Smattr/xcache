@@ -78,6 +78,10 @@ int input_save(const input_t input, FILE *stream) {
     if (ERROR((rc = cbor_write_opt_str(stream, input.getenv.value))))
       goto done;
     break;
+
+  case INP_UNLINK_PRE:
+    // nothing to be done
+    break;
   }
 
 done:

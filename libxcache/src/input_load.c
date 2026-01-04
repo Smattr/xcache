@@ -137,6 +137,10 @@ int input_load(input_t *input, FILE *stream) {
       goto done;
     break;
 
+  case INP_UNLINK_PRE:
+    // nothing to be done
+    break;
+
   default:
     DEBUG("invalid input tag %d", (int)i.tag);
     rc = EPROTO;

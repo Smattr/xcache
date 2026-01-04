@@ -41,6 +41,12 @@ INTERNAL bool path_is_cacheable(const char *abs_path);
 /// @return True if reads of this path can be ignored
 INTERNAL bool path_is_ignorable(const char *abs_path);
 
+/// get the parent directory of a path
+///
+/// @param abs_path Absolute path to file or directory to consider
+/// @return Parent path or `NULL` on out-of-memory
+INTERNAL char *path_parent(const char *abs_path);
+
 /// `readlink`-alike that dynamically allocates
 ///
 /// The caller is expected to free `out`.

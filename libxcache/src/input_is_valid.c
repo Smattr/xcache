@@ -1,6 +1,10 @@
+#include "debug.h"
 #include "input.h"
+#include "path.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 bool input_is_valid(const input_t input) {
 
@@ -52,6 +56,29 @@ bool input_is_valid(const input_t input) {
       return false;
     break;
   }
+
+  case INP_UNLINK_PRE:
+    // the target must exist and not be a directory
+    {
+      struct stat st;
+      if (stat(input.path, &st) < 0)
+        return false;
+      if (S_ISDIR(st.st_mode))
+        return false;
+      return true;
+    }
+    // its parent must be writable
+    {
+      char *const parent = path_parent(input.path);
+      if (ERROR(parent == NULL))
+        return false;
+      const bool is_writable = access(parent, W_OK) == 0;
+      free(parent);
+      if (!is_writable)
+        return false;
+    }
+    return true;
+    break;
   }
 
   const bool is_valid = input_eq(input, attempt);

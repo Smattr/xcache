@@ -79,6 +79,10 @@ static dep_t out_cmp_in(const output_t a, const input_t b) {
     if (a.tag == OUT_WRITE && a.write.is_creat_excl && b.tag == INP_ACCESS)
       return DEP_RAW;
 
+    // assume if we created somethiing, we are able to delete it
+    if (a.tag == OUT_WRITE && a.write.is_creat_excl && b.tag == INP_UNLINK_PRE)
+      return DEP_RAW;
+
     // we do not yet distinguish the details of this dependency
     return DEP_CTRL;
   } while (0);

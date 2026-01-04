@@ -64,6 +64,10 @@ bool input_eq(const input_t a, const input_t b) {
       return false;
     }
     break;
+
+  case INP_UNLINK_PRE:
+    // nothing else required
+    break;
   }
 
   return true;

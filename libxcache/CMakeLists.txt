@@ -44,6 +44,7 @@ add_library(libxcache
   src/input_new_readlink.c
   src/input_new_stat.c
   src/input_new_sysconf.c
+  src/input_new_unlink_pre.c
   src/input_save.c
   src/input_to_str.c
   src/io.c
@@ -71,6 +72,7 @@ add_library(libxcache
   src/path_is_ignorable.c
   src/path_join.c
   src/path_make.c
+  src/path_parent.c
   src/peek_data.c
   src/peek_str.c
   src/proc.c

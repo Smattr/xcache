@@ -10,12 +10,13 @@
 
 /// type of an external input
 typedef enum {
-  INP_ACCESS,   ///< `access()`
-  INP_READ,     ///< `open()` with `O_RDONLY` or `O_RDWR`
-  INP_READLINK, ///< `readlink()`
-  INP_STAT,     ///< `stat()`
-  INP_SYSCONF,  ///< `sysconf()`
-  INP_GETENV,   ///< `getenv()`
+  INP_ACCESS,     ///< `access()`
+  INP_READ,       ///< `open()` with `O_RDONLY` or `O_RDWR`
+  INP_READLINK,   ///< `readlink()`
+  INP_STAT,       ///< `stat()`
+  INP_SYSCONF,    ///< `sysconf()`
+  INP_GETENV,     ///< `getenv()`
+  INP_UNLINK_PRE, ///< `unlink()` preconditions
 } input_type_t;
 
 /// an external input
@@ -108,6 +109,13 @@ INTERNAL int input_new_sysconf(input_t *input, int name);
 /// @return 0 on success or an errno on failure
 INTERNAL int input_new_getenv(input_t *input, const char *name,
                               const char *value);
+
+/// create an input for `unlink()` preconditions
+///
+/// @param input [out] Created input on success
+/// @param path Absolute path to the target file
+/// @return 0 on success or an errno on failure
+INTERNAL int input_new_unlink_pre(input_t *input, const char *path);
 
 /// deserialise an input from a file
 ///
