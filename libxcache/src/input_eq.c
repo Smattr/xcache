@@ -27,7 +27,7 @@ bool input_eq(const input_t a, const input_t b) {
     break;
 
   case INP_READLINK:
-    if (!hash_eq(a.readlink.hash, b.readlink.hash))
+    if (strcmp(a.readlink.target, b.readlink.target) != 0)
       return false;
     break;
 

@@ -80,8 +80,8 @@ char *input_to_str(const input_t input) {
     break;
 
   case INP_READLINK:
-    if (fprintf(stream, ", .readlink.hash = 0x%" PRIx64,
-                input.readlink.hash.data) < 0)
+    if (fprintf(stream, ", .readlink.target = \"%s\"", input.readlink.target) <
+        0)
       goto done;
     break;
 

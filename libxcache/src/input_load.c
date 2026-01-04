@@ -61,7 +61,7 @@ int input_load(input_t *input, FILE *stream) {
     goto ok;
 
   case INP_READLINK:
-    if (ERROR((rc = cbor_read_u64(stream, &i.readlink.hash.data))))
+    if (ERROR((rc = cbor_read_str(stream, &i.readlink.target))))
       goto done;
     goto ok;
 

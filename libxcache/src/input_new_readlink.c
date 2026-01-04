@@ -1,5 +1,4 @@
 #include "debug.h"
-#include "hash_t.h"
 #include "input.h"
 #include "path.h"
 #include <assert.h>
@@ -38,8 +37,10 @@ int input_new_readlink(input_t *input, const int *expected_err,
       goto done;
     }
 
-    if (i.err == 0)
-      i.readlink.hash = hash_data(target, strlen(target));
+    if (i.err == 0) {
+      i.readlink.target = target;
+      target = NULL;
+    }
   }
 
   *input = i;

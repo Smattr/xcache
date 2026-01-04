@@ -33,7 +33,7 @@ typedef struct {
       hash_t hash; ///< hash of the file’s content
     } read;
     struct {
-      hash_t hash; ///< hash of the link’s target
+      char *target; ///< link’s target
     } readlink;
     struct {
       bool is_lstat : 1;    ///< were symlinks not followed?
