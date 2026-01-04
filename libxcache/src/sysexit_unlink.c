@@ -50,13 +50,12 @@ int sysexit_unlink(inferior_t *inf, thread_t *thread) {
     goto done;
   }
 
-  // note a dependency on the file pre-existing
-  if (ERROR((rc = input_new_access(&i, &(int){0}, abs_path, F_OK, 0))))
+  // note a dependency on the preconditions
+  if (ERROR((rc = input_new_unlink_pre(&i, abs_path))))
     goto done;
   if (ERROR((rc = inferior_input_new(inf, i))))
     goto done;
   i = (input_t){0};
-  // TODO: also record a R_OK|W_OK|X_OK on the parent dir
 
   // record this as an output
   if (ERROR((rc = output_new_unlink(&o, abs_path))))
