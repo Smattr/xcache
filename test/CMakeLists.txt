@@ -36,6 +36,7 @@ add_executable(xcache-test-open2 open2.c)
 add_executable(xcache-test-putenv putenv.c)
 add_executable(xcache-test-setenv setenv.c)
 add_executable(xcache-test-temp-usage temp-usage.c)
+add_executable(xcache-test-unlink unlink.c)
 add_executable(xcache-test-unsetenv unsetenv.c)
 
 add_library(xcache-test-ld-preload-cos SHARED preload.c)
@@ -102,5 +103,6 @@ add_dependencies(check
   xcache-test-putenv
   xcache-test-setenv
   xcache-test-temp-usage
+  xcache-test-unlink
   xcache-test-unsetenv
 )

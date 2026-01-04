@@ -1578,6 +1578,110 @@ def test_temp_usage(tmp_path: Path):
     assert "replay succeeded" in stderr, "replay failed"
 
 
+@pytest.mark.parametrize(
+    "dir_read", (pytest.param(False, id="-"), pytest.param(True, id="r"))
+)
+@pytest.mark.parametrize(
+    "dir_write", (pytest.param(False, id="-"), pytest.param(True, id="w"))
+)
+@pytest.mark.parametrize(
+    "dir_execute", (pytest.param(False, id="-"), pytest.param(True, id="x"))
+)
+@pytest.mark.parametrize(
+    "file_read", (pytest.param(False, id="-"), pytest.param(True, id="r"))
+)
+@pytest.mark.parametrize(
+    "file_write", (pytest.param(False, id="-"), pytest.param(True, id="w"))
+)
+@pytest.mark.parametrize(
+    "file_execute", (pytest.param(False, id="-"), pytest.param(True, id="x"))
+)
+def test_unlink(
+    dir_read: bool,
+    dir_write: bool,
+    dir_execute: bool,
+    file_read: bool,
+    file_write: bool,
+    file_execute: bool,
+    tmp_path: Path,
+):
+    """various variations of `unlink` scenarios"""
+
+    # create a directory
+    bar = tmp_path / "bar"
+    bar.mkdir()
+
+    # create a file with the given permission set
+    mode = file_read * 0o400 + file_write * 0o200 + file_execute * 0o100
+    foo = bar / "foo"
+    foo.touch(mode)
+
+    # make the directory the requested mode
+    mode = dir_read * 0o400 + dir_write * 0o200 + dir_execute * 0o100
+    bar.chmod(mode)
+
+    # run the raw unlink
+    baseline, _, _ = sandbox(["xcache-test-unlink"], box=tmp_path)
+    bar.chmod(0o700)
+    removed = foo.exists()
+
+    # clean up and recreate
+    shutil.rmtree(bar)
+    bar.mkdir()
+    mode = file_read * 0o400 + file_write * 0o200 + file_execute * 0o100
+    foo = bar / "foo"
+    foo.touch(mode)
+    mode = dir_read * 0o400 + dir_write * 0o200 + dir_execute * 0o100
+    bar.chmod(mode)
+
+    # try caching it
+    record, _, stderr = sandbox(
+        [
+            "xcache",
+            "--debug",
+            f"--dir={tmp_path}/database",
+            "--read-write",
+            "--",
+            "xcache-test-unlink",
+        ],
+        box=tmp_path,
+    )
+    assert record == baseline, "differing result under xcache"
+    bar.chmod(0o700)
+    assert removed == foo.exists(), "differing outcome under xcache"
+
+    if baseline != 0:
+        return
+    assert "record succeeded" in stderr, "recording of successful unlink failed"
+
+    # clean up and recreate
+    shutil.rmtree(bar)
+    bar.mkdir()
+    mode = file_read * 0o400 + file_write * 0o200 + file_execute * 0o100
+    foo = bar / "foo"
+    foo.touch(mode)
+    mode = dir_read * 0o400 + dir_write * 0o200 + dir_execute * 0o100
+    bar.chmod(mode)
+
+    # try replaying it
+    replay, _, stderr = sandbox(
+        [
+            "xcache",
+            "--debug",
+            f"--dir={tmp_path}/database",
+            "--read-write",
+            "--",
+            "xcache-test-unlink",
+        ],
+        box=tmp_path,
+    )
+    assert replay == baseline, "differing result under xcache"
+    bar.chmod(0o700)
+    assert removed == foo.exists(), "differing outcome under xcache"
+
+    assert "replay succeeded" in stderr, "replay of unlink failed"
+
+
 def test_unsetenv(tmp_path: Path):
     """
     does xcache understand `unsetenv`?
