@@ -86,7 +86,7 @@ def sandbox(
     assert wrapper is not None, "Bubblewrap not found"
 
     # construct a sandbox invocation, read-only mounting everything
-    wrap = [wrapper, "--ro-bind", "/", "/"]
+    wrap = [wrapper, "--die-with-parent", "--ro-bind", "/", "/"]
 
     # include a usable stub /dev
     wrap += ["--dev", "/dev"]
